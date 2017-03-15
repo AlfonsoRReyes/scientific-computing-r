@@ -1,0 +1,88 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+## Central Limit Theorem in an exponential distribution
+```{r}
+################################
+# Using a for loop to illustrate the
+# CLT based on a exponential distribution
+################################
+set.seed(12345)
+nsims=1000
+samplemeans=rep(NA,nsims)
+n=25
+lambda=2
+
+for(i in 1:nsims){
+ x=rexp(n=n,rate=lambda)
+ samplemeans[i]=mean(x)
+}
+
+mean(samplemeans)
+var(samplemeans)
+
+hist(samplemeans,main=paste("Histogram of samplemeans for n
+ =",n),col="hotpink",cex.main=1.5)
+```
+
+
+```{r}
+################################
+# Simulation to compare proportion
+# CI's: regular vs. continuity corrected
+################################
+set.seed(021114)
+nsims=10000
+n=50
+p=0.3
+samples=rbinom(nsims,size=n,p=p)
+p.hats=samples/n
+hist(p.hats)
+mean(p.hats)
+var(p.hats)
+lower.regular=p.hats-qnorm(0.975)*sqrt(p.hats*(1-p.hats)/n)
+upper.regular=p.hats+qnorm(0.975)*sqrt(p.hats*(1-p.hats)/n)
+lower.corrected=p.hats-(qnorm(0.975)*sqrt(p.hats*(1-p.hats)/n)+0.5/n)
+upper.corrected=p.hats+(qnorm(0.975)*sqrt(p.hats*(1-p.hats)/n)+0.5/n)
+mean(lower.regular<=p & upper.regular>=p)
+mean(lower.corrected<=p & upper.corrected>=p)
+
+################################
+# Now using a for loop to check all different
+# levels of the population proportion, p
+################################
+set.seed(021114)
+nsims=10000
+n=50
+p.vector=(1:50)/100
+cover.prob.regular=cover.prob.corrected=rep(NA,length(p.vector))
+for(i in 1:length(p.vector)){
+p=p.vector[i]
+p.hats=rbinom(nsims,size=n,p=p)/n
+lower.regular=p.hats-qnorm(0.975)*sqrt(p.hats*(1-p.hats)/n)
+upper.regular=p.hats+qnorm(0.975)*sqrt(p.hats*(1-p.hats)/n)
+lower.corrected=p.hats-(qnorm(0.975)*sqrt(p.hats*(1-p.hats)/n)+0.5/n)
+upper.corrected=p.hats+(qnorm(0.975)*sqrt(p.hats*(1-p.hats)/n)+0.5/n)
+cover.prob.regular[i]=mean(lower.regular<=p & upper.regular>=p)
+cover.prob.corrected[i]=mean(lower.corrected<=p & upper.corrected>=p)
+}
+sum(cover.prob.corrected>=0.95)
+sum(cover.prob.regular>=0.95)
+
+boxplot(cover.prob.regular,cover.prob.corrected,
+names=c("Regular","Corrected"),main="Simulated
+CI Coverage Probabilities",
+cex=1.5,cex.axis=1.5,col="gray")
+abline(a=0.95,b=0,lty=2)
+plot(cover.prob.regular~p.vector,col="red",
+type="l",lwd=2,main="Simulated CI Coverage
+Probabilities \n at Various Levels of p")
+lines(cover.prob.corrected~p.vector,col="blue",
+type="l",lwd=2)
+legend(x=0.3,y=0.5,legend=c("Regular","Corrected")
+,col=c("red","blue"),lwd=2,cex=1.5)
+abline(a=0.95,b=0,lty=2)
+```
+

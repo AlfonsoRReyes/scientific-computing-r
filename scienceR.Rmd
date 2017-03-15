@@ -1,0 +1,182 @@
+--- title: "R Notebook" output: html_document: default html_notebook: default 
+---
+
+The following example shows how one can create quite complicated data structures
+by using list objects as components inside a list.
+
+```{r} spec.list <- vector(mode = "list", length = 3)
+
+names(spec.list) <- c("O2", "H2O", "CO2")
+
+spec.list$O2  <- list(name = "oxygen", mol.weight = 32) spec.list$H2O <-
+list(name = "water", mol.weight = 18) spec.list$CO2 <- list(name = "carbon
+dioxide", mol.weight = 44)
+
+spec.list ``` The names() command initializes the names of the mother list. Each
+daughter component of the mother list is in itself again a list object. Print
+spec.list on the screen and try to understand its contents.
+
+## Plotting a mathematical function
+
+```{r} # 1st plot curve(expr = sin(3*pi*x))
+
+# 2nd set of plots curve(expr = sin(3*pi*x), from = 0, to = 2, col = "blue", 
+xlab = "x", ylab = "f(x)", main = "curve")
+
+curve(expr = cos(3*pi*x), add = TRUE, col = "red", lty = 2) abline(h = 0, lty =
+2)
+
+# add legend legend("bottomleft", c("sin", "cos"), text.col = c("blue", "red"),
+lty = 1:2) ```
+
+## Root of functions
+
+```{r} curve(expr = cos(x)-2*x, from = -2, to = 2) abline(h = 0, lty = 2) ```
+
+## 9.2. The bisection method The bisection method is a basic root-ﬁnding method.
+It is simple and robust, but also rather slow. In real life problems, other
+methods will be preferred that are numerically more eﬃcient. However, the
+bisection method nicely illustrates how a root algotithm works, and for this
+reason, we discuss it here. We start from an interval [a, b] for which we know
+that it contains a root. The bisection method then divides this interval in two
+and selects the subinterval in which a root must lie. This procedure is repeated
+until the interval is suﬃciently small (i.e. smaller than some preset
+tolerance). The bisection method can be implented by following function:
+
+```{r} bisection <- function(f, interval, tol=.Machine$double.eps^0.25,
+maxiter=1000) { a <- interval[1] b <- interval[2] if (a >= b) stop("startpoint a
+must be smaller than endpoint b") if (f(a)*f(b) >= 0) stop("f(a) and f(b) must
+have a different sign") i <- 1 while (i <= maxiter) #limit iterations to prevent
+infinite loop { mid <- (a + b)/2 # new midpoint estim.prec <- (b - a)/2 #
+estimated precision if (f(mid) == 0 | estim.prec < tol) # root found { if
+(f(mid) == 0) estim.prec <- 0 result <-
+list(root=mid,f.root=f(mid),iter=i,estim.prec=estim.prec) return(result) } i <-
+i + 1 # step counter increases if (sign(f(mid)) == sign(f(a))) a <- mid else b
+<- mid } stop(paste("Bisection method failed: max number of
+steps",maxiter,"exceeded")) } ```
+
+The bisection method requires four diﬀerent types of input: * f: the function
+for which the root needs to be found * interval: the interval speciﬁed by the
+start point a and the end point b. The start point must be smaller than the end
+point, and the function f needs to have an opposite sign at these two points. *
+tol: the requested tolerance on the root. If no value is speciﬁed, we use a
+default value based on the machine precision .Machine$double.eps * maxiter: the
+maximum number of iterations. This criterion is speciﬁed to prevent that the
+algorithm gets stuck in an inﬁnite loop.
+
+
+The bisection method generates four diﬀerent types of output: * root: the
+estimated value of the root * f.root: the function value evaluated at the root *
+iter: the number of iterations used * estim.prec: an estimate of the precision
+for the root ```{r} test.f <- function(x) return(cos(x)-2*x) (result <-
+bisection(f = test.f, interval = c(-2, 2))) ```
+
+
+## 11. Diﬀerential equations
+
+In the natural sciences, the challenge is often to describe or predict how a 
+given environmental variable will evolve over time. Depending on the problem at 
+hand, this variable can have many diﬀerent meanings. For example, one could be 
+interested in future evolution of the temperature of the atmosphere (as in the 
+IPCC models of global warming), the seasonal ﬂuctuation in the oxygen 
+concentration in a lake (as described in biogeochemical ecosystem models), or 
+the year-to-year ﬂuctuations in the density of lions in the Serengeti National 
+park (as in the population models used by conservation biologists). The 
+mathematical models that describe such changes in environmental variable are 
+called dynamic models, because they have the time t as the independent variable.
+The models themselves are based on diﬀerential equations, which are typically of
+the form:
+
+$$\frac {dC}{dt} = f(a, b(t), C = f(C, t)$$ In this, $t$ represents the time and
+$C$ is the `state variable`. Furthermore, $a$ is a parameter that remains
+constant in time, while $b(t)$ is a function that varies with time (a so-called
+**forcing function**). This equation is termed a diﬀerential equation because it
+contains the derivative $dC/dt$, which represents the so-called `rate of change`
+of the `state variable` $C$ . The speciﬁc form of the function f depends on the
+physical, chemical and biological processes that inﬂuence $C$.
+
+The determination of how the function $f$ should look like, is the subject of
+the process of model development. In essence, one or more suitable diﬀerential 
+equations need to be derived from the general balance equations of mass, 
+momentum and/or energy, which form the theoretical pillars of any model in the 
+natural sciences. How this is exactly done will not be considered here, but is 
+treated in detail in the course on Environmental Modelling.
+
+
+
+
+
+
+## 11.2. Types of diﬀerential equations * Autonomous versus non-autonomous
+diﬀerential equations * Linear versus non-linear diﬀerential equations *
+Ordinary versus partial diﬀerential equations
+
+### Ordinary versus partial diﬀerential equations When the function $f$ only
+contains the time $t$ and the state variable $C$ , the resulting equation is
+called an **ordinary diﬀerential equation (ODE)**. When the function $f$ also
+contains one or more diﬀerentials of the state variable $C$ with respect to a
+spatial coordinate, the resulting equation is called a **partial diﬀerential
+equation (PDE)**.
+
+The use of `ODE`’s versus `PDE`’s to describe a natural system depends on the
+level of detail one wants to include in the model. For example, the
+concentration in a lake can be described with varying spatial detail. If the
+lake is strongly mixed, concentrations will not exhibit spatial gradients, and
+so the lake can be considered as one homogeneously mixed volume. In this case,
+the lake can be described by a single concentration $C(t)$, which only depends
+on time. However, when the lake is not fully mixed, more complex descriptions of
+the concentration in the lake are needed. Following cases are possible:
+
+* 0D-model: $C(t)$ only dependent on time (ODE case), 
+
+* 1D-model: $C(t, z)$ depends on time and the spatial coordinate (e.g. z = depth in a lake),
+
+* 2D-model: $C(t, x, z)$ depends on time and two spatial coordinates (e.g. z =
+depth, x = distance along the axis of a river) 
+
+* 3D-model: $C(t, x, y, z)$ depends on time and three spatial coordinates (e.g.
+full three- dimensional model of a lake).
+
+$$\frac {dC}{dt} = D \cdot (C_{in} - C) - k \cdot C$$
+$$\frac {dC}{dt} = K_z \cdot \frac {\mathrm{d^2}C}{\mathrm{d}z^2} - k \cdot C$$
+$$\frac {dC}{dt} = K_x \cdot \frac {\mathrm{d^2}C}{\mathrm{d}x^2} +
+K_y \cdot \frac {\mathrm{d^2}C}{\mathrm{d}y^2} +
+K_z \cdot \frac {\mathrm{d^2}C}{\mathrm{d}z^2} -
+k \cdot C$$
+
+The ﬁrst equation is an ODE or ordinary diﬀerential equation and describes how the average concentration in the lake will change through time (0D-model). 
+
+The second equation comprises a PDE or partial diﬀerential equation, and describes how the concentration will change with time as well as with the depth of the lake (1D-model). 
+
+The third equation is also a PDE, but now describes the concentration varies in all three directions (full 3D-model).
+
+Note that for the solution of a PDE problem, one needs a set of boundary conditions in
+addition to the initial conditions. Here, we only focus on the solution of ODE problems.
+Accordingly, the implementation of boundary conditions and the solution of PDEs is for a
+more advanced course. Intrinsically however, it is similar to the solution of ODEs.
+
+## Example
+Let’s consider again pour lake model,
+$$\frac {dC}{dt} = D \cdot (C_{in} - C) - k \cdot C \\
+C(t = t_0) = C_0$$
+
+This is a linear ODE with constant parameters, and for this speciﬁc type of ODEs, one can prove that an analytical solution must always exist.
+
+To see how the concentration will evolve over time, one simply needs to plot the analytical solution in a graph.
+
+```{r}
+# Parameters
+D<-2; C_in<-1; k<-1; C_0<-2
+
+# Time sequence vector
+time.seq <- seq(from = 0, to = 0.5, by = 0.1)
+
+# Analytical solution as a vector expression
+C.star <- D/(D+k)*C_in
+C.an <- C.star + (C_0 - C.star )*exp(-(D+k)*time.seq)
+
+# Plot solution
+plot(time.seq, C.an, type="l", ylim=c(0,2), lwd =2, cex = 2,
+xlab="time", ylab="state variable", main = "Analytical solution")
+```
+

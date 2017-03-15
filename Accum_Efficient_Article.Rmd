@@ -1,0 +1,125 @@
+---
+title: "Efficient accumulation in R"
+output: html_notebook
+---
+
+R has a number of very good packages for manipulating and aggregating data (dplyr, sqldf, ScaleR, data.table, and more), but when it comes to accumulating results the beginning R user is often at sea. The R execution model is a bit exotic so many R users are very uncertain which methods of accumulating results are efficient and which are inefficient.
+
+In this latest “R as it is” (again in collaboration with our friends at Revolution Analytics) we will quickly become expert at efficiently accumulating results in R.
+
+A number of applications (most notably simulation) require the incremental accumulation of results prior to processing. For our example, suppose we want to collect rows of data one by one into a data frame. Take the mkRow function below as a simple example source that yields a row of data each time we call it.
+
+```{r}
+mkRow <- function(nCol) {
+  rn <- rnorm(nCol)        # vector of `ncol` random numbers
+  x <- as.list(rn)         # convert vector to a list
+  # make row mixed types by changing first column to string
+  x[[1]] <- ifelse(x[[1]] > 0, 'pos', 'neg')         # 1st element of list to be pos/neg
+  names(x) <- paste('x', seq_len(nCol), sep = '.')   # name each member of the list
+  x    # return the list/column
+}
+```
+
+
+The obvious “for-loop” solution is to collect or accumulate many rows into a data frame by repeated application of rbind. This looks like the following function.
+```{r}
+# The common wrong-way to accumulate the rows of data into a single data frame.
+mkFrameForLoop <- function(nRow,nCol) {
+  d <- c()
+  for(i in seq_len(nRow)) {
+    ri <- mkRow(nCol)
+    di <- data.frame(ri,
+                     stringsAsFactors=FALSE)
+    d <- rbind(d,di)
+  }
+  d
+}
+```
+
+This would be the solution most familiar to many non-R programmers. The problem is: in R the above code is incredibly slow.
+
+
+## Testing mkFrameForLoop
+
+```{r}
+set.seed(23525) # make run more repeatable
+
+nCol <- 10                            # number of columns
+# timeSeq <- seq.int(100, 2000, 100)  # with this sequence last DF will have 2000 rows
+timeSeq <- seq.int(10, 200, 10)       # with this sequence last DF will have 200  rows
+
+timings <-  vector("list", length(timeSeq))
+
+# timeSeq:   a vector indicating the number of rows for each iteration
+# timings:   a list where the DF will be saved
+```
+
+
+```{r}
+# This is the FOR loop that will create a list of many data frames
+#
+# timeseq:  is the number of rows for each data frame.
+#           1st dataframe has 10 rows; 2nd 20; 3rd 30, and so on.           
+
+for(i in seq_len(length(timeSeq))) {
+  nRow <- timeSeq[[i]]                # get the size of the rows from timeSeq 
+  cat(i, nRow, nCol, "\n")
+  ti <- mkFrameForLoop(nRow, nCol)    # traverse the rows
+  
+  ti <- data.frame(ti, stringsAsFactors = FALSE)
+  ti$nRow <- nRow
+  ti$nCol <- nCol
+  timings[[i]] <- ti
+  
+}  
+# `ti` will contain the last data frame
+# timings contains all the dataframes generated in the loop.
+timings
+```
+
+## Why the `for` loop taks so long?
+
+In R all common objects are usually immutable and can not change. So when you write an assignment like `d <- rbind(d,di)` you are usually not actually adding a row to an existing data frame, but constructing a new data frame that has an additional row. This new data frame replaces your old data frame in your current execution environment (R execution environments are mutable, to implement such changes). This means to accumulate or add n rows incrementally to a data frame, as in mkFrameForLoop we actually build n different data frames of sizes 1,2,...,n. As we do work copying each row in each data frame (since in R data frame columns can potentially be shared, but not rows) we pay the cost of processing n*(n+1)/2 rows of data. So: no matter how expensive creating each row is, for large enough n the time wasted re-allocating rows (again and again) during the repeated rbinds eventually dominates the calculation time. For large enough n you are wasting most of your time in the repeated `rbind` steps.
+
+
+## Using `lapply`
+
+The most elegant way to avoid the problem is to use R’s lapply (or list apply) function as shown below:
+
+```{r}
+# This function does not use FOR to iterate the rows
+mkFrameList <- function(nRow, nCol) {
+  d <- lapply(seq_len(nRow), function(i) { 
+    ri <- mkRow(nCol)                         # make the row
+    data.frame(ri, stringsAsFactors=FALSE)    # return a DF in the anonymous function
+  })
+  do.call(rbind, d)       # return a data frame
+}
+```
+
+
+```{r}
+# This is using `lapply` instead of `for` that will create a list of many data frames
+#
+# timeseq:  is the number of rows for each data frame.
+#           1st dataframe has 10 rows; 2nd 20; 3rd 30, and so on.           
+
+for(i in seq_len(length(timeSeq))) {
+  nRow <- timeSeq[[i]]                # get the size of the rows from timeSeq 
+  cat(i, nRow, nCol, "\n")
+  ti <- mkFrameList(nRow, nCol)    # traverse the rows
+  
+  ti <- data.frame(ti, stringsAsFactors = FALSE)
+  ti$nRow <- nRow
+  ti$nCol <- nCol
+  timings[[i]] <- ti
+  
+}  
+# `ti` will contain the last data frame
+# timings contains all the dataframes generated in the loop.
+timings
+```
+
+## Why `lapply` is faster?
+What we did is take the contents of the for-loop body, and wrap them in a function. This function is then passed to `lapply` which creates a list of rows. We then batch apply `rbind` to these rows using `do.call`. It isn’t that the for-loop is slow (which many R users mistakingly believe), **it is the incremental collection of results into a data frame is slow** and that is one of the steps the `lapply` method is avoiding. While you can prefer lapply to for-loops always for stylistic reasons, it is important to understand when `lapply` is in fact quantitatively **better** than a for-loop (and to know when a for-loop is in fact acceptable). In fact a for-loop with a better binder such as data.table::rbindlist (assuming your code can work with a data.table which in some environments has different semantics) is among the fastest variations we have seen (as suggested by Arun Srinivasan in the comments below; another top contender are file based Split-Apply-Combine methods as suggested in comments by David Hood, ideas also seen in Map-Reduce).
+

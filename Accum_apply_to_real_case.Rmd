@@ -1,0 +1,5 @@
+---
+title: "Acumulator - applying to real case"
+output: html_notebook
+---
+
