@@ -94,7 +94,7 @@ timings <- data.table::rbindlist(timings)
 print(plotTimings(timings))
 ```
 
-
+## Benchmark mkFrameForList, mkFrameList
 
 A few roughly equivilent right ways to accumulate the rows.
 
@@ -130,16 +130,16 @@ mkFrameList <- function(nRow,nCol) {
 
 Confirm value getting altered in place (effiency depends on interior columns also not chaning address, which is also the case).
 
-
 ```{r}
-mkFrameForList(10,5,TRUE)
+mkFrameForList(10, 5, TRUE)
 ```
 
-Get more timings and plots.
+Get more timings and plots for two new functions.
 
 ```{r}
-timingsPrev <- timings
+timingsPrev <- timings                           # accumulate previous timings
 timings <-  vector("list", length(timeSeq))
+
 for(i in seq_len(length(timeSeq))) {
   nRow <- timeSeq[[i]]
   ti <- microbenchmark(
@@ -152,12 +152,13 @@ for(i in seq_len(length(timeSeq))) {
   ti$nCol <- nCol
   timings[[i]] <- ti
 }
+
 timings <- data.table::rbindlist(timings)
 
 print(plotTimings(timings))
 ```
 
-### Report for above
+### Report for previous and newer functions
 ```{r}
 timings <- rbind(timings, timingsPrev)
 
@@ -231,6 +232,7 @@ ggplot(data=dInc,aes(x=nRow,y=slowDown)) +
   geom_point() + geom_smooth()
 ```
 
+## mkFrameInPlace, mkFrameDataTableFor
 ```{r}
 # From Arun Srinivasan's comment
 # http://www.win-vector.com/blog/2015/07/efficient-accumulation-in-r/comment-page-1/#comment-65994
@@ -289,7 +291,6 @@ mkFrameInPlace <- function(nRow,nCol,classHack=TRUE) {
 ```
 
 
-### mkFrameInPlace, mkFrameDataTableFor
 Still more timings.
 
 ```{r}
@@ -312,7 +313,7 @@ timings <- rbind(timings,timingsPrev)
 print(plotTimings(timings))
 ```
 
-### mkFrameDplyrBind, mkFramePlyrLdply, mkFrameMat, mkFrameVector, mkFrameDaccum
+## mkFrameDplyrBind, mkFramePlyrLdply, mkFrameMat, mkFrameVector, mkFrameDaccum
 ```{r}
 # library('dplyr')
 # Fast method from https://twitter.com/drob/status/626146450842497028
@@ -403,25 +404,27 @@ mkFrameDaccum <- function(nRow,nCol) {
 ```{r}
 timingsPrev <- timings
 timings <-  vector("list", length(timeSeq))
+
 for(i in seq_len(length(timeSeq))) {
   nRow <- timeSeq[[i]]
   ti <- microbenchmark(
-    mkFrameDplyrBind(nRow,nCol),
-    mkFramePlyrLdply(nRow,nCol),
-    mkFrameMat(nRow,nCol),
-    mkFrameVector(nRow,nCol),
-    mkFrameDaccum(nRow,nCol),
-    mkFrameEnvDataTable(nRow,nCol),
-    mkFrameDataTableLapply(nRow,nCol),
-    times=10)
-  ti <- data.frame(ti,
-                   stringsAsFactors=FALSE)
-  ti$nRow <- nRow
-  ti$nCol <- nCol
-  timings[[i]] <- ti
+    mkFrameDplyrBind(nRow, nCol),
+    mkFramePlyrLdply(nRow, nCol),
+    mkFrameMat(nRow, nCol),
+    mkFrameVector(nRow, nCol),
+    mkFrameDaccum(nRow, nCol),
+    mkFrameEnvDataTable(nRow, nCol),
+    mkFrameDataTableLapply(nRow, nCol), 
+    times = 10)                                  # benchmark 10 times
+  
+  ti <- data.frame(ti, stringsAsFactors=FALSE)   # create DF with timings
+  ti$nRow <- nRow                                # document # rows 
+  ti$nCol <- nCol                                # document # columns
+  timings[[i]] <- ti                             # add DF to the list `timings`
 }
+
 timings <- data.table::rbindlist(timings, fill = TRUE)
-timings <- rbind(timings,timingsPrev)
+timings <- rbind(timings, timingsPrev)
 
 print(plotTimings(timings))
 ```
