@@ -7,18 +7,28 @@ In this latest “R as it is” (again in collaboration with our friends at Revo
 
 A number of applications (most notably simulation) require the incremental accumulation of results prior to processing. For our example, suppose we want to collect rows of data one by one into a data frame. Take the mkRow function below as a simple example source that yields a row of data each time we call it.
 
+## Define the time sequence for the benchmarking tests
+We have two options, the long and short time sequences.
 ```{r}
 library('microbenchmark')
 library('ggplot2')
+
 set.seed(23525) # make run more repeatable
 
-nCol <- 10
-timeSeq <- seq.int(100, 2000, 100)
-timeSeq <- seq.int(10, 200, 10)
+nCol <- 10                                  # number of columns for the test DF
+# If we use seq.int(100, 2000, 100) we will test with dataframes of size:
+#  100  200  300  400  500  600  700  800  900 1000 
+# 1100 1200 1300 1400 1500 1600 1700 1800 1900 2000
+timeSeq <- seq.int(100, 2000, 100)          # long sequence
+
+# If we use seq.int(10, 200, 10) we will test with dataframes of size:
+#  10  20  30  40  50  60  70  80  90 100 
+# 110 120 130 140 150 160 170 180 190 200
+timeSeq <- seq.int(10, 200, 10)             # short sequence
 ```
 
 
-Function to populate a row of data.
+### Function to populate a row of data.
 ```{r}
 mkRow <- function(nCol) {
   x <- as.list(rnorm(nCol))
@@ -29,24 +39,7 @@ mkRow <- function(nCol) {
 }
 ```
 
-The obvious “for-loop” solution is to collect or accumulate many rows into a data frame by repeated application of rbind. This looks like the following function.
-
-```{r}
-# The common wrong-way to accumulate the rows of data into a single data frame.
-mkFrameForLoop <- function(nRow,nCol) {
-  d <- c()
-  for(i in seq_len(nRow)) {
-    ri <- mkRow(nCol)
-    di <- data.frame(ri,
-                     stringsAsFactors=FALSE)
-    d <- rbind(d,di)
-  }
-  d
-}
-```
-
-
-### Function for benchmarking of all functions
+### Function for benchmarking plots of all functions
 ```{r}
 # build function to plot timings
 # devtools::install_github("WinVector/WVPlots")
@@ -73,25 +66,42 @@ plotTimings <- function(timings) {
 ```
 
 
-### mkFrameForLoop
+## mkFrameForLoop
+The obvious “for-loop” solution is to collect or accumulate many rows into a data frame by repeated application of rbind. This looks like the following function.
+
+```{r}
+# The common wrong-way to accumulate the rows of data into a single data frame.
+mkFrameForLoop <- function(nRow,nCol) {
+  d <- c()
+  for(i in seq_len(nRow)) {
+    ri <- mkRow(nCol)
+    di <- data.frame(ri,
+                     stringsAsFactors=FALSE)
+    d <- rbind(d,di)
+  }
+  d
+}
+```
+
+
 Timing showing the quadratic runtime.
 ```{r}
-timings <-  vector("list", length(timeSeq))
+# this list will save the dataframes created during the test
+timings <- vector("list", length(timeSeq))    # create a vector of lists
 
-for(i in seq_len(length(timeSeq))) {
-  nRow <- timeSeq[[i]]
+for(i in seq_len(length(timeSeq))) {      # iterate throgh time sequence
+  nRow <- timeSeq[[i]]                    # get number of rows for the current DF
   ti <- microbenchmark(
-    mkFrameForLoop(nRow,nCol),
+    mkFrameForLoop(nRow, nCol),           # create DF
     times=10)
-  ti <- data.frame(ti,
-                   stringsAsFactors=FALSE)
-  ti$nRow <- nRow
+  ti <- data.frame(ti, stringsAsFactors = FALSE) # no factors
+  ti$nRow <- nRow                         # document # rows
   ti$nCol <- nCol
-  timings[[i]] <- ti
+  timings[[i]] <- ti                      # save DF in the list
 }
 
-timings <- data.table::rbindlist(timings)
-print(plotTimings(timings))
+timings <- data.table::rbindlist(timings) # convert DF to DT
+print(plotTimings(timings))               # plot the data
 ```
 
 ## Benchmark mkFrameForList, mkFrameList
