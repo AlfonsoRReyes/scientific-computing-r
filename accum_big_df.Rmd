@@ -1,7 +1,15 @@
 ---
-title: "Accumulating results"
-output: html_notebook
+title: "Accumulating results: small dataframes"
+output:
+  pdf_document: default
+  html_notebook: default
+  html_document: default
 ---
+
+```{r setup, include=F, error=T, message=F, warning=F}
+knitr::opts_chunk$set(echo=T, comment=NA, error=T, warning=F, message = F, fig.align = 'center')
+```
+
 
 In this latest “R as it is” (again in collaboration with our friends at Revolution Analytics) we will quickly become expert at efficiently accumulating results in R.
 
@@ -16,15 +24,18 @@ library('ggplot2')
 set.seed(23525) # make run more repeatable
 
 nCol <- 10                                  # number of columns for the test DF
-# If we use seq.int(100, 2000, 100) we will test with dataframes of size:
-#  100  200  300  400  500  600  700  800  900 1000 
-# 1100 1200 1300 1400 1500 1600 1700 1800 1900 2000
-timeSeq <- seq.int(100, 2000, 100)          # long sequence
 
 # If we use seq.int(10, 200, 10) we will test with dataframes of size:
 #  10  20  30  40  50  60  70  80  90 100 
 # 110 120 130 140 150 160 170 180 190 200
 timeSeq <- seq.int(10, 200, 10)             # short sequence
+
+# If we use seq.int(100, 2000, 100) we will test with dataframes of size:
+#  100  200  300  400  500  600  700  800  900 1000 
+# 1100 1200 1300 1400 1500 1600 1700 1800 1900 2000
+timeSeq <- seq.int(100, 2000, 100)          # long sequence
+
+summary(timeSeq)
 ```
 
 
@@ -45,8 +56,8 @@ mkRow <- function(nCol) {
 # devtools::install_github("WinVector/WVPlots")
 # library('WVPlots')
 plotTimings <- function(timings) {
-  timings$expr <- reorder(timings$expr,-timings$time,FUN=max)
-  ggplot(data=timings,aes(x=nRow,y=time,color=expr)) +
+  timings$expr <- reorder(timings$expr, -timings$time, FUN=max)
+  ggplot(data = timings, aes(x=nRow,y=time, color=expr)) +
     geom_point(alpha=0.8) + geom_smooth(alpha=0.8) 
   
   nmax <- max(timings$nRow)
@@ -66,7 +77,7 @@ plotTimings <- function(timings) {
 ```
 
 
-## mkFrameForLoop
+## 1st test: mkFrameForLoop
 The obvious “for-loop” solution is to collect or accumulate many rows into a data frame by repeated application of rbind. This looks like the following function.
 
 ```{r}
@@ -104,7 +115,7 @@ timings <- data.table::rbindlist(timings) # convert DF to DT
 print(plotTimings(timings))               # plot the data
 ```
 
-## Benchmark mkFrameForList, mkFrameList
+## 2nd test: Benchmark mkFrameForList, mkFrameList
 
 A few roughly equivilent right ways to accumulate the rows.
 
@@ -175,57 +186,6 @@ timings <- rbind(timings, timingsPrev)
 print(plotTimings(timings))
 ```
 
-Show the in-place alteration of objects in a simpler setting.
-
-```{r}
-computeSquares <- function(n,
-                           messUpVisibility,
-                           usePRYR=FALSE) {
-  # pre-allocate v
-  # (doesn't actually help!)
-  v <- 1:n
-  if(messUpVisibility) {
-     vLast <- v
-  }
-  # print details of v
-  .Internal(inspect(v))
-  if(usePRYR) {
-    print(pryr::address(v))
-  }
-  for(i in 1:n) {
-    v[[i]] <- i^2
-    if(messUpVisibility) {
-      vLast <- v
-    }
-    # print details of v
-    .Internal(inspect(v))
-    if(usePRYR) {
-      print(pryr::address(v))
-    }
-  }
-  v
-}
-```
-
-Show how if the value associated with v is visible only to the variable name “v” that R will start performing in-place replacement (making calculation much cheaper).
-
-```{r}
-computeSquares(5, FALSE)
-```
-
-
-Show how if the value associated with v is visible to more than one variable that R will not performing in-place replacement (making calcultion much more expensive).
-
-```{r}
-computeSquares(5, TRUE)
-```
-
-Check if we can use PRYR for addresses in this case.
-
-```{r}
-computeSquares(5, FALSE, usePRYR=TRUE)
-
-```
 
 Show slowdown of incremental method versus others as a function of number of row.
 
@@ -242,7 +202,7 @@ ggplot(data=dInc,aes(x=nRow,y=slowDown)) +
   geom_point() + geom_smooth()
 ```
 
-## mkFrameInPlace, mkFrameDataTableFor
+## 3rd test: mkFrameInPlace, mkFrameDataTableFor
 ```{r}
 # From Arun Srinivasan's comment
 # http://www.win-vector.com/blog/2015/07/efficient-accumulation-in-r/comment-page-1/#comment-65994
@@ -323,7 +283,7 @@ timings <- rbind(timings,timingsPrev)
 print(plotTimings(timings))
 ```
 
-## mkFrameDplyrBind, mkFramePlyrLdply, mkFrameMat, mkFrameVector, mkFrameDaccum
+## 4th test: mkFrameDplyrBind, mkFramePlyrLdply, mkFrameMat, mkFrameVector, mkFrameDaccum
 ```{r}
 # library('dplyr')
 # Fast method from https://twitter.com/drob/status/626146450842497028
@@ -440,3 +400,59 @@ print(plotTimings(timings))
 ```
 
 
+
+
+
+## Miscelaneous
+
+Show the in-place alteration of objects in a simpler setting.
+
+```{r}
+computeSquares <- function(n,
+                           messUpVisibility,
+                           usePRYR=FALSE) {
+  # pre-allocate v
+  # (doesn't actually help!)
+  v <- 1:n
+  if(messUpVisibility) {
+     vLast <- v
+  }
+  # print details of v
+  .Internal(inspect(v))
+  if(usePRYR) {
+    print(pryr::address(v))
+  }
+  for(i in 1:n) {
+    v[[i]] <- i^2
+    if(messUpVisibility) {
+      vLast <- v
+    }
+    # print details of v
+    .Internal(inspect(v))
+    if(usePRYR) {
+      print(pryr::address(v))
+    }
+  }
+  v
+}
+```
+
+Show how if the value associated with v is visible only to the variable name “v” that R will start performing in-place replacement (making calculation much cheaper).
+
+```{r}
+computeSquares(5, FALSE)
+```
+
+
+Show how if the value associated with v is visible to more than one variable that R will not performing in-place replacement (making calcultion much more expensive).
+
+```{r}
+computeSquares(5, TRUE)
+```
+
+Check if we can use PRYR for addresses in this case.
+
+```{r}
+computeSquares(5, FALSE, usePRYR=TRUE)
+
+```
