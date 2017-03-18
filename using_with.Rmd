@@ -1,0 +1,155 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+```{r}
+library(MASS)
+with(anorexia, {
+    anorex.1 <- glm(Postwt ~ Prewt + Treat + offset(Prewt),
+                    family = gaussian)
+    summary(anorex.1)
+})
+```
+
+```{r}
+head(airquality)
+```
+
+```{r}
+aq <- within(airquality, {     # Notice that multiple vars can be changed
+    lOzone <- log(Ozone)
+    Month <- factor(month.abb[Month])
+    cTemp <- round((Temp - 32) * 5/9, 1) # From Fahrenheit to Celsius
+    S.cT <- Solar.R / cTemp  # using the newly created variable
+    rm(Day, Temp)
+})
+head(aq)
+```
+
+
+```{r}
+aq <- with(airquality, {     # Notice that multiple vars can be changed
+    lOzone <- log(Ozone)
+    Month <- factor(month.abb[Month])
+    cTemp <- round((Temp - 32) * 5/9, 1) # From Fahrenheit to Celsius
+    S.cT <- Solar.R / cTemp  # using the newly created variable
+    rm(Day, Temp)
+})
+head(aq)
+```
+
+
+
+
+
+
+
+
+
+```{r}
+#-----------------------#
+# the model parameters: #
+#-----------------------#
+
+neonateWeight      <-  1.1    #?gC
+reproductiveWeight <-  7.5    #?gC
+maximumWeight      <- 60.0    #?gC
+
+ksFood             <- 85.0    #?gC/l
+IngestWeight       <-132.0    #?gC
+maxIngest          <-  1.05   #/day
+assimilEff         <-  0.8    #-
+
+maxReproduction    <-  0.8    #-
+respirationRate    <-  0.25   #/day
+
+# Dilution parameters !
+transferTime       <-    2    # Days
+foodInMedium       <-  509    # ?gC/l
+
+instarDuration     <-  3.0    # days
+numberIndividuals  <-   32    #   -
+
+#-------------------------#
+# the initial conditions: #
+#-------------------------#
+ 
+state     <-c(
+  INDWEIGHT = neonateWeight      , # ?gC
+  EGGWEIGHT = 0                  , # ?gC    ! Total egg mass in a stage
+  FOOD      = foodInMedium         # ?gC
+             )
+
+with(as.list(c(state)),{  # unpack the state variables
+
+# ingestion, size-dependent and food limited
+WeightFactor <- (IngestWeight-INDWEIGHT)/(IngestWeight-neonateWeight) 
+MaxIngestion <- maxIngest*WeightFactor      # /day     
+Ingestion    <- MaxIngestion*INDWEIGHT*FOOD / (FOOD + ksFood)
+
+Respiration  <- respirationRate * INDWEIGHT         # ?gC/day 
+Growth       <- Ingestion*assimilEff - Respiration
+
+# Fraction of assimilate allocated to reproduction
+
+if (Growth <= 0. | INDWEIGHT<reproductiveWeight) Reproduction <- 0. 
+else {               # Fraction of growth allocated to reproduction.
+  WeightRatio  <- reproductiveWeight/INDWEIGHT
+  Reproduction <- maxReproduction * (1. - WeightRatio^2)
+     }
+
+# rate of change 
+dINDWEIGHT <- (1. -Reproduction) * Growth
+dEGGWEIGHT <-      Reproduction  * Growth
+dFOOD      <- -Ingestion * numberIndividuals      
+
+# the output, packed as a list
+theList <-  list(c(dINDWEIGHT, dEGGWEIGHT, dFOOD),   # the rate of change
+       c(Ingestion    = Ingestion,            # the ordinary output variables
+         Respiration  = Respiration,
+         Reproduction = Reproduction))
+  })
+```
+
+
+ 
+```{r}
+Moulting   <- function ()
+
+  {
+   with(as.list(c(state)),{  # unpack the state variables
+ 
+   # Relationship moulting loss and length
+    refLoss   <-  0.24   #?gC
+    cLoss     <-  3.1    #-
+
+    # Weight lost during molts depends allometrically on the organism length
+    INDLength    <- (INDWEIGHT /3.0)^(1/2.6)
+
+    WeightLoss <- refLoss * INDLength^cLoss
+    return(INDWEIGHT - WeightLoss)   # New weight
+    })
+}
+
+mo <- Moulting()
+```
+
+```{r}
+vec <- c(a =1, b = 2, c =3)
+
+ff <- function() {
+  with(as.list(vec) , {
+    x <- 0.1
+    y <- 0.2
+    a  <- x * y
+  })
+}
+```
+
+```{r}
+f1 <- ff()
+vec
+```
+
