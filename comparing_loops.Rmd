@@ -1,0 +1,44 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+```{r}
+big.matrix <- matrix(1:1e+06, nrow = 1000)
+colsums <- rep(NA, dim(big.matrix)[2])
+```
+
+
+Compar a double loop of summations,
+```{r}
+system.time({
+for (i in 1:dim(big.matrix)[2]) {
+    s <- 0
+    for (j in 1:dim(big.matrix)[1]) {
+        s <- s + big.matrix[j, i]
+        }
+        colsums[i] <- s
+    }
+})
+```
+
+
+```{r}
+# The use of apply,
+system.time(colsums <- apply(big.matrix, 2, sum))
+```
+
+```{r}
+# A single loop of sums, and
+system.time(for (i in 1:dim(big.matrix)[2]) {
+ colsums[i] <- sum(big.matrix[, i])
+ })
+```
+
+```{r}
+# Using the dedicated R function:
+system.time(colsums <- colSums(big.matrix))
+```
+
+We note that using apply is not faster than using a for loop. This is because, in R, `apply` creates its own for loop.
