@@ -3,8 +3,72 @@ title: "R Notebook"
 output: html_notebook
 ---
 
+Examples. We load the marioKart data object from the openintro package, which provides information about 143 auctions for the Wii game, Mario Kart. 
+
+* (0) A new data set with two outliers is returned and saved to mk0. 
+
+* (1) A plot is constructed for the number of steering wheels included in the auction against the auction’s total price. Notice that the variables are accessed in the expressions without explicitly invoking the mk0 data frame. 
+
+* (2) An object is removed, so it will not be included in the returned value from within. 
+
+* (3) Other values can also be modified for the object returned from within. 
+
+* (4) Lastly, variables may be added to the outgoing object for within, as is done here with the end price of the auction.
+
 
 ```{r}
+
+# install.packages("openintro")
+
+library(openintro)
+
+data(marioKart)
+names(marioKart)
+dim(marioKart)
+
+#______ 0. Removing Two Outliers ______#
+mk0 <- marioKart[marioKart$totalPr < 100,]
+
+
+#______ 1. Create Plot ______#
+cat("#______ 1. Create Plot ______#\n")
+png("wheels_totalPr.png")
+with(mk0, {
+           boxplot(totalPr ~ wheels)
+           points(wheels+1.1, totalPr, col=4)
+          })
+# dev.off()
+
+
+#______ 2. Remove One Column ______#
+cat("#______ 2. Remove One Column ______#\n")
+mk2 <- within(mk0, rm(title))
+names(mk2)
+
+
+#______ 3. Change Values ______#
+cat("#______ 3. Change Values ______#\n")
+mk0$totalPr[50]
+mk0$startPr[25]
+mk3 <- within(mk0, { # Would not typically do...
+                     # this is just an example
+                    totalPr[50] <- 88.59
+                    startPr[25] <- 85.00
+                   })
+mk3$totalPr[50]
+mk3$startPr[25]
+
+
+#______ 4. Constuct Auction End Price ______#
+cat("#______ 4. Constuct Auction End Price ______#")
+mk4 <- within(mk0, endPrice <- totalPr - shipPr)
+all.equal(mk4$totalPr - mk4$shipPr, mk4$endPrice)
+names(mk4)
+```
+
+
+```{r}
+# in this case, we don't need anorexia as a prefix
 library(MASS)
 with(anorexia, {
     anorex.1 <- glm(Postwt ~ Prewt + Treat + offset(Prewt),
@@ -13,23 +77,25 @@ with(anorexia, {
 })
 ```
 
-```{r}
-head(airquality)
-```
 
 ```{r}
+# in this example we modify the data frame and write the modifications
+# in another data frame
+
 aq <- within(airquality, {     # Notice that multiple vars can be changed
-    lOzone <- log(Ozone)
-    Month <- factor(month.abb[Month])
-    cTemp <- round((Temp - 32) * 5/9, 1) # From Fahrenheit to Celsius
-    S.cT <- Solar.R / cTemp  # using the newly created variable
-    rm(Day, Temp)
+        lOzone <- log(Ozone)                  # calculate log
+        Month  <- factor(month.abb[Month])    # convert to factor
+        cTemp  <- round((Temp - 32) * 5/9, 1) # From Fahrenheit to Celsius
+        S.cT   <- Solar.R / cTemp             # using newly created variable
+        rm(Day, Temp)                         # remove 2 variables
 })
-head(aq)
+
+head(aq)   # new data frame
 ```
 
 
 ```{r}
+# on the other hand, `with` doesn't do antything
 aq <- with(airquality, {     # Notice that multiple vars can be changed
     lOzone <- log(Ozone)
     Month <- factor(month.abb[Month])
@@ -40,116 +106,39 @@ aq <- with(airquality, {     # Notice that multiple vars can be changed
 head(aq)
 ```
 
-
-
-
-
-
-
-
+http://stackoverflow.com/questions/21827572/what-is-the-difference-between-with-and-within-in-r
 
 ```{r}
-#-----------------------#
-# the model parameters: #
-#-----------------------#
+require(plyr)
 
-neonateWeight      <-  1.1    #?gC
-reproductiveWeight <-  7.5    #?gC
-maximumWeight      <- 60.0    #?gC
-
-ksFood             <- 85.0    #?gC/l
-IngestWeight       <-132.0    #?gC
-maxIngest          <-  1.05   #/day
-assimilEff         <-  0.8    #-
-
-maxReproduction    <-  0.8    #-
-respirationRate    <-  0.25   #/day
-
-# Dilution parameters !
-transferTime       <-    2    # Days
-foodInMedium       <-  509    # ?gC/l
-
-instarDuration     <-  3.0    # days
-numberIndividuals  <-   32    #   -
-
-#-------------------------#
-# the initial conditions: #
-#-------------------------#
- 
-state     <-c(
-  INDWEIGHT = neonateWeight      , # ?gC
-  EGGWEIGHT = 0                  , # ?gC    ! Total egg mass in a stage
-  FOOD      = foodInMedium         # ?gC
-             )
-
-with(as.list(c(state)),{  # unpack the state variables
-
-# ingestion, size-dependent and food limited
-WeightFactor <- (IngestWeight-INDWEIGHT)/(IngestWeight-neonateWeight) 
-MaxIngestion <- maxIngest*WeightFactor      # /day     
-Ingestion    <- MaxIngestion*INDWEIGHT*FOOD / (FOOD + ksFood)
-
-Respiration  <- respirationRate * INDWEIGHT         # ?gC/day 
-Growth       <- Ingestion*assimilEff - Respiration
-
-# Fraction of assimilate allocated to reproduction
-
-if (Growth <= 0. | INDWEIGHT<reproductiveWeight) Reproduction <- 0. 
-else {               # Fraction of growth allocated to reproduction.
-  WeightRatio  <- reproductiveWeight/INDWEIGHT
-  Reproduction <- maxReproduction * (1. - WeightRatio^2)
-     }
-
-# rate of change 
-dINDWEIGHT <- (1. -Reproduction) * Growth
-dEGGWEIGHT <-      Reproduction  * Growth
-dFOOD      <- -Ingestion * numberIndividuals      
-
-# the output, packed as a list
-theList <-  list(c(dINDWEIGHT, dEGGWEIGHT, dFOOD),   # the rate of change
-       c(Ingestion    = Ingestion,            # the ordinary output variables
-         Respiration  = Respiration,
-         Reproduction = Reproduction))
-  })
+# with(baseball, baseball[id=="ansonca01",])
+with(baseball, baseball[id=="ansonca01",])
 ```
 
 
- 
 ```{r}
-Moulting   <- function ()
-
-  {
-   with(as.list(c(state)),{  # unpack the state variables
- 
-   # Relationship moulting loss and length
-    refLoss   <-  0.24   #?gC
-    cLoss     <-  3.1    #-
-
-    # Weight lost during molts depends allometrically on the organism length
-    INDLength    <- (INDWEIGHT /3.0)^(1/2.6)
-
-    WeightLoss <- refLoss * INDLength^cLoss
-    return(INDWEIGHT - WeightLoss)   # New weight
-    })
-}
-
-mo <- Moulting()
+within(baseball, baseball[id=="ansonca01", ])
+# code doesn’t modify anything inside baseball, the unmodified baseball is returned. with on the other hand doesn’t return the object, it returns expr.
 ```
 
-```{r}
-vec <- c(a =1, b = 2, c =3)
 
-ff <- function() {
-  with(as.list(vec) , {
-    x <- 0.1
-    y <- 0.2
-    a  <- x * y
-  })
-}
+```{r}
+head(within(cars, speed[dist < 20] <- 1))
 ```
 
+
+
+http://stackoverflow.com/questions/21827572/what-is-the-difference-between-with-and-within-in-r
+
 ```{r}
-f1 <- ff()
-vec
+df <- data.frame(a=1:5,b=2:6)
+
+with(df, 
+     {c <- a + b
+     df})
+
+within(df, 
+       {c <- a + b
+       df} )
 ```
 
