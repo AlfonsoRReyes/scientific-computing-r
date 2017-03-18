@@ -1,0 +1,48 @@
+---
+title: "Acumulator - applying to real case"
+output: html_notebook
+---
+
+
+```{r}
+mkRow <- function(nCol) {
+  rn <- rnorm(nCol)        # vector of `ncol` random numbers
+  x <- as.list(rn)         # convert vector to a list
+  # make row mixed types by changing first column to string
+  x[[1]] <- ifelse(x[[1]] > 0, 'pos', 'neg')         # 1st element of list to be pos/neg
+  names(x) <- paste('x', seq_len(nCol), sep = '.')   # name each member of the list
+  x    # return the list/column
+}
+```
+
+
+The obvious “for-loop” solution is to collect or accumulate many rows into a data frame by repeated application of rbind. This looks like the following function.
+```{r}
+mkFrameForLoop <- function(nRow, nCol, obj) {
+  d <- c()
+  obj.cum <- 0
+  for(i in seq_len(nRow)) {
+    #obj.cum <- obj.cum + obj[i]
+    #cat(obj[i], "\t", obj.cum, "\n")
+    cat(i, obj[i], obj.cum)
+    ri <- mkRow(nCol)                            # call function to make row
+    di <- data.frame(ri, stringsAsFactors=FALSE) # convert the list to a data frame
+    d <- rbind(d, di)                            # add the new row to data frame
+    cat("\n")
+  }
+  d      # return data frame
+}
+```
+
+This would be the solution most familiar to many non-R programmers. The problem is: in R the above code is incredibly slow.
+
+## Example
+
+```{r}
+depth.wh <- 0
+depth.bh <- 1000
+pres.wh <- 200
+
+segments <- seq(from = depth.wh, to = depth.bh, length.out = 10)
+mkFrameForLoop(length(segments), 3, segments)
+```
