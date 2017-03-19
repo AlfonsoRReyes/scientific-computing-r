@@ -1,0 +1,137 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+David Hood says: July 28, 2015 at 8:35 pm
+The thing is, the memory allocation is the aggregating with rbind is in itself a huge bottleneck so you can effectively get an order of magnitude saving in time (and the larger the set of data the more significant the save) by going around the problem entirely. Consider this quick and dirty modification of your code: 
+
+```{r}
+mkRow <- function(nCol) {
+  rn <- rnorm(nCol)        # vector of `ncol` random numbers
+  x <- as.list(rn)         # convert vector to a list
+  # make row mixed types by changing first column to string
+  x[[1]] <- ifelse(x[[1]] > 0, 'pos', 'neg')    # 1st element of list to be pos/neg
+  names(x) <- paste('x', seq_len(nCol), sep = '.')   # name each member of the list
+  x    # return the list/column
+}
+
+mkFrameForLoop <- function(nRow,nCol) {
+  d <- c()
+  for(i in seq_len(nRow)) {
+    ri <- mkRow(nCol)
+    di <- data.frame(ri, stringsAsFactors=FALSE)
+    d <- rbind(d,di)
+  }
+  d
+}
+
+mkFrameList <- function(nRow,nCol) {
+  d <- lapply(seq_len(nRow),function(i) {
+    ri <- mkRow(nCol)
+    data.frame(ri,
+               stringsAsFactors=FALSE)
+  })
+  do.call(rbind,d)
+}
+
+mkRow2 <- function(nCol, fileloc) {
+  x <- as.list(rnorm(nCol))
+  # make row mixed types by changing first column to string
+  x[[1]] <- ifelse(x[[1]] > 0,'pos','neg')
+  writeLines(paste(x, collapse=" "), con = fileloc)
+}
+
+avoidAggregate <- function(nRow,nCol) {
+  some.file <- tempfile()
+  file.create(some.file)
+  cf <- file(some.file, open = "a")
+  lapply(seq_len(nRow), function(i) {mkRow2(nCol, cf)})
+  close(cf)
+  numnumer <- rep("numeric", nCol - 1)
+  read.table(some.file, nrows=nRow,
+    colClasses = c("character", numnumer))
+}
+
+go <- Sys.time();a1 <- mkFrameForLoop(10000,10);print(Sys.time()-go)
+go <- Sys.time();a2 <- mkFrameList(10000,10);print(Sys.time()-go)
+go <- Sys.time();a3 <- avoidAggregate(10000,10);print(Sys.time()-go)
+```
+
+> The fastest method is avoiding aggregation.
+
+jmount says: July 28, 2015 at 9:18 pm
+David,
+Thanks for your comment I suspect in addition to allocation a lot of the lost time is in the name and type checking of all the rows. I was able to run your code and see similar timings for the two efficient methods (my first bad for-loop was taking too long, so I killed it). Your code was a real kick in the stomach.
+
+Another way thing we could try is: pre-allocating into a character matrix like below (on a machine that seems to be no faster than the one you used). However in both cases (your code and my code) we have hard to maintain code (that I wouldn’t want to teach a beginner) and we are damaging the floating point numbers by round-tripping them through a printed decimal representation (which isn’t faithful to binary floating point).
+
+There are also nice idiomatic ways to do this with dplyr::bind_rows and plyr::ldply which I am adding to the examples (though they don’t get the speed of the file or matrix code).
+
+```{r}
+mkRowC <- function(nCol) {
+  xN <- rnorm(nCol)
+  x <- as.character(xN)
+  x[[1]] <- ifelse(xN[[1]]>0,'pos','neg')
+  x
+}
+
+mkFrameMat <- function(nRow, nCol) {
+  d <- matrix(data = "",
+     nrow = nRow, ncol = nCol)
+  for(i in seq_len(nRow)) {
+    ri <- mkRowC(nCol)
+    d[i,] <- ri
+  }
+  d <- data.frame(d,
+     stringsAsFactors=FALSE)
+  if(nCol>1) {
+    for(i in 2:nCol) {
+      d[[i]] <- as.numeric(d[[i]])
+    }
+  }
+  names(d) <- paste('x', seq_len(nCol), sep='.')
+  d
+}
+
+go <- Sys.time()
+aC <- mkFrameMat(10000,10)
+print(Sys.time()-go)
+
+## Time difference of 0.4311979 secs
+```
+
+Jim Hester (@the_belal) says: July 29, 2015 at 5:48 am
+An alternative approach than David’s read.table() or John’s matrix methods is to realize that data.frames are simply lists of vectors with equal lengths. If you know a priori the number and type of rows you can pre-allocate all of them first, then simply assign to each of them in turn.
+
+An implementation of this (mkFrameVector) is at https://gist.github.com/jimhester/e725e1ad50a5a62f3dee#file-accumulation-r-L43-L57
+
+That gist also contains David and John’s methods, as well as a method using dplyr::bind_rows.
+
+Interestingly the performance of the vector based method depends highly on whether the function has been byte compiled. Without byte compilation it is actually slower than the matrix method (with or without compilation). However when byte compiled the vector based method is by far the fastest.
+
+I actually think this vector based approach is a good way to teach this as it both de-mystifies how data.frames are implemented and gives you a good tool to iteratively build them by both rows or columns.
+
+https://gist.github.com/jimhester/e725e1ad50a5a62f3dee#file-accumulation-r-L43-L57
+
+```{r}
+mkFrameVector <- function(nRow, nCol) {
+  set.seed(0)
+  res <- c(list(character(nRow)), replicate(nCol - 1, numeric(nRow), simplify = FALSE))
+  for(i in seq_len(nRow)) {
+    ri <- mkRow(nCol)
+    for(j in seq_along(ri)) {
+      res[[j]][i] <- ri[[j]]
+    }
+  }
+  # fix the names
+  names(res) <- paste('x', seq_len(nCol),sep='.')
+
+  data.frame(res, stringsAsFactors = FALSE)
+}
+
+go <- Sys.time()
+aC <- mkFrameVector(10000,10)
+print(Sys.time()-go)
+```
+
