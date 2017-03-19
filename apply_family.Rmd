@@ -1,0 +1,227 @@
+---
+title: "tapply"
+output: html_notebook
+---
+
+Source: ISPASUR pg 99
+
+## `tapply
+```{r}
+# clear the workspace
+rm(list=ls())
+
+prime <- function(n) {
+    # returns TRUE if n is prime
+    # assumes n is a positive integer
+    if (n == 1) {
+        is.prime <- FALSE
+    } else if (n == 2) {
+        is.prime <- TRUE
+    } else {
+        is.prime <- TRUE
+        for (m in 2:(n/2)) {
+            if (n %% m == 0) is.prime <- FALSE
+        }
+    }
+    # return(is.prime)
+  return(list(n, is.prime))
+}
+
+```
+
+```{r}
+prime(7)
+prime(4)
+```
+
+```{r}
+vec <- seq(2:24)
+
+primes <- sapply(vec, prime)
+primes
+```
+
+## `tapply`
+tapply is a lovely function that allows us to vectorise the application of a function to subsets of data. In conjunction with factors, this can make for some exceptionally eﬃcient code. It has the form
+
+$$tapply(X, INDEX, FUN, ...),$$
+
+where the additional arguments are as follows: $X$ is the target vector to which the function will be applied; $INDEX$ is a factor, the same length as X, which is used to group the elements of X (Note that INDEX will be automatically coerced to a factor if it is not one already); $FUN$ is the function to be applied. It is applied to subvectors of X corresponding to a single level of INDEX. tapply returns a one-dimensional array the same length as levels(INDEX),  whose i-th element is the result of applying FUN to X[INDEX == levels(INDEX)[i]] (plus any additional arguments given by ...). 
+
+As an example, consider again the Upper Flat Creek data. Using tapply we obtain average height by species as follows:
+
+```{r}
+library(spuRs)
+data("ufc")
+dim(ufc)
+names(ufc)
+
+tapply(ufc$height.m, ufc$species, mean)
+
+```
+
+We can reduce the noise as follows:
+```{r}
+round(tapply(ufc$height.m, ufc$species, mean), digits = 1)
+```
+
+To ﬁnd out how many examples we have of each species we could use table,
+or equivalently:
+```{r}
+tapply(ufc$species, ufc$species, length)
+```
+
+The argument INDEX can also be a list of factors, in which case the output
+is an array with dimensions given by the length of each factor, with each
+element given by applying FUN to a subset of X indexed by a speciﬁc factor
+combination. For example, we can average height by species and plot:
+
+```{r}
+ht.ps <- tapply(ufc$height.m, ufc[c("plot", "species")], mean)
+round(ht.ps[1:5,], digits=1)
+```
+
+Note from the missing values that most plots contain only a couple of diﬀerent species.
+
+## `lapply`
+
+```{r}
+lapply(ufc[4:5], mean)
+```
+
+## `sapply`
+```{r}
+sapply(ufc[4:5], mean)
+```
+
+Note that the output of the command sapply(ufc[4:6], mean) is a vector
+with a names attribute.
+
+## Reducing `for` loops to `sapply`
+
+A sample of 66 Grand Fir trees (Abies grandis ) was selected from national forests around northern and central Idaho. The trees were selected to be dominant in their environment, with no visible evidence of crown damage, forks, broken tops, etc. For each tree the habitat type and the national forest from which it came were recorded. We have data from nine national forests and six diﬀerent habitat types.1 
+
+For each tree the height, diameter, and age were measured (age was measured using tree rings), then the tree was split lengthwaysto determine the height and diameter of the tree at any age. In this instance height and diameter were recorded for the age the tree was felled and then at ten-year periods going back in time. The diameter of the tree was measured at a height of 1.37 m (4′6′′), which is called breast height in forestry. The height refers to the height of the main trunk only. The data are provided in the comma-separated ﬁle treegrowth.csv, with each row giving diameter at breast height (dbh) in inches and height in feet, for a single tree at a given age. 
+
+This dataset is provided in the package that accompanies this book. For example, here are the rows relevant to the ﬁrst two trees:
+
+```{r}
+treeg <- read.csv("./data/treegrowth.csv")
+treeg[1:15,]
+```
+
+
+
+
+
+An alternative way of structuring the data is to collect the measurements for each tree together in a single variable. We will use a list whose elements are the tree ID number; forest code; habitat code; and three vectors giving age, dbh, and height measurements. Each tree record will then be a single element of a larger list called trees.
+
+
+```{r}
+trees <- list() #list of trees
+n <- 0 #number of trees in the list of trees
+#start collecting information on current tree
+current.ID <- treeg$tree.ID[1]
+current.age <- treeg$age[1]
+current.dbh <- treeg$dbh.in[1]
+current.height <- treeg$height.ft[1]
+for (i in 2:dim(treeg)[1]) {
+  if (treeg$tree.ID[i] == current.ID) {
+      #continue collecting information on current tree
+      current.age <- c(treeg$age[i], current.age)
+      current.dbh <- c(treeg$dbh.in[i], current.dbh)
+      current.height <- c(treeg$height.ft[i], current.height)
+    } else {
+      #add previous tree to list of trees
+      n <- n + 1
+      trees[[n]] <- list(tree.ID = current.ID,
+      forest = treeg$forest[i-1],
+      habitat = treeg$habitat[i-1],
+      age = current.age,
+      dbh.in = current.dbh,
+      height.ft = current.height)
+      #start collecting information on current tree
+      current.ID <- treeg$tree.ID[i]
+      current.age <- treeg$age[i]
+      current.dbh <- treeg$dbh.in[i]
+      current.height <- treeg$height.ft[i]
+  }
+}
+
+#add final tree to list of trees
+n <- n + 1
+trees[[n]] <- list(tree.ID = current.ID, 
+                   forest = treeg$forest[i], 
+                   habitat = treeg$habitat[i], 
+                   age = current.age, 
+                   dbh.in = current.dbh, 
+                   height.ft = current.height)
+
+length(trees)
+
+# Let’s see how the data on the ﬁrst two trees is now structured.
+str(trees[1:2])
+```
+
+Here we used loops to split the data up. Phil Spector suggested a more compact solution that we provide below, with an interesting twist.
+
+```{r}
+getit <- function(name, x) {
+if (all(x[[name]] == x[[name]][1])) {
+    x[[name]][1]
+  } else {
+    x[[name]]
+    }
+}
+
+repts <- function(x) { 
+  res <- lapply(names(x), getit, x)
+  names(res) <- names(x)
+  res
+}
+
+trees.ps <- lapply(split(treeg, treeg$tree.ID), repts)
+str(trees.ps[1:2])
+```
+
+Suppose now that we would like to plot a curve of height versus age for each tree. First we need to know the maximum age and height so that we can set up the plot region.
+
+```{r}
+max.age <- 0
+max.height <- 0
+
+for (i in 1:length(trees.ps)) {
+  if (max(trees.ps[[i]]$age) > max.age)
+      max.age <- max(trees.ps[[i]]$age)
+  if (max(trees.ps[[i]]$height.ft) > max.height)
+      max.height <- max(trees.ps[[i]]$height.ft)
+}
+max.age
+max.height
+```
+
+Alternatively, here is a more concise way of calculating max.age and
+max.height, using sapply.
+
+```{r}
+my.max <- function(x, i) max(x[[i]]) #max of element i of list x
+
+max.age    <- max(sapply(trees.ps, my.max, "age"))
+max.height <- max(sapply(trees.ps, my.max, "height.ft"))
+
+max.age
+max.height
+```
+
+The plotting is now straightforward. See Figure 6.1 for the output.
+
+```{r}
+plot(c(0, max.age), c(0, max.height), 
+     type = "n", 
+     xlab = "age (years)", 
+     ylab = "height (feet)")
+
+for (i in 1:length(trees.ps)) 
+  lines(trees.ps[[i]]$age, trees.ps[[i]]$height.ft)
+```
+

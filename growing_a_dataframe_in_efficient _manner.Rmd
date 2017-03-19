@@ -1,0 +1,99 @@
+---
+title: "Growing a data.frame in a memory-efficient manner"
+output: html_notebook
+---
+
+```{r setup, include=F, error=T, message=F, warning=F}
+knitr::opts_chunk$set(echo=T, comment=NA, error=T, warning=F, message = F, fig.align = 'center')
+```
+
+Source: http://stackoverflow.com/questions/11486369/growing-a-data-frame-in-a-memory-efficient-manner
+
+Probably the best approach
+
+As with many speed or memory-limited processes these days, the best approach may well be to use data.table instead of a data.frame. Since data.table has the := assign by reference operator, it can update without re-copying:
+
+```{r}
+library(data.table)
+dt <- data.table(x=rep(0,1000), y=rep(0,1000))
+tracemem(dt)
+for(i in 1:1000) {
+  dt[i,x := runif(1)]
+  dt[i,y := rnorm(1)]
+}
+# note no message from tracemem
+```
+
+But as @MatthewDowle points out, set() is the appropriate way to do this inside a loop. Doing so makes it faster still:
+
+```{r}
+library(data.table)
+
+n <- 10^4
+dt <- data.table(x=rep(0,n), y=rep(0,n))
+
+dt.colon <- function(dt) {
+  for(i in 1:n) {
+    dt[i,x := runif(1)]
+    dt[i,y := rnorm(1)]
+  }
+}
+
+dt.set <- function(dt) {
+  for(i in 1:n) {
+    set(dt,i,1L, runif(1) )
+    set(dt,i,2L, rnorm(1) )
+  }
+}
+
+library(microbenchmark)
+microbenchmark(dt.colon(dt), dt.set(dt), times=2)
+```
+
+
+Well, I am very surprised that nobody mentioned the conversion to a matrix yet...
+
+Comparing with the dt.colon and dt.set functions defined by Ari B. Friedman , the conversion to a matrix has the best running time (slightly quicker than dt.colon). All affectations inside a matrix are done by reference, so there is no unnecessary memory copy performed in this code.
+
+```{r}
+library(data.table)
+n <- 10^4
+dt <- data.table(x=rep(0,n), y=rep(0,n))
+
+use.matrix <- function(dt) {
+  mat = as.matrix(dt)  # converting to matrix
+  for(i in 1:n) {
+    mat[i,1] = runif(1)
+    mat[i,2] = rnorm(1)
+  }
+  return(as.data.frame(mat))  # converting back to a data.frame
+}
+
+
+dt.colon <- function(dt) { # same as Ari's function
+  for(i in 1:n) {
+    dt[i,x := runif(1)]
+    dt[i,y := rnorm(1)]
+  }
+}
+
+dt.set <- function(dt) { # same as Ari's function
+  for(i in 1:n) {
+    set(dt,i,1L, runif(1) )
+    set(dt,i,2L, rnorm(1) )
+  }
+}
+
+library(microbenchmark)
+microbenchmark(dt.colon(dt), dt.set(dt), use.matrix(dt),times=2)
+```
+
+### Pros of using a matrix:
+
+* this is the fastest method so far
+* you don't have to learn/use data.table objects
+
+### Con of using a matrix:
+
+* you can only handle one data type in a matrix (in particular, if you had mixed types in the columns of your data.frame, then they will all be converted to character by the line: mat = as.matrix(dt) # converting to matrix)
+

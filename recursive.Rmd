@@ -1,0 +1,19 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+nfact2 <- function(n) {
+    if (n == 1) {
+        cat("called nfact2(1)\n")
+        return(1)
+    } else {
+        cat("called nfact2(", n, ")\n", sep = "")
+        return(n * nfact2(n - 1))
+    }
+}
+
+nfact2(10)
+```
+

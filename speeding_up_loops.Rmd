@@ -1,0 +1,118 @@
+---
+title: "Another aspect of speeding up loops in R"
+output: html_notebook
+---
+
+```{r setup, include=F, error=T, message=F, warning=F}
+knitr::opts_chunk$set(echo=T, comment=NA, error=T, warning=F, message = F, fig.align = 'center')
+```
+
+Source: http://menugget.blogspot.com/2011/11/another-aspect-of-speeding-up-loops-in.html
+
+
+```{r}
+# NROW = 5000
+NCOL = 100
+ 
+
+
+ex1 <-function(NROW) {
+  #Ex. 1 - Creation of a results matrix where its memory
+  #allocation must continually be redefined
+  # t1 <- Sys.time()
+  x <- c()
+  for(i in seq(NROW)){
+   x <- rbind(x, runif(NCOL))
+  }
+  # T1 <- Sys.time() - t1
+}
+
+ex2 <- function(NROW) {
+  #Ex. 2 - Creation of a results matrix where its memory
+  #allocation is defined only once, at the beginning of the loop.
+  # t2 <- Sys.time()
+  x <- matrix(NA, nrow=NROW, ncol=NCOL)
+  for(i in seq(NROW)){
+   x[i,] <- runif(NCOL)
+  }
+  # T2 <- Sys.time() - t2
+}
+
+ex3 <- function(NROW) {
+  #Ex. 3 - Creation of a results object as an empty list of length NROW. 
+  #Much faster than Ex. 1 even though the size of the list is
+  #not known at the start of the loop.
+  # t3 <- Sys.time()
+  x <- vector(mode="list", NROW)
+  for(i in seq(NROW)){
+   x[[i]] <- runif(NCOL)
+  }
+  # T3 <- Sys.time() - t3
+}
+
+f2 <- function(NROW) {
+  x <- matrix(NA, nrow=NROW, ncol=NCOL)
+  for(i in seq(NROW)){
+  x[i,] <- runif(NCOL)
+  }
+  return(x)
+}
+
+f3 <- function(NROW) {
+  x <- vector(mode="list", NROW)
+  for(i in seq(NROW)){
+  x[[i]] <- runif(NCOL)
+  }
+  return(x)
+}
+
+f4 <- function(NROW) {
+  x <- vector(mode="list", NROW)
+  x = lapply(seq_len(NROW), function(r) runif(NCOL))
+  return(x)
+}
+
+
+
+library(microbenchmark)
+# 
+# mb <- microbenchmark(ex1(), ex2(), ex3(), times = 5)
+# mb
+# ti <- data.frame(mb, stringsAsFactors = FALSE)
+```
+
+
+```{r}
+rows <- c(50, 100, 200, 500, 1000, 2000, 3000, 4000, 5000, 6000)
+timings <- vector("list", length(rows))
+
+for (i in seq_len(length(rows))) {
+  nr <- rows[i]
+  cat(i, nr, "\n")
+  ti <- microbenchmark(f3(nr), 
+                       f4(nr), 
+                       ex3(nr), 
+                       f2(nr),
+                       times = 10)
+  ti <- data.frame(ti, stringsAsFactors = FALSE)
+  ti$nRow <- nr
+  timings[[i]] <- ti
+
+}
+timings <- data.table::rbindlist(timings)
+
+source("plotBenchmarks.R")
+print(plotTimings(timings))
+```
+
+
+
+```{r}
+
+```
+
+
+```{r}
+
+```
+

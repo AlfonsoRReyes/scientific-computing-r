@@ -1,0 +1,38 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+https://www.biostars.org/p/92276/
+
+```{r}
+#dummy data
+df <- data.frame(CHROM=rep(1,100),
+                 POS=1:100,
+                 SAMPLE_1=round(runif(100,40,80)))
+#create bins
+bin <- seq(1,100,5)
+
+#get mean per bin
+sapply(1:(length(bin)-1),
+       function(i)
+         mean(df[ df$POS>=bin[i] &
+                    df$POS < bin[i+1], "SAMPLE_1"]))
+```
+
+## Looping through list of data frames in R
+
+http://stackoverflow.com/questions/19460120/looping-through-list-of-data-frames-in-r
+```{r}
+x <- c(1:5)
+y <- c(1:5)
+
+df1 <- data.frame("Row One"=x, "Row Two"=y)
+df2 <- data.frame("Row Two"=y,"Row One"=x)
+dfList <- list(df1,df2)
+lapply(dfList, function(x) {
+                    names(x)[ grep("One", names(x))] <- "R1"
+                    names(x)[ grep("Two", names(x))] <- "R2"
+                    x} )
+```
+
