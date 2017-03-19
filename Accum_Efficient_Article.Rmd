@@ -3,6 +3,8 @@ title: "Efficient accumulation in R"
 output: html_notebook
 ---
 
+Source: http://www.win-vector.com/blog/2015/07/efficient-accumulation-in-r/
+
 R has a number of very good packages for manipulating and aggregating data (dplyr, sqldf, ScaleR, data.table, and more), but when it comes to accumulating results the beginning R user is often at sea. The R execution model is a bit exotic so many R users are very uncertain which methods of accumulating results are efficient and which are inefficient.
 
 In this latest “R as it is” (again in collaboration with our friends at Revolution Analytics) we will quickly become expert at efficiently accumulating results in R.
