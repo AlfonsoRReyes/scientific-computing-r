@@ -1,11 +1,17 @@
 ---
-title: "R Notebook"
+title: "3 fastest method to add rows to data frames"
 output: html_notebook
 ---
 
-        mkFrameDataTableLapply(nRow, nCol)
-        mkFrameDataTableFor(nRow, nCol)
-        mkFrameEnvDataTable(nRow, nCol)
+```{r setup, include=F, error=T, message=F, warning=F}
+knitr::opts_chunk$set(echo=T, comment=NA, error=T, warning=F, message = F, fig.align = 'center')
+```
+
+These three methods are the fastest in R to add rows.
+
+          mkFrameDataTableLapply(nRow, nCol)
+          mkFrameDataTableFor(nRow, nCol)
+          mkFrameEnvDataTable(nRow, nCol)
         
 
 These are the fastest methods to add rows to a data frame.        
