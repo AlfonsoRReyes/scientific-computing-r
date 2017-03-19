@@ -1,0 +1,278 @@
+---
+title: "How to append rows to an R data frame"
+output: html_notebook
+---
+
+Source: http://stackoverflow.com/questions/20689650/how-to-append-rows-to-an-r-data-frame/38052208
+
+```{r}
+# use rbind
+f1 <- function(n){
+  df <- data.frame(x = numeric(), y = character())
+  for(i in 1:n){
+    df <- rbind(df, data.frame(x = i, y = toString(i)))
+  }
+  df
+}
+
+# use list
+f2 <- function(n){
+  df <- data.frame(x = numeric(), y = character(), stringsAsFactors = FALSE)
+  for(i in 1:n){
+    df[i,] <- list(i, toString(i))
+  }
+  df
+}
+
+# pre-allocate space
+f3 <- function(n){
+  df <- data.frame(x = numeric(n), y = character(n), stringsAsFactors = FALSE)
+  for(i in 1:n){
+    df$x[i] <- i
+    df$y[i] <- toString(i)
+  }
+  df
+}
+
+
+# Use preallocated vectors
+f4 <- function(n) {
+  x <- numeric(n)
+  y <- character(n)
+  for (i in 1:n) {
+    x[i] <- i
+    y[i] <- i
+  }
+  data.frame(x, y, stringsAsFactors=FALSE)
+}
+
+library(microbenchmark)
+mb <- microbenchmark(f1(1000), f2(1000), f3(1000), f4(1000), times = 10)
+autoplot(mb)
+
+```
+
+The best solution is to pre-allocate space (as intended in R). The next-best solution is to use list, and the worst solution (at least based on these timing results) appears to be rbind.
+
+
+
+## create, append, access
+Suppose you simply don't know the size of the data.frame in advance. It can well be a few rows, or a few millions. You need to have some sort of container, that grows dynamically. Taking in consideration my experience and all related answers in SO I come with 4 distinct solutions:
+
+rbindlist to the data.frame
+Use data.table's fast set operation and couple it with manually doubling the table when needed.
+Use RSQLite and append to the table held in memory.
+data.frame's own ability to grow and use custom environment (which has reference semantics) to store the data.frame so it will not be copied on return.
+Here is a test of all the methods for both small and large number of appended rows. Each method has 3 functions associated with it:
+
+create(first_element) that returns the appropriate backing object with first_element put in.
+append(object, element) that appends the element to the end of the table (represented by object).
+access(object) gets the data.frame with all the inserted elements.
+
+```{r}
+# rbindlist to the data.frame
+create.1<-function(elems)
+{
+  return(as.data.table(elems))
+}
+
+append.1<-function(dt, elems)
+{ 
+  return(rbindlist(list(dt,  elems),use.names = TRUE))
+}
+
+access.1<-function(dt)
+{
+  return(dt)
+}
+
+
+# data.table::set + manually doubling the table when needed
+create.2<-function(elems)
+{
+  return(as.data.table(elems))
+}
+
+append.2<-function(dt, elems)
+{
+  n<-attr(dt, 'rowcount')
+  if (is.null(n))
+    n<-nrow(dt)
+  if (n==nrow(dt))
+  {
+    tmp<-elems[1]
+    tmp[[1]]<-rep(NA,n)
+    dt<-rbindlist(list(dt, tmp), fill=TRUE, use.names=TRUE)
+    setattr(dt,'rowcount', n)
+  }
+  pos<-as.integer(match(names(elems), colnames(dt)))
+  for (j in seq_along(pos))
+  {
+    set(dt, i=as.integer(n+1), pos[[j]], elems[[j]])
+  }
+  setattr(dt,'rowcount',n+1)
+  return(dt)
+}
+
+access.2<-function(elems)
+{
+  n<-attr(elems, 'rowcount')
+  return(as.data.table(elems[1:n,]))
+}
+
+
+
+# SQL should be optimized for fast record insertion, so I initially had high hopes for RSQLite solution
+create.3<-function(elems)
+{
+  con <- RSQLite::dbConnect(RSQLite::SQLite(), ":memory:")
+  RSQLite::dbWriteTable(con, 't', as.data.frame(elems))
+  return(con)
+}
+
+append.3<-function(con, elems)
+{ 
+  RSQLite::dbWriteTable(con, 't', as.data.frame(elems), append=TRUE)
+  return(con)
+}
+
+access.3<-function(con)
+{
+  return(RSQLite::dbReadTable(con, "t", row.names=NULL))
+}
+
+# data.frame's own row-appending + custom environment.
+create.4<-function(elems)
+{
+  env<-new.env()
+  env$dt<-as.data.frame(elems)
+  return(env)
+}
+
+append.4<-function(env, elems)
+{ 
+  env$dt[nrow(env$dt)+1,]<-elems
+  return(env)
+}
+
+access.4<-function(env)
+{
+  return(env$dt)
+}
+```
+
+
+
+```{r}
+test <- function(id, n = 100)
+{
+  n <- n-1
+  el <- list(a=1, b=2, c=3, d=4)                  # the row data
+  o <- do.call(paste0('create.',id), list(el))    # create the row
+  s <- paste0('append.',id)                     
+  for (i in 1:n)
+  {
+    o <- do.call(s, list(o,el))                    # add the row
+  }
+  return(do.call(paste0('access.', id), list(o)))  # read the row
+}
+```
+
+
+## The test suite:
+
+For convenience I will use one test function to cover them all with indirect calling. (I checked: using do.call instead of calling the functions directly doesn't makes the code run measurable longer).
+```{r}
+library(microbenchmark)
+
+rows <- c(10, 50, 100, 1000)
+timings <- vector("list", length(rows))
+
+i <- 1
+for (tm in rows) {
+  cat(tm, "\n")
+  ti <- microbenchmark(test(1, n = tm),
+                       test(2, n = tm),
+                       test(3, n = tm), 
+                       test(4, n = tm), times = 10)
+  ti <- data.frame(ti, stringsAsFactors = FALSE)
+  ti$nRow <- tm
+  timings[[i]] <- ti
+  i <- i + 1
+  #autoplot(ti)  
+  # print(ti)
+}
+
+timings <- data.table::rbindlist(timings)
+
+source("plotBenchmarks.R")
+print(plotTimings(timings))
+```
+
+### We exclude now test #3 and increase the # of rows
+
+
+```{r}
+library(microbenchmark)
+
+rows <- c(10, 50, 100, 1000, 2000, 5000, 10000)
+timings <- vector("list", length(rows))
+
+i <- 1
+for (tm in rows) {
+  cat(tm, "\n")
+  ti <- microbenchmark(test(1, n = tm),
+                       test(2, n = tm),
+                       test(4, n = tm), times = 10)
+  ti <- data.frame(ti, stringsAsFactors = FALSE)
+  cat(i, tm, dim(ti), "\n")
+  ti$nRow <- tm
+  timings[[i]] <- ti
+  i <- i + 1
+}
+
+timings <- data.table::rbindlist(timings)
+
+source("plotBenchmarks.R")
+print(plotTimings(timings))
+```
+
+
+
+
+```{r}
+extendDf <- function (df, n) {
+    withFactors <- sum(sapply (df, function(X) (is.factor(X)) )) > 0
+    nr          <- nrow (df)
+    colNames    <- names(df)
+    for (c in 1:length(colNames)) {
+        if (is.factor(df[,c])) {
+            col         <- vector (mode='character', length = nr+n) 
+            col[1:nr]   <- as.character(df[,c])
+            col[(nr+1):(n+nr)]<- rep(col[1], n)  # to avoid extra levels
+            col         <- as.factor(col)
+        } else {
+            col         <- vector (mode=mode(df[1,c]), length = nr+n)
+            class(col)  <- class (df[1,c])
+            col[1:nr]   <- df[,c] 
+        }
+        if (c==1) {
+            newDf       <- data.frame (col ,stringsAsFactors=withFactors)
+        } else {
+            newDf[,c]   <- col 
+        }
+    }
+    names(newDf) <- colNames
+    newDf
+}
+```
+
+
+The function extendDf() extends a data frame with n rows.
+
+As an example:
+```{r}
+aDf <- data.frame (l=TRUE, i=1L, n=1, c='a', t=Sys.time(), stringsAsFactors = TRUE)
+extendDf (aDf, 2)
+```
+
