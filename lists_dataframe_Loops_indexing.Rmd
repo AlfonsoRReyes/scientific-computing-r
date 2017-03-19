@@ -1,0 +1,29 @@
+---
+title: "lists, data.frame loops & indexing questions"
+output: html_notebook
+---
+
+Source: http://stackoverflow.com/questions/9677737/lists-data-frame-loops-indexing-questions
+
+```{r}
+i=1:5
+data.frame(param1 = i * 1.1, param2 = i * 5.3, param3 = i*2+9)
+
+```
+
+
+```{r}
+result = data.frame()
+for (i in 1:5) {
+   #Calculate some dummy data. The actual calculations are much more involved
+   param1 = i * 1.1
+   param2 = i * 5.3
+   param3 = 2*i+9
+   # Now append these calculated values to some sort of object
+   sample = list(param1=param1, param2=param2, param3=param3)
+   result <- data.frame(rbind(result, sample))
+   row.names(result) <- 1:nrow(result)
+ }
+ print(result)
+```
+
