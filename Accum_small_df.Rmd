@@ -11,6 +11,19 @@ knitr::opts_chunk$set(echo=T, comment=NA, error=T, warning=F, message = F, fig.a
 ```
 
 
+## 
+We demonstrate in this analysis that the fastest methods to create row by row in a data frame are:
+
+        mkFrameDataTableLapply(nRow, nCol)
+        mkFrameDataTableFor(nRow, nCol)
+        mkFrameEnvDataTable(nRow, nCol)
+
+
+Different methods are tested with different size of rows.
+
+
+
+
 In this latest “R as it is” (again in collaboration with our friends at Revolution Analytics) we will quickly become expert at efficiently accumulating results in R.
 
 A number of applications (most notably simulation) require the incremental accumulation of results prior to processing. For our example, suppose we want to collect rows of data one by one into a data frame. Take the mkRow function below as a simple example source that yields a row of data each time we call it.
@@ -40,13 +53,18 @@ summary(timeSeq)
 ### Function to populate a row of data.
 ```{r}
 mkRow <- function(nCol) {
-  x <- as.list(rnorm(nCol))
-  # make row mixed types by changing first column to string
-  x[[1]] <- ifelse(x[[1]]>0,'pos','neg')
-  names(x) <- paste('x',seq_len(nCol),sep='.')
-  x
+  x <- as.list(rnorm(nCol))                           # list of random numbers
+  x[[1]] <- ifelse(x[[1]] > 0, 'pos', 'neg')          # 1st column to be a string
+  names(x) <- paste('x', seq_len(nCol), sep = '.')    # name the columns
+  x                                                   # return a list
 }
 ```
+
+
+```{r}
+mkRow(5)
+```
+
 
 ### Function for benchmarking plots of all functions
 ```{r}
@@ -86,7 +104,7 @@ mkFrameForLoop <- function(nRow,nCol) {
   for(i in seq_len(nRow)) {
     ri <- mkRow(nCol)
     di <- data.frame(ri, stringsAsFactors=FALSE)
-    d <- rbind(d,di)
+    d <- rbind(d, di)
   }
   d
 }
@@ -235,8 +253,7 @@ mkFrameEnvDataTable <- function(nRow,nCol) {
 # Another possibility, working in place.
 mkFrameInPlace <- function(nRow,nCol,classHack=TRUE) {
   r1 <- mkRow(nCol)
-  d <- data.frame(r1,
-                    stringsAsFactors=FALSE)
+  d <- data.frame(r1, stringsAsFactors=FALSE)
   if(nRow>1) {
     d <- d[rep.int(1,nRow),]
     if(classHack) {
@@ -287,8 +304,7 @@ print(plotTimings(timings))
 # Fast method from https://twitter.com/drob/status/626146450842497028
 mkFrameDplyrBind <- function(nRow,nCol) {
  dplyr::bind_rows(replicate(nRow, 
-                     data.frame(mkRow(nCol),
-                                stringsAsFactors=FALSE), 
+                     data.frame(mkRow(nCol), stringsAsFactors=FALSE), 
                      simplify=FALSE))
 }
 
@@ -297,8 +313,7 @@ mkFrameDplyrBind <- function(nRow,nCol) {
 # Idiomatic plyr https://www.reddit.com/r/rstats/comments/3ex31f/efficient_accumulation_in_r/ctjl9lq
 mkFramePlyrLdply <- function(nRow,nCol) {
   plyr::ldply(seq_len(nRow),
-              function(i) data.frame(mkRow(nCol),
-                                     stringsAsFactors=FALSE))
+              function(i) data.frame(mkRow(nCol), stringsAsFactors=FALSE))
 }
 
 
@@ -378,6 +393,28 @@ mkFrameSQLite <- function(nRow, nCol) {
 }
 ```
 
+
+```{r}
+#nRow = 10; nCol = 10
+mkFrameWithList <- function(nRow, nCol) {
+  result <- data.frame()
+  for (i in seq_len(nRow)) {
+    ri <- mkRow(nCol)
+    ri <- data.frame(ri)
+    result <- rbind(result, ri)
+    row.names(result) <- 1:nrow(result)
+  }  
+  result
+}
+# result  
+```
+
+
+```{r}
+mkFrameWithList(100, 10)
+```
+
+
 ## Final comparison
 ```{r}
 timingsPrev <- timings
@@ -393,6 +430,7 @@ for(i in seq_len(length(timeSeq))) {
                        mkFrameEnvDataTable(nRow, nCol), 
                        mkFrameDataTableLapply(nRow, nCol),
                        mkFrameSQLite(nRow, nCol), 
+                       mkFrameWithList(nRow, nCol),
                        times = 10)                                  # benchmark 10 times
   
   ti <- data.frame(ti, stringsAsFactors=FALSE)   # create DF with timings
@@ -407,7 +445,7 @@ timings <- rbind(timings, timingsPrev)
 print(plotTimings(timings))
 ```
 
-## Tests excludimng slowest
+## Tests excluding slowest
 ```{r}
 library(dplyr)
 
@@ -432,9 +470,12 @@ library(dplyr)
 
 timingsFastest <- timings %>%
   filter(
-      expr == "mkFrameDataTableLapply(nRow, nCol)" | 
-      expr == "mkFrameDataTableFor(nRow, nCol)" |
-      expr == "mkFrameEnvDataTable(nRow, nCol)"
+        expr == "mkFrameDataTableLapply(nRow, nCol)" | 
+        expr == "mkFrameDataTableFor(nRow, nCol)" |
+        expr == "mkFrameEnvDataTable(nRow, nCol)" |
+        expr == "mkFrameInPlace(nRow, nCol)" |
+        expr == "mkFrameVector(nRow, nCol)"
+        
       )
   
   print(plotTimings(timingsFastest))
