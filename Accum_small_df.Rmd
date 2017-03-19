@@ -266,9 +266,8 @@ Still more timings.
 timings <-  vector("list", length(timeSeq))
 for(i in seq_len(length(timeSeq))) {
   nRow <- timeSeq[[i]]
-  ti <- microbenchmark(
-    mkFrameInPlace(nRow,nCol),
-    mkFrameDataTableFor(nRow,nCol),
+  ti <- microbenchmark(mkFrameInPlace(nRow, nCol),
+                       mkFrameDataTableFor(nRow, nCol),
     times=10)
   ti <- data.frame(ti,
                    stringsAsFactors=FALSE)
@@ -376,15 +375,14 @@ timings <-  vector("list", length(timeSeq))
 
 for(i in seq_len(length(timeSeq))) {
   nRow <- timeSeq[[i]]
-  ti <- microbenchmark(
-    mkFrameDplyrBind(nRow, nCol),
-    mkFramePlyrLdply(nRow, nCol),
-    mkFrameMat(nRow, nCol),
-    mkFrameVector(nRow, nCol),
-    mkFrameDaccum(nRow, nCol),
-    mkFrameEnvDataTable(nRow, nCol),
-    mkFrameDataTableLapply(nRow, nCol), 
-    times = 10)                                  # benchmark 10 times
+  ti <- microbenchmark(mkFrameDplyrBind(nRow, nCol), 
+                       mkFramePlyrLdply(nRow, nCol), 
+                       mkFrameMat(nRow, nCol), 
+                       mkFrameVector(nRow, nCol), 
+                       mkFrameDaccum(nRow, nCol), 
+                       mkFrameEnvDataTable(nRow, nCol), 
+                       mkFrameDataTableLapply(nRow, nCol), 
+                       times = 10)                                  # benchmark 10 times
   
   ti <- data.frame(ti, stringsAsFactors=FALSE)   # create DF with timings
   ti$nRow <- nRow                                # document # rows 
@@ -398,6 +396,35 @@ timings <- rbind(timings, timingsPrev)
 print(plotTimings(timings))
 ```
 
+```{r}
+library(dplyr)
+
+timingsFaster <- timings %>%
+  #mutate(exp)
+  filter(expr != "mkFrameForLoop(nRow, nCol)") %>%
+  filter(expr != "mkFramePlyrLdply(nRow, nCol)") %>%
+  filter(expr != "mkFrameList(nRow, nCol)") %>%
+  filter(expr != "mkFrameForList(nRow, nCol)") %>%
+  filter(expr != "mkFrameDplyrBind(nRow, nCol)") %>%
+  filter(expr != "mkFrameDaccum(nRow, nCol)")
+
+print(plotTimings(timingsFaster))
+  
+```
+
+
+```{r}
+library(dplyr)
+
+timingsFastest <- timings %>%
+  filter(
+      expr == "mkFrameDataTableLapply(nRow, nCol)" | 
+      expr == "mkFrameDataTableFor(nRow, nCol)" |
+      expr == "mkFrameEnvDataTable(nRow, nCol)"
+      )
+  
+  print(plotTimings(timingsFastest))
+```
 
 
 
