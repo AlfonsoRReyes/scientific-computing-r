@@ -3,6 +3,10 @@ title: "Growing a data.frame in a memory-efficient manner"
 output: html_notebook
 ---
 
+```{r setup, include=F, error=T, message=F, warning=F}
+knitr::opts_chunk$set(echo=T, comment=NA, error=T, warning=F, message = F, fig.align = 'center')
+```
+
 Source: http://stackoverflow.com/questions/11486369/growing-a-data-frame-in-a-memory-efficient-manner
 
 Probably the best approach
