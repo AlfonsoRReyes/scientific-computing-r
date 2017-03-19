@@ -1,0 +1,105 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+## using `sapply` to download a list of files
+```{r}
+cities <- c("Melbourne", "Sydney", "Brisbane", "Cairns")
+
+urls <- sprintf("http://nicercode.github.io/guides/repeating-things/data/%s.csv", cities)
+
+urls
+```
+
+```{r}
+# function to download the files. Will be called by sapply
+download.maybe <- function(url, refetch = FALSE, path = ".") {
+  dest <- file.path(path, basename(url))
+  if (refetch || !file.exists(dest))
+    download.file(url, dest)
+  dest
+}
+```
+
+
+
+```{r}
+# these lines will use sapply to download the files
+path <- "data"
+dir.create(path, showWarnings = FALSE)
+files <- sapply(urls, download.maybe, path = path)
+names(files) <- cities
+```
+
+### loading the files
+```{r}
+# this function will load the files in memory
+load.file <- function(filename) {
+  d <- read.csv(filename, stringsAsFactors = FALSE)
+  d$time <- as.POSIXct(d$time)
+  d
+}
+```
+
+
+```{r}
+# load each of the CSV files in a list
+data <- lapply(files, load.file)
+str(data)
+names(data) <- cities
+```
+
+```{r}
+head(data$Sydney)
+```
+
+### How many rows in each member of a list
+```{r}
+sapply(data, nrow)
+```
+
+### What is the maximum temperature in each of the cities
+```{r}
+sapply(data, function(x) max(x$temp))
+```
+
+### estimate the autocorrelation function for each set:
+```{r}
+autocor <- lapply(data, function(x) acf(x$temp, lag.max = 24))
+```
+
+### plotting with `for`
+
+```{r}
+xlim <- range(sapply(data, function(x) range(x$time)))
+ylim <- range(sapply(data, function(x) range(x[-1])))
+
+plot(data[[1]]$time, data[[1]]$temp, ylim = ylim, type = "n", 
+     xlab = "Time", ylab = "Temperature")
+
+cols <- 1:4
+for (i in seq_along(data))
+  lines(data[[i]]$time, data[[i]]$temp, col = cols[i])
+```
+
+### Plotting using `mapply`
+```{r}
+plot(data[[1]]$time, data[[1]]$temp, ylim = ylim, type = "n", 
+     xlab = "Time", ylab = "Temperature")
+
+mapply(function(x, col) lines(x$time, x$temp, col = col), data, cols)
+```
+
+```{r}
+library(downloader)
+if (!file.exists("seinfeld.csv"))
+  download("https://raw.github.com/audy/smalldata/master/seinfeld.csv",
+           "seinfeld.csv")
+dat <- read.csv("seinfeld.csv", stringsAsFactors=FALSE)
+```
+
+```{r}
+head(dat)
+```
+
