@@ -5,6 +5,10 @@ output:
   html_notebook: default
 ---
 
+```{r setup, include=F, error=T, message=F, warning=F}
+knitr::opts_chunk$set(echo=T, comment=NA, error=T, warning=F, message = F, fig.align = 'center')
+```
+
 Source: http://www.win-vector.com/blog/2015/07/efficient-accumulation-in-r/
 
 R has a number of very good packages for manipulating and aggregating data (dplyr, sqldf, ScaleR, data.table, and more), but when it comes to accumulating results the beginning R user is often at sea. The R execution model is a bit exotic so many R users are very uncertain which methods of accumulating results are efficient and which are inefficient.
@@ -23,7 +27,7 @@ mkRow <- function(nCol) {
   rn <- rnorm(nCol)        # vector of `ncol` random numbers
   x <- as.list(rn)         # convert vector to a list
   # make row mixed types by changing first column to string
-  x[[1]] <- ifelse(x[[1]] > 0, 'pos', 'neg')         # 1st element of list to be pos/neg
+  x[[1]] <- ifelse(x[[1]] > 0, 'pos', 'neg')    # 1st element of list to be pos/neg
   names(x) <- paste('x', seq_len(nCol), sep = '.')   # name each member of the list
   x    # return the list/column
 }
@@ -33,13 +37,12 @@ mkRow <- function(nCol) {
 The obvious “for-loop” solution is to collect or accumulate many rows into a data frame by repeated application of rbind. This looks like the following function.
 ```{r}
 # The common wrong-way to accumulate the rows of data into a single data frame.
-mkFrameForLoop <- function(nRow,nCol) {
+mkFrameForLoop <- function(nRow, nCol) {
   d <- c()
   for(i in seq_len(nRow)) {
     ri <- mkRow(nCol)
-    di <- data.frame(ri,
-                     stringsAsFactors=FALSE)
-    d <- rbind(d,di)
+    di <- data.frame(ri, stringsAsFactors=FALSE)
+    d <- rbind(d, di)
   }
   d
 }
@@ -48,7 +51,7 @@ mkFrameForLoop <- function(nRow,nCol) {
 This would be the solution most familiar to many non-R programmers. The problem is: in R the above code is incredibly slow.
 
 
-## Testing mkFrameForLoop
+## Testing `mkFrameForLoop`
 
 ```{r}
 set.seed(23525) # make run more repeatable
@@ -75,20 +78,21 @@ for(i in seq_len(length(timeSeq))) {
   # cat(i, nRow, nCol, "\n")
   ti <- mkFrameForLoop(nRow, nCol)    # traverse the rows
   
-  ti <- data.frame(ti, stringsAsFactors = FALSE)
+  ti <- data.frame(ti, stringsAsFactors = FALSE)  # convert to data frame
   ti$nRow <- nRow
   ti$nCol <- nCol
-  timings[[i]] <- ti
+  timings[[i]] <- ti    # add data frame to a list
   
 }  
 # `ti` will contain the last data frame
 # timings contains all the dataframes generated in the loop.
+# 
 cat("dataframes and dimensions\n")
 sapply(timings, dim)
 ```
 
 
-## Why the `for` loop taks so long?
+## Why the `for` loop takes so long?
 In R all common objects are usually immutable and can not change. So when you write an assignment like `d <- rbind(d,di)` you are usually not actually adding a row to an existing data frame, but constructing a new data frame that has an additional row. This new data frame replaces your old data frame in your current execution environment (R execution environments are mutable, to implement such changes). This means to accumulate or add n rows incrementally to a data frame, as in mkFrameForLoop we actually build n different data frames of sizes 1,2,...,n. As we do work copying each row in each data frame (since in R data frame columns can potentially be shared, but not rows) we pay the cost of processing n*(n+1)/2 rows of data. So: no matter how expensive creating each row is, for large enough n the time wasted re-allocating rows (again and again) during the repeated rbinds eventually dominates the calculation time. For large enough n you are wasting most of your time in the repeated `rbind` steps.
 
 
@@ -143,7 +147,7 @@ sapply(timings, dim)
 What we did is take the contents of the for-loop body, and wrap them in a function. This function is then passed to `lapply` which creates a list of rows. We then batch apply `rbind` to these rows using `do.call`. It isn’t that the for-loop is slow (which many R users mistakingly believe), **it is the incremental collection of results into a data frame is slow** and that is one of the steps the `lapply` method is avoiding. While you can prefer lapply to for-loops always for stylistic reasons, it is important to understand when `lapply` is in fact quantitatively **better** than a for-loop (and to know when a for-loop is in fact acceptable). In fact a for-loop with a better binder such as data.table::rbindlist (assuming your code can work with a data.table which in some environments has different semantics) is among the fastest variations we have seen (as suggested by Arun Srinivasan in the comments below; another top contender are file based Split-Apply-Combine methods as suggested in comments by David Hood, ideas also seen in Map-Reduce).
 
 
-## Collecting rows in a list
+## Collecting rows in a list: `mkFrameForList`
 If you don’t want to learn about lapply you can write fast code by collecting the rows in a list as below.
 
 ```{r}
@@ -158,14 +162,27 @@ mkFrameForList <- function(nRow, nCol) {
 }
 ```
 
-The above code still uses a familiar for-loop notation and is in fact fast. Below is a comparison of the time (in MS) for each of the above algorithms to assemble data frames of various sizes. The quadratic cost of the first method is seen in the slight upward curvature of its smoothing line. Again, to make this method truly fast replace `do.call(rbind,d)` with `data.table::rbindlist(d)` (examples here).
+Testing it:
+```{r}
+for(i in seq_len(length(timeSeq))) {
+  nRow <- timeSeq[[i]]                # get the size of the rows from timeSeq 
+  ti <- mkFrameForList(nRow, nCol)    # traverse the rows
+  ti <- data.frame(ti, stringsAsFactors = FALSE)
+  ti$nRow <- nRow
+  ti$nCol <- nCol
+  timings[[i]] <- ti
+  
+}  
+sapply(timings, dim)
+```
 
-http://winvector.github.io/Accumulation/Accum.html
+
+The above code still uses a familiar `for-loop` notation and is in fact fast. Below is a comparison of the time (in MS) for each of the above algorithms to assemble data frames of various sizes. The quadratic cost of the first method is seen in the slight upward curvature of its smoothing line. Again, to make this method truly fast replace `do.call(rbind,d)` with `data.table::rbindlist(d)` ([examples here](http://winvector.github.io/Accumulation/Accum.html)).
+
 
 The reason `mkFrameForList` is tolerable is in some situations R can avoid creating new objects and in fact manipulate data in place. In this case the list “d” is not in fact re-created each time we add an additional element, but in fact mutated or changed in place.
 
 ## In-place edits
-
 (edit) The common advice is we should prefer in-place edits. We tried that, but it wasn’t until we (after getting feedback in our comments below) threw out the data frame class attribute that we got really fast code. The code and latest run are below (but definitely check out the comments following this article for the reasoning chain).
 
 ```{r}
@@ -194,7 +211,24 @@ mkFrameInPlace <- function(nRow, nCol, classHack=TRUE) {
 }
 ```
 
-Note that the in-place list of vectors method is faster than any of lapply/do.call(rbind), dplyr::bind_rows/replicate, or plyr::ldply. This is despite having nested for-loops (one for rows, one for columns; though this is also why methods of this type can speed up even more if we use compile:cmpfun). At this point you should see: it isn’t the for-loops that are the problem, it is any sort of incremental allocation, re-allocation, and checking.
+Testing it:
+```{r}
+for(i in seq_len(length(timeSeq))) {
+  nRow <- timeSeq[[i]]                # get the size of the rows from timeSeq 
+  ti <- mkFrameInPlace(nRow, nCol)    # traverse the rows
+  ti <- data.frame(ti, stringsAsFactors = FALSE)
+  ti$nRow <- nRow
+  ti$nCol <- nCol
+  timings[[i]] <- ti
+  
+}  
+sapply(timings, dim)
+```
+
+Note that the in-place list of vectors method is faster than any of `lapply/do.call(rbind)`, `dplyr::bind_rows/replicate`, or `plyr::ldply`. This is despite having nested for-loops (one for rows, one for columns; though this is also why methods of this type can speed up even more if we use compile:cmpfun). At this point you should see: it isn’t the for-loops that are the problem, it is any sort of incremental allocation, re-allocation, and checking.
+
+
+## Explaining  incremental allocation, re-allocation, and checking
 
 At this point we are avoiding both the complexity waste (running an algorithm that takes time proportional to the square of the number of rows) and avoiding a lot of linear waste (re-allocation, type-checking, and name matching).
 
