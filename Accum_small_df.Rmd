@@ -85,13 +85,13 @@ mkFrameForLoop <- function(nRow,nCol) {
   d <- c()
   for(i in seq_len(nRow)) {
     ri <- mkRow(nCol)
-    di <- data.frame(ri,
-                     stringsAsFactors=FALSE)
+    di <- data.frame(ri, stringsAsFactors=FALSE)
     d <- rbind(d,di)
   }
   d
 }
 ```
+
 
 
 Timing showing the quadratic runtime.
@@ -102,7 +102,7 @@ timings <- vector("list", length(timeSeq))    # create a vector of lists
 for(i in seq_len(length(timeSeq))) {      # iterate throgh time sequence
   nRow <- timeSeq[[i]]                    # get number of rows for the current DF
   ti <- microbenchmark(
-    mkFrameForLoop(nRow, nCol),           # create DF
+    mkFrameForLoop(nRow, nCol),
     times=10)
   ti <- data.frame(ti, stringsAsFactors = FALSE) # no factors
   ti$nRow <- nRow                         # document # rows
@@ -366,6 +366,16 @@ mkFrameDaccum <- function(nRow,nCol) {
   }
   daccum::unwrapRows(collector)
 }
+
+mkFrameSQLite <- function(nRow, nCol) {
+  con <- RSQLite::dbConnect(RSQLite::SQLite(), ":memory:")
+  ri <- mkRow(nCol)
+  RSQLite::dbWriteTable(con, 't', as.data.frame(ri))
+  for(i in seq_len(nRow)) { 
+    ri <- mkRow(nCol)
+    RSQLite::dbWriteTable(con, 't', as.data.frame(ri), append = TRUE)
+    }
+}
 ```
 
 ## Final comparison
@@ -381,7 +391,8 @@ for(i in seq_len(length(timeSeq))) {
                        mkFrameVector(nRow, nCol), 
                        mkFrameDaccum(nRow, nCol), 
                        mkFrameEnvDataTable(nRow, nCol), 
-                       mkFrameDataTableLapply(nRow, nCol), 
+                       mkFrameDataTableLapply(nRow, nCol),
+                       mkFrameSQLite(nRow, nCol), 
                        times = 10)                                  # benchmark 10 times
   
   ti <- data.frame(ti, stringsAsFactors=FALSE)   # create DF with timings
@@ -396,6 +407,7 @@ timings <- rbind(timings, timingsPrev)
 print(plotTimings(timings))
 ```
 
+## Tests excludimng slowest
 ```{r}
 library(dplyr)
 
@@ -406,12 +418,14 @@ timingsFaster <- timings %>%
   filter(expr != "mkFrameList(nRow, nCol)") %>%
   filter(expr != "mkFrameForList(nRow, nCol)") %>%
   filter(expr != "mkFrameDplyrBind(nRow, nCol)") %>%
-  filter(expr != "mkFrameDaccum(nRow, nCol)")
+  filter(expr != "mkFrameDaccum(nRow, nCol)") %>%
+  filter(expr != "mkFrameSQLite(nRow, nCol)") 
 
 print(plotTimings(timingsFaster))
   
 ```
 
+## Test only the fastest
 
 ```{r}
 library(dplyr)
