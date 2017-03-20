@@ -79,6 +79,5 @@ for (i in seq_len(nRow)) {
 
 tbl <- data.table::rbindlist(v)     # add row to table
 tbl
-
 ```
 
