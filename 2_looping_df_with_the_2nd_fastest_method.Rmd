@@ -1,0 +1,84 @@
+---
+title: "2nd fastest way to add rows to dataframes"
+output: html_notebook
+---
+
+```{r setup, include=F, error=T, message=F, warning=F}
+knitr::opts_chunk$set(echo=T, comment=NA, error=T, warning=F, message = F, fig.align = 'center')
+```
+
+## mkFrameDataTableFor: 2nd fastest way to add rows to dataframes
+```{r}
+library('microbenchmark')
+source("plotBenchmarks.R")
+
+set.seed(23525) # make run more repeatable
+
+nCol <- 10                                  # number of columns for the test DF
+
+
+mkFrameDataTableFor <- function(nRow, nCol) {
+  # 2nd fastest
+  v = vector("list", nRow)
+  for (i in seq_len(nRow)) {
+    v[[i]] = mkRow(nCol)       # this is a list coming from mkRow
+  }
+  data.table::rbindlist(v)     # add row to table
+}
+
+
+mkRow <- function(nCol) {
+  x <- as.list(rnorm(nCol))                           # list of random numbers
+  x[[1]] <- ifelse(x[[1]] > 0, 'pos', 'neg')          # 1st column to be a string
+  names(x) <- paste('x', seq_len(nCol), sep = '.')    # name the columns
+  x                                                   # return a list
+}
+
+
+timeSeq <- seq.int(10, 500, 20)             # short sequence
+timings <-  vector("list", length(timeSeq))
+
+
+for(i in seq_len(length(timeSeq))) {
+  nRow <- timeSeq[[i]]
+  ti <- microbenchmark(
+    mkFrameDataTableFor(nRow,nCol),
+    times=10)
+  ti <- data.frame(ti, stringsAsFactors=FALSE)
+  ti$nRow <- nRow
+  ti$nCol <- nCol
+  timings[[i]] <- ti
+}
+
+timings <- data.table::rbindlist(timings)
+
+print(plotTimings(timings))
+```
+
+
+## Using mkFrameDataTableFor
+
+```{r}
+# using depths for any well
+depths <- seq.int(0, 9000, 100)
+nRow <- length(depths)
+
+v = vector("list", nRow)
+
+for (i in seq_len(nRow)) {
+  depth.ft <- depths[i]
+  depth.m  <- depth.ft / 3.23
+  whp <- 200 + 120.5 * log(depth.ft+1)
+  thp <- 80 + log(whp+1)^2 
+  gor <- 800 + 1.5 * log(whp+1)^3
+  z = abs(log(whp+1) - 6)
+  
+  v[[i]] <- list(depth.ft = depth.ft, depth.m = depth.m, whp = whp, thp = thp,
+                 gor = gor, z = z)
+}
+
+tbl <- data.table::rbindlist(v)     # add row to table
+tbl
+
+```
+
