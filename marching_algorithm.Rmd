@@ -50,6 +50,7 @@ output: html_notebook
 
 
 ```{r}
+tol       = 0.001
 thp       = 200          # initial pressure
 
 p         = thp
@@ -62,23 +63,22 @@ depths <- seq.int(from = depth.wh, to = depth.bh, length.out = pipe.incr)
 n      <- length(depths)   # which is the same as pipe.incr
 
 dp.dz = 0.002
+p0    = thp
 
 for (i in seq_len(n)) {
-  
   dL = depths[i+1] - depths[i]
+  p1 = p0 + dp.dz * dL
   
-  p.guess = dp.dz * dL
-  p.avg = (p + p.guess) / 2
-  
-  dp.dz = props.calc(p, t)
-  p.calc = p - (dp.dz)
-  
-  eps <- abs( (p.guess - p.calc) / p.calc )
-  
-  if (eps <= tol) loop = FALSE
-  
-  
-  cat(i, dL, p, p.avg, dp.dz, "\n")
+  while (eps > tol) {         # loop until AE greater than tolerance
+    p.avg = (p0 + p1) / 2
+    dp.dz = log10(pavg)       # calculate gradient as function of `pavg`
+    p.calc = p0 - (-dp.dz) * dL
+    eps <- abs( (p1 - p.calc) / p.calc )
+    if (eps <= tol) p1 = p.calc
+    
+    #cat(i, dL, p, p.avg, dp.dz, "\n")
+  }  
+  p0 = p1
 }
 
 ```
@@ -100,6 +100,7 @@ cat(sprintf("%2s %6s %8s %8s %8s %9s %9s \n",                 # header
 
 p1 = p0 + grad * dL         # first pressure guess
 iter = 1
+
 while (eps > tol) {         # loop until AE greater than tolerance
   pavg  = (p0 + p1) / 2     # take the average
   grad  = log10(pavg)       # calculate gradient as function of `pavg`
