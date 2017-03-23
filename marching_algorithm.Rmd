@@ -83,39 +83,52 @@ for (i in seq_len(n)) {
 
 ```
 
+## Marching algorithm with smaller tolerance
+It uses a dummy function $grad = f(p_{avg})$. Also includes iteration counter `iter`
 
 ```{r}
 # iterating using marching algorithm
-tol = 0.00001
-pin = 200
+tol = 0.00001   # tolerance
+pin = 200       # initial pressure
 grad = 0.002
-dL = 300
+dL = 300        # segment length
+p0 = pin        # initial pressure
+eps = 1         # initial absolute error
 
-p0 = pin
-eps = 1
+cat(sprintf("%2s %6s %6s %6s %8s %8s %6s \n",                 # header
+            "it", "p0", "p1", "pavg", "pcalc", "eps", "grad"))
 
-cat(sprintf("%6s %6s %6s %8s %8s %6s \n", 
-            "p0", "p1", "pavg", "pcalc", "eps", "grad"))
-
-p1 = p0 + grad * dL      # first pressure guess
-while (eps > tol) {       # loop until epsilon greater than tolerance
-  
-  pavg = (p0 + p1)/2       # take the average
-  
-  grad = log10(pavg)      # calculate gradient with pavg
-  
-  pcalc = p0 + grad * dL  # calculate new pressure
+p1 = p0 + grad * dL        # first pressure guess
+iter = 1
+while (eps > tol) {        # loop until AE greater than tolerance
+  pavg  = (p0 + p1) / 2     # take the average
+  grad  = log10(pavg)       # calculate gradient as function of `pavg`
+  pcalc = p0 + grad * dL    # calculate new pressure
   
   eps = abs((p1 - pcalc) / pcalc)   # compare guess and calculation
   
-  if (eps >= tol) {        # if 
-    p1 = pcalc
-  }
-  cat(sprintf("%6.1f %6.1f %6.1f %8.1f %8.5f %6.4f \n", 
-              p0, p1, pavg, pcalc, eps, grad))
+  cat(sprintf("%2d %6.1f %6.1f %6.1f %8.1f %8.5f %6.4f \n", 
+            iter, p0, p1, pavg, pcalc, eps, grad))
+  
+  if (eps >= tol) p1 = pcalc        # if AE too big take a new guess
+  iter = iter + 1
 } 
 ```
+```
+   p0     p1   pavg    pcalc      eps   grad 
+ 200.0  890.5  200.3    890.5  0.77473 2.3017 
+ 200.0 1021.0  545.3   1021.0  0.12779 2.7366 
+ 200.0 1035.7  610.5   1035.7  0.01422 2.7857 
+ 200.0 1037.3  617.9   1037.3  0.00151 2.7909 
+ 200.0 1037.4  618.6   1037.4  0.00016 2.7914 
+ 200.0 1037.4  618.7   1037.4  0.00002 2.7915 
+ 200.0 1037.4  618.7   1037.4  0.00000 2.7915 
 
+```
+
+
+## Another marching algorithm with different initial value
+It uses gradient and initial pressure
 ```{r}
 tol = 0.01
 pin = 200
@@ -127,41 +140,46 @@ eps = 1
 
 cat(sprintf("%6s %6s %6s %8s %8s %6s \n", "p0", "p1", "pavg", "pcalc", "eps", "grad"))
 
+p1 = p0 + grad * dL      # first pressure guess
 while (eps > tol) {       # loop until epsilon greater than tolerance
-  p1 = p0 + grad * dL      # first pressure guess
+  
   pavg = (p0 + p1)/2       # take the average
-  
   grad = log10(pavg)      # calculate gradient with pavg
-  
   pcalc = p0 + grad * dL  # calculate new pressure
-  
   eps = abs((p1 - pcalc) / pcalc)   # compare guess and calculation
-  
+
+  cat(sprintf("%6.1f %6.1f %6.1f %8.1f %8.5f %6.4f \n", 
+            p0, p1, pavg, pcalc, eps, grad))
+    
   if (eps >= tol) {        # if 
-    p0 = pcalc
+    p1 = pcalc
   }
-  cat(sprintf("%6.1f %6.1f %6.1f %8.1f %8.5f %6.4f \n", p0, p1, pavg, pcalc, eps, grad))
 } 
 ```
 
 
+## simple marching algorithm
+Uses any function and any variable
 ```{r}
-tol = 0.01
+# very simple marching algorithm 
+tol = 0.0001
 ini = 4
 guess = 0.25
 eps = 1
-var = ini
+var0 = ini
 
+cat(sprintf("%2s %8s %8s %8s %8s %8s \n", "i", "var0", "var1", "avg", "calc", "eps" ))
+var1 = var0 + guess
+i = 1
 while (eps > tol) {
-  guess = var + guess
-  avg = (var + guess) / 2
-  calc = (avg + avg^2/2 - avg^3/3) / avg^3
-  eps = abs((guess - calc) / calc)
+  avg = (var0 + var1) / 2
+  calc = log(avg + avg^2/2 + avg^3)^0.5      # any function here `f(avg)`
+  eps = abs((var1 - calc) / calc)            # absolute error
   
-  cat(avg, calc, eps, "\n")
-  if (eps <= tol) {
-    guess = calc
-  }
+  cat(sprintf("%2d %f %f %f %f %f\n", i, var0, var1, avg, calc, eps))
+  
+  if (eps >= tol) var1 = calc
+  i = i + 1
 }
 ```
 
