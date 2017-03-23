@@ -95,25 +95,27 @@ dL = 300        # segment length
 p0 = pin        # initial pressure
 eps = 1         # initial absolute error
 
-cat(sprintf("%2s %6s %6s %6s %8s %8s %6s \n",                 # header
-            "it", "p0", "p1", "pavg", "pcalc", "eps", "grad"))
+cat(sprintf("%2s %6s %8s %8s %8s %9s %9s \n",                 # header
+            "it", "p0", "p1", "pavg", "pcalc", "grad", "eps"))
 
-p1 = p0 + grad * dL        # first pressure guess
+p1 = p0 + grad * dL         # first pressure guess
 iter = 1
-while (eps > tol) {        # loop until AE greater than tolerance
+while (eps > tol) {         # loop until AE greater than tolerance
   pavg  = (p0 + p1) / 2     # take the average
   grad  = log10(pavg)       # calculate gradient as function of `pavg`
   pcalc = p0 + grad * dL    # calculate new pressure
-  
   eps = abs((p1 - pcalc) / pcalc)   # compare guess and calculation
   
-  cat(sprintf("%2d %6.1f %6.1f %6.1f %8.1f %8.5f %6.4f \n", 
-            iter, p0, p1, pavg, pcalc, eps, grad))
+  cat(sprintf("%2d %6.1f %8.2f %8.2f %8.2f %9.6f %9.6f \n", 
+            iter, p0, p1, pavg, pcalc, grad, eps))
   
   if (eps >= tol) p1 = pcalc        # if AE too big take a new guess
   iter = iter + 1
 } 
 ```
+
+If we move the print() after the `iter` then we get values after a new $p_{i+1}$ calculation, which is not correct.
+
 ```
    p0     p1   pavg    pcalc      eps   grad 
  200.0  890.5  200.3    890.5  0.77473 2.3017 
