@@ -7,15 +7,19 @@ output: html_notebook
 
 ```{r}
 # 1 read all the input data for the current pipe segment:
-#   oil.rt, gas.rt, oil.sg, gas.sg, L, diam, angle, tep.grad
+#   oil.rt, gas.rt, oil.sg, gas.sg, L, diam, angle, temp.grad
 #   and initial pressure
+
 
 # 2 set the calculation increment dL = L / n. Usually n = 30
 
+  
 
 # 3 guess initial outlet pressure. Can assume 0.002 psi/ft. p.guess
+  
 
 # 4 calculate the average pressure: p.avg = (p + p.guess) /2
+  p.avg = (p + dp.dz * dL)
 
 # 5 calculate the fluid properties at P and T
 #   oil.fvf, gas.fvf, oil.rt, gas.rt, oil.supvel, gas.supvel
@@ -42,6 +46,137 @@ output: html_notebook
 
 # 12 If there are more pipe segments, repeat calculation 1-11 
 
+```
+
+
+```{r}
+thp       = 200          # initial pressure
+
+p         = thp
+depth.wh  = 0
+depth.bh  = 9700
+pipe.incr = 30
+
+
+depths <- seq.int(from = depth.wh, to = depth.bh, length.out = pipe.incr)
+n      <- length(depths)   # which is the same as pipe.incr
+
+dp.dz = 0.002
+
+for (i in seq_len(n)) {
+  
+  dL = depths[i+1] - depths[i]
+  
+  p.guess = dp.dz * dL
+  p.avg = (p + p.guess) / 2
+  
+  dp.dz = props.calc(p, t)
+  p.calc = p - (dp.dz)
+  
+  eps <- abs( (p.guess - p.calc) / p.calc )
+  
+  if (eps <= tol) loop = FALSE
+  
+  
+  cat(i, dL, p, p.avg, dp.dz, "\n")
+}
+
+```
+
+
+```{r}
+# iterating using marching algorithm
+tol = 0.00001
+pin = 200
+grad = 0.002
+dL = 300
+
+p0 = pin
+eps = 1
+
+cat(sprintf("%6s %6s %6s %8s %8s %6s \n", 
+            "p0", "p1", "pavg", "pcalc", "eps", "grad"))
+
+p1 = p0 + grad * dL      # first pressure guess
+while (eps > tol) {       # loop until epsilon greater than tolerance
+  
+  pavg = (p0 + p1)/2       # take the average
+  
+  grad = log10(pavg)      # calculate gradient with pavg
+  
+  pcalc = p0 + grad * dL  # calculate new pressure
+  
+  eps = abs((p1 - pcalc) / pcalc)   # compare guess and calculation
+  
+  if (eps >= tol) {        # if 
+    p1 = pcalc
+  }
+  cat(sprintf("%6.1f %6.1f %6.1f %8.1f %8.5f %6.4f \n", 
+              p0, p1, pavg, pcalc, eps, grad))
+} 
+```
+
+```{r}
+tol = 0.01
+pin = 200
+grad = 0.002
+dL = 300
+
+p0 = pin
+eps = 1
+
+cat(sprintf("%6s %6s %6s %8s %8s %6s \n", "p0", "p1", "pavg", "pcalc", "eps", "grad"))
+
+while (eps > tol) {       # loop until epsilon greater than tolerance
+  p1 = p0 + grad * dL      # first pressure guess
+  pavg = (p0 + p1)/2       # take the average
+  
+  grad = log10(pavg)      # calculate gradient with pavg
+  
+  pcalc = p0 + grad * dL  # calculate new pressure
+  
+  eps = abs((p1 - pcalc) / pcalc)   # compare guess and calculation
+  
+  if (eps >= tol) {        # if 
+    p0 = pcalc
+  }
+  cat(sprintf("%6.1f %6.1f %6.1f %8.1f %8.5f %6.4f \n", p0, p1, pavg, pcalc, eps, grad))
+} 
+```
+
+
+```{r}
+tol = 0.01
+ini = 4
+guess = 0.25
+eps = 1
+var = ini
+
+while (eps > tol) {
+  guess = var + guess
+  avg = (var + guess) / 2
+  calc = (avg + avg^2/2 - avg^3/3) / avg^3
+  eps = abs((guess - calc) / calc)
+  
+  cat(avg, calc, eps, "\n")
+  if (eps <= tol) {
+    guess = calc
+  }
+}
+```
+
+
+
+```{r}
+
+# while infinite loop with break
+
+i = 0
+while (TRUE) {
+  cat(i, "\n")
+  i = i + 1
+  if (i >= 10) break   # exit when hitting 10 numbers
+}
 ```
 
 
