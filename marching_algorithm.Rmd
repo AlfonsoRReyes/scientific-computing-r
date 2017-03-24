@@ -1,9 +1,14 @@
 ---
-title: "R Notebook"
+title: "Marching Algorithm"
 output:
   html_document: default
   html_notebook: default
 ---
+
+```{r setup, include=F, error=T, message=F, warning=F}
+knitr::opts_chunk$set(echo=T, comment=NA, error=T, warning=F, message = F, fig.align = 'center')
+```
+
 
 ### 1 read all the input data for the current pipe segment:
 oil.rt, gas.rt, oil.sg, gas.sg, L, diam, angle, temp.grad
@@ -106,7 +111,7 @@ for (i in seq_len(n)) {              # n: is the number of depths = # rows
 ## Marching algorithm with smaller tolerance
 It uses a dummy function $grad = f(p_{avg})$. Also includes iteration counter `iter`
 
-```{r}
+```{r results='hold'}
 # iterating using marching algorithm
 tol = 0.00001   # tolerance
 pin = 200       # initial pressure
@@ -152,7 +157,7 @@ If we move the print() after the `iter` then we get values after a new $p_{i+1}$
 
 ## Another marching algorithm with different initial value
 It uses gradient and initial pressure
-```{r}
+```{r results='hold'}
 tol = 0.01
 pin = 200
 grad = 0.002
@@ -183,7 +188,7 @@ while (eps > tol) {       # loop until epsilon greater than tolerance
 
 ## simple marching algorithm
 Uses any function and any variable
-```{r}
+```{r results='hold'}
 # very simple marching algorithm 
 tol = 0.0001
 ini = 4
