@@ -9,7 +9,7 @@ output:
 knitr::opts_chunk$set(echo=T, comment=NA, error=T, warning=F, message = F, fig.align = 'center')
 ```
 
-
+## Computational algorithm workflow
 ### 1 read all the input data for the current pipe segment:
 oil.rt, gas.rt, oil.sg, gas.sg, L, diam, angle, temp.grad
 and initial pressure
@@ -61,6 +61,8 @@ and calculate p and dp.dz for the current segment
 1-11 
 
 
+## Implementation of marching algorithm for well gradient
+For demo purposes, only using a dummy function, $log(P_{avg})^{-1}$
 
 ```{r rows.print=30}
 tol       = 0.00001
