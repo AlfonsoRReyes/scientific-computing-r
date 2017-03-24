@@ -1,52 +1,60 @@
 ---
 title: "R Notebook"
-output: html_notebook
+output:
+  html_document: default
+  html_notebook: default
 ---
 
+### 1 read all the input data for the current pipe segment:
+oil.rt, gas.rt, oil.sg, gas.sg, L, diam, angle, temp.grad
+and initial pressure
 
 
-```{r}
-# 1 read all the input data for the current pipe segment:
-#   oil.rt, gas.rt, oil.sg, gas.sg, L, diam, angle, temp.grad
-#   and initial pressure
+### 2 set the calculation increment 
+$$dL = L / n$$
+Usually n = 30
 
-
-# 2 set the calculation increment dL = L / n. Usually n = 30
-
+### 3 guess initial outlet pressure. 
+Can assume 0.002 psi/ft for the gradient 
+$$\frac {dP}{dL} = 0.002$$
   
 
-# 3 guess initial outlet pressure. Can assume 0.002 psi/ft. p.guess
-  
+### 4 calculate the average pressure: 
+$$p_{avg} = \frac {(p_0 + p_1)} {2}$$
 
-# 4 calculate the average pressure: p.avg = (p + p.guess) /2
-  p.avg = (p + dp.dz * dL)
-
-# 5 calculate the fluid properties at P and T
-#   oil.fvf, gas.fvf, oil.rt, gas.rt, oil.supvel, gas.supvel
-
-
-# 6 calculate the pressure gradient dp.dz (-dP/dL)
+### 5 calculate the fluid properties at P and T for $P_{avg}$
+oil.fvf, gas.fvf, oil.rt, gas.rt, oil.supvel, gas.supvel
+$$B_o, B_g \\ Q_o, Q_g \\ V_{SL}, V_{SG} \\ \rho_o, \rho_g \\
+\nu_o, \nu_g \\ z \\ Re, f$$
 
 
-# 7 calculate the outlet-calculated pressure: p.calc = p - (-dp.dz)
 
-# 8 compare the guessed and calculated outlet pressures:
-#   (p.guess - p.calc) / p.calc should be less than the tolerance
-#   otherwise, increase iteration and make p.guess = p.calc
+### 6 calculate the pressure gradient dp.dz (-dP/dL)
+$$\left ( \frac {dp} {dL} \right ) = f(P_{avg}) $$
+
+### 7 calculate the outlet-calculated pressure
+
+$$p_{i+1(C)} = p_i - \left ( \frac {dP}{dL} \right )_i dL_i $$
+
+### 8 compare the guessed and calculated outlet pressures:
+(p.guess - p.calc) / p.calc should be less than the tolerance
+otherwise, increase iteration and make p.guess = p.calc
+
+$$| ( p_{i+1(G)} - p_{i+1(C)} ) / p_{i+1(C)} | < \epsilon$$
+
+### 9 Repeat 1 to 6 until convergence achieved. 
+Ten iterations is the usual.
 
 
-# 9 Repeat 1 to 6 until convergence achieved. Ten iterations is the usual.
+### 10 when convergence is achive, move to the next pipe increment
+p2.inlet = p1.outlet
 
+### 11 Repeat for all pipe increments 
+and calculate p and dp.dz for the current segment
 
-# 10 when convergence is achive, move to the next pipe increment
-#    p2.inlet = p1.outlet
+### 12 If there are more pipe segments, repeat calculations
+1-11 
 
-# 11 Repeat for all pipe increments and calculate p and dp.dz
-#    for the current segment
-
-# 12 If there are more pipe segments, repeat calculation 1-11 
-
-```
 
 
 ```{r rows.print=30}
@@ -216,10 +224,3 @@ while (TRUE) {
 
 
 
-### 7 calculate the outlet-calculated pressure
-
-$$p_{i+1(C)} = p_i - (\frac {dP}{dL})_i dL_i $$
-
-### 8 compare the guessed and calculated outlet pressures
-
-$$| ( p_{i+1(G)} - p_{i+1(C)} ) / p_{i+1(C)} | < \epsilon$$
