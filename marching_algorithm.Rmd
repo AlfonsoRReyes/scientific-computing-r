@@ -49,7 +49,7 @@ output: html_notebook
 ```
 
 
-```{r}
+```{r rows.print=30}
 tol       = 0.001
 thp       = 200          # initial pressure
 
@@ -62,26 +62,32 @@ pipe.incr = 30
 depths <- seq.int(from = depth.wh, to = depth.bh, length.out = pipe.incr)
 n      <- length(depths)   # which is the same as pipe.incr
 
+dL = 300
 dp.dz = 0.002
 p0    = thp
 
 for (i in seq_len(n)) {
   dL = depths[i+1] - depths[i]
   p1 = p0 + dp.dz * dL
-  
-  while (eps > tol) {         # loop until AE greater than tolerance
+  eps = 1
+  iter = 1
+  while (eps > tol) {             # loop until AE greater than tolerance
     p.avg = (p0 + p1) / 2
-    dp.dz = log10(pavg)       # calculate gradient as function of `pavg`
+    dp.dz = log10(p.avg)           # calculate gradient as function of `pavg`
     p.calc = p0 - (-dp.dz) * dL
     eps <- abs( (p1 - p.calc) / p.calc )
-    if (eps <= tol) p1 = p.calc
+    if (eps >= tol) p1 = p.calc
+    iter = iter + 1
     
-    #cat(i, dL, p, p.avg, dp.dz, "\n")
+    #cat(iter, p0, p1, p.avg, dp.dz, eps, "\n")
   }  
+  cat(i, p0, p1, iter, dp.dz, "\n")
   p0 = p1
+  
 }
 
 ```
+
 
 ## Marching algorithm with smaller tolerance
 It uses a dummy function $grad = f(p_{avg})$. Also includes iteration counter `iter`
