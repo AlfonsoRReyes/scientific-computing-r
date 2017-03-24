@@ -50,9 +50,8 @@ output: html_notebook
 
 
 ```{r rows.print=30}
-tol       = 0.001
+tol       = 0.00001
 thp       = 200          # initial pressure
-
 p         = thp
 depth.wh  = 0
 depth.bh  = 9700
@@ -61,15 +60,15 @@ segments  = 30
 
 # rows has to be greater than segments to allocate the zero
 depths   <- seq.int(from = depth.wh, to = depth.bh, length.out = segments+1)
-n      <- length(depths)   # which is the same as pipe.incr
+n        <- length(depths)   # which is the same as pipe.incr
 
 depth.top = depth.wh
-dL = 300
+#dL = 300
 dp.dz = 0.002
 p0    = thp
 
 for (i in seq_len(n)) {
-  if (i = 1) {
+  if (i == 1) {
       depth.prev = depth.top
   } else {
       depth.prev = depths[i-1]
@@ -78,14 +77,15 @@ for (i in seq_len(n)) {
   p1 = p0 + dp.dz * dL
   eps  = 1
   iter = 1
-  cat(i, "\n")
+  cat(sprintf("%2d %8.0f %8.1f segment=%d \n", i, depths[i], dL, i-1))
   while (eps > tol) {             # loop until AE greater than tolerance
     p.avg  = (p0 + p1) / 2
     dp.dz  = 1/log10(p.avg)           # calculate gradient as function of `pavg`
     p.calc = p0 - (-dp.dz) * dL
     eps    = abs( (p1 - p.calc) / p.calc )
-    cat(sprintf("%2d %6.1f %8.2f %8.2f %8.2f %9.6f %9.6f \n", 
+    cat(sprintf("%8d %6.1f %8.2f %8.2f %8.2f %9.6f %9.7f \n", 
           iter, p0, p1, p.avg, p.calc, dp.dz, eps))
+    
     if (eps >= tol) p1 = p.calc
     iter = iter + 1
   }  
