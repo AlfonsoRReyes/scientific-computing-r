@@ -52,48 +52,46 @@ output: html_notebook
 ```{r rows.print=30}
 tol       = 0.00001
 thp       = 200          # initial pressure
-p         = thp
 depth.wh  = 0
 depth.bh  = 9700
 segments  = 30
 
 
-# rows has to be greater than segments to allocate the zero
+# rows have to be greater than segments to allocate the zero or initial value
+# consider that in length.out parameter
 depths   <- seq.int(from = depth.wh, to = depth.bh, length.out = segments+1)
-n        <- length(depths)   # which is the same as pipe.incr
+n        <- length(depths)   # which is the same as # rows
 
 depth.top = depth.wh
-#dL = 300
-dp.dz = 0.002
-p0    = thp
+dp.dz     = 0.002                    # 1st approximation of the gradient
+p0        = thp                      # the initial pressure
 
 for (i in seq_len(n)) {
   if (i == 1) {
-      depth.prev = depth.top
+      depth.prev = depth.top         # do this only in the 1st row
   } else {
-      depth.prev = depths[i-1]
+      depth.prev = depths[i-1]       # otherwise, use the previous depth
     }
-  dL = depths[i] - depth.prev
-  p1 = p0 + dp.dz * dL
+  dL = depths[i] - depth.prev        # calculate dL
+  p1 = p0 + dp.dz * dL               # calculate outlet pressure
   eps  = 1
-  iter = 1
   cat(sprintf("%2d %8.0f %8.1f segment=%d \n", i, depths[i], dL, i-1))
+  # here we start iterating for the pressure gradient
+  iter = 1
   while (eps > tol) {             # loop until AE greater than tolerance
     p.avg  = (p0 + p1) / 2
-    dp.dz  = 1/log10(p.avg)           # calculate gradient as function of `pavg`
+    dp.dz  = 1/log10(p.avg)       # calculate gradient as function of `pavg`
     p.calc = p0 - (-dp.dz) * dL
-    eps    = abs( (p1 - p.calc) / p.calc )
+    eps    = abs( (p1 - p.calc) / p.calc )  # absolute error
     cat(sprintf("%8d %6.1f %8.2f %8.2f %8.2f %9.6f %9.7f \n", 
           iter, p0, p1, p.avg, p.calc, dp.dz, eps))
     
-    if (eps >= tol) p1 = p.calc
-    iter = iter + 1
-  }  
-  #cat(, "\n")
-  #cat(sprintf("%2d %8.1f %8.1f %2d %8.3f \n", i, p0, p1, iter, dp.dz))
-  p0 = p1
+    if (eps >= tol) p1 = p.calc   # if error too big, iterate again
+    iter = iter + 1               # with a new p1
+  } # end of while 
+  p0 = p1      # assign p1 to the inlet pressure of new segment, p0
   
-}
+} # end of for
 
 ```
 
