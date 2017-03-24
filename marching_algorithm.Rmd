@@ -56,7 +56,6 @@ depth.wh  = 0
 depth.bh  = 9700
 segments  = 30
 
-
 # rows have to be greater than segments to allocate the zero or initial value
 # consider that in length.out parameter
 depths   <- seq.int(from = depth.wh, to = depth.bh, length.out = segments+1)
@@ -66,7 +65,7 @@ depth.top = depth.wh
 dp.dz     = 0.002                    # 1st approximation of the gradient
 p0        = thp                      # the initial pressure
 
-for (i in seq_len(n)) {
+for (i in seq_len(n)) {              # n: is the number of depths = # rows
   if (i == 1) {
       depth.prev = depth.top         # do this only in the 1st row
   } else {
