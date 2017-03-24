@@ -56,32 +56,41 @@ thp       = 200          # initial pressure
 p         = thp
 depth.wh  = 0
 depth.bh  = 9700
-pipe.incr = 30
+segments  = 30
 
 
-depths <- seq.int(from = depth.wh, to = depth.bh, length.out = pipe.incr)
+# rows has to be greater than segments to allocate the zero
+depths   <- seq.int(from = depth.wh, to = depth.bh, length.out = segments+1)
 n      <- length(depths)   # which is the same as pipe.incr
 
+depth.top = depth.wh
 dL = 300
 dp.dz = 0.002
 p0    = thp
 
 for (i in seq_len(n)) {
-  dL = depths[i+1] - depths[i]
+  if (i = 1) {
+      depth.prev = depth.top
+  } else {
+      depth.prev = depths[i-1]
+    }
+  dL = depths[i] - depth.prev
   p1 = p0 + dp.dz * dL
-  eps = 1
+  eps  = 1
   iter = 1
+  cat(i, "\n")
   while (eps > tol) {             # loop until AE greater than tolerance
-    p.avg = (p0 + p1) / 2
-    dp.dz = log10(p.avg)           # calculate gradient as function of `pavg`
+    p.avg  = (p0 + p1) / 2
+    dp.dz  = 1/log10(p.avg)           # calculate gradient as function of `pavg`
     p.calc = p0 - (-dp.dz) * dL
-    eps <- abs( (p1 - p.calc) / p.calc )
+    eps    = abs( (p1 - p.calc) / p.calc )
+    cat(sprintf("%2d %6.1f %8.2f %8.2f %8.2f %9.6f %9.6f \n", 
+          iter, p0, p1, p.avg, p.calc, dp.dz, eps))
     if (eps >= tol) p1 = p.calc
     iter = iter + 1
-    
-    #cat(iter, p0, p1, p.avg, dp.dz, eps, "\n")
   }  
-  cat(i, p0, p1, iter, dp.dz, "\n")
+  #cat(, "\n")
+  #cat(sprintf("%2d %8.1f %8.1f %2d %8.3f \n", i, p0, p1, iter, dp.dz))
   p0 = p1
   
 }
