@@ -62,7 +62,9 @@ and calculate p and dp.dz for the current segment
 
 
 ## Implementation of marching algorithm for well gradient
-For demo purposes, only using a dummy function, $log(P_{avg})^{-1}$
+For demo purposes, only using a dummy function, $log(P_{avg})^{-1}$.
+The next thing to do is generating a dataframe with the data. Actually, it could be two dataframes, one for the main results for each pipe segment; and the second dataframe -with more detail-, showing the iterations.
+
 
 ```{r rows.print=30}
 tol       = 0.00001
