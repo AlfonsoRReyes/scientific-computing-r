@@ -1,10 +1,26 @@
 ---
 title: "Fitting data"
-output: html_notebook
+output:
+  pdf_document:
+    toc: yes
+  html_notebook: default
+  html_document:
+    toc: yes
 ---
 
+```{r setup, include=F, error=T, message=F, warning=F}
+knitr::opts_chunk$set(echo=T, comment=NA, error=T, warning=F, message = F, fig.align = 'center')
+```
 
-## 
+
+## How to estimate the best fitting function to a scatter plot in R?
+http://stackoverflow.com/questions/15042435/how-to-estimate-the-best-fitting-function-to-a-scatter-plot-in-r/15045035#15045035
+
+I have scatterplot of two variables, for instance this:
+ I would like to find the function that better fits the relation between these two variables. to be precise I would like to compare the fitting of three models: linear, exponential and logarithmic.
+I was thinking about fitting each function to my values, calculate the likelihoods in each case and compare the AIC values.
+But I don't really know how or where to start. Any possible help about this would be extremely appreciated.
+
 ```{r}
 # find the function that better fits the relation between these two variables.
 x<-c(0.108,0.111,0.113,0.116,0.118,0.121,0.123,0.126,0.128,0.131,0.133,0.136)
@@ -16,10 +32,14 @@ y<-c(-6.908,-6.620,-5.681,-5.165,-4.690,-4.646,-3.979,-3.755,-3.564,-3.558,-3.27
 
 
 
-http://stackoverflow.com/a/15045035
-Here is an example of comparing five models. Due to the form of the first two models we are able to use lm to get good starting values. (Note that models using different transforms of y should not be compared so we should not use lm1 and lm2 as comparison models but only for starting values.) Now run an nls for each of the first two. After these two models we try polynomials of various degrees in x. Fortunately lm and nls use consistent AIC definitions (although its not necessarily true that other R model fitting functions have consistent AIC definitions) so we can just use lm for the polynomials. Finally we plot the data and fits of the first two models.
+### http://stackoverflow.com/a/15045035
+Here is an example of comparing five models. Due to the form of the first two models we are able to use `lm` to get good starting values. (Note that models using different transforms of `y` should not be compared so we should not use `lm1` and `lm2` as comparison models but only for starting values.) 
 
-The lower the AIC the better so nls1 is best followed by lm3.2 following by nls2.
+Now run an `nls` for each of the first two. After these two models we try polynomials of various degrees in `x`. Fortunately lm and nls use consistent `AIC` definitions (although its not necessarily true that other R model fitting functions have consistent AIC definitions) so we can just use `lm` for the polynomials. 
+
+Finally we plot the data and fits of the first two models.
+
+The lower the AIC the better so `nls1` is best followed by `lm3.2` following by nls2.
 
 ```{r}
 lm1 <- lm(1/y ~ x)
@@ -60,9 +80,9 @@ ADDED a few more models and subsequently fixed them up and changed notation. Als
 
 
 
------
-http://stackoverflow.com/a/15044001
-I would begin by an explantory plots, something like this :
+
+### http://stackoverflow.com/a/15044001
+I would begin by an explanqtory plots, something like this :
 
 ```{r}
 library(latticeExtra)
@@ -92,9 +112,16 @@ summary(lm(y~poly(x,3),data=dat))
 summary(lm(y ~ log(x), data=dat))
 ```
 
+looks like you need a cubic model.
+
+
 
 ## Fitting a function in R
 http://stackoverflow.com/questions/11844522/fitting-a-function-in-r
+
+I have a few datapoints (x and y) that seem to have a logarithmic relationship.
+Now I would like to find an underlying function that fits the graph and allows me to infer other datapoints (i.e. 3 or 82). I read about lm and nls but I'm not getting anywhere really.
+Can someone point me in the right direction on what to do from here?
 
 
 ```{r}
@@ -118,6 +145,7 @@ qplot(x, y, data=mydata, geom="line")
 
 ```
 
+### experimenting with the data
 ```{r}
 lm1 <- lm(1/y ~ x)
 nls1 <- nls(y ~ 1/(a + b*x), start = setNames(coef(lm1), c("a", "b")))
@@ -151,15 +179,52 @@ lines(fitted(lm3.3) ~ x, lty = 2) # dashed line
 summary(lm(y ~ poly(x, 3), data = mydata))
 ```
 
+### http://stackoverflow.com/a/11846275
+Maybe using a cubic specification for your model and estimating via lm would give you a good fit.
+
+```{r}
+library(ggplot2)
+
+# Importing your data
+dataset <- read.table(text='
+    x   y
+1   0 123
+2   2 116
+3   4 113
+4  15 100
+5  48  87
+6  75  84
+7 122  77', header=T)
+
+# I think one possible specification would be a cubic linear model
+y.hat <- predict(lm(y~x+I(x^2)+I(x^3), data=dataset)) 
+# estimating the model and obtaining the fitted values from the model
+
+qplot(x, y, data=dataset, geom="line") # your plot black lines
+last_plot() + geom_line(aes(x=x, y=y.hat), col=2) # the fitted values red lines
+
+# It fits good.
+```
+
 
 ## Fitting polynomial model to data in R
 http://stackoverflow.com/questions/3822535/fitting-polynomial-model-to-data-in-r
 
+I've read the answers to this question and they are quite helpful, but I need help particularly in R.
+
+I have an example data set in R as follows:
 ```{r}
 x <- c(32,64,96,118,126,144,152.5,158)  
 y <- c(99.5,104.8,108.5,100,86,64,35.3,15)
 ```
 
+I want to fit a model to these data so that y = f(x). I want it to be a 3rd order polynomial model.
+
+How can I do that in R?
+
+Additionally, can R help me to find the best fitting model?
+
+### http://stackoverflow.com/a/3822706
 
 To get a third order polynomial in x (x^3), you can do
 
@@ -167,7 +232,7 @@ To get a third order polynomial in x (x^3), you can do
 lm(y ~ x + I(x^2) + I(x^3))
 ```
 
-http://stackoverflow.com/a/3824248
+### http://stackoverflow.com/a/3824248
 Which model is the "best fitting model" depends on what you mean by "best". R has tools to help, but you need to provide the definition for "best" to choose between them. Consider the following example data and code:
 
 ```{r}
@@ -208,9 +273,7 @@ AIC(fit6)
 AIC(fit7)
 ```
 
-
-
-http://stackoverflow.com/a/3824080
+### http://stackoverflow.com/a/3824080
 Regarding the question 'can R help me find the best fitting model', there is probably a function to do this, assuming you can state the set of models to test, but this would be a good first approach for the set of n-1 degree polynomials:
 
 ```{r}
@@ -219,8 +282,20 @@ polyfit <- function(i) x <- AIC(lm(y ~ poly(x, i)))
 as.integer(optimize(polyfit, interval = c(1,length(x)-1))$minimum)
 ```
 
+Notes
 
-http://stackoverflow.com/a/12428183
+* The validity of this approach will depend on your objectives, the assumptions of optimize() and AIC() and if AIC is the criterion that you want to use,
+* polyfit() may not have a single minimum. check this with something like:
+for (i in 2:length(x)-1) print(polyfit(i))
+* I used the as.integer() function because it is not clear to me how I would interpret a non-integer polynomial.
+* for testing an arbitrary set of mathematical equations, consider the 'Eureqa' program reviewed by Andrew Gelman here
+
+
+Update
+Also see the stepAIC function (in the MASS package) to automate model selection.
+
+
+### http://stackoverflow.com/a/12428183
 The easiest way to find the best fit in R is to code the model as:
 
 ```{r}
@@ -356,7 +431,7 @@ Please explain how you found the solution.
 
 
 
-http://stackoverflow.com/a/14646118
+### http://stackoverflow.com/a/14646118
 Without an idea of the underlying process you may as well just fit a polynomial with as many components as you like. You don't seem to be testing a hypothesis (eg, gravitational strength is inverse-square related with distance) so you can fish all you like for functional forms, the data is unlikely to tell you which one is 'right'.
 
 So if I read your data into a data frame with x and y components I can do:
@@ -386,7 +461,7 @@ I need to fit a curve into this.
 
 
 
-http://stackoverflow.com/a/15050715
+### http://stackoverflow.com/a/15050715
 
 Just in case R is an option, here's a sketch of two methods you might use.
 
@@ -447,5 +522,267 @@ ldply(models, function(mod){ data.frame(AICc = AICc(mod), AIC = AIC(mod), model 
 # no doubt with a better understanding of nls and the data a better fitting
 # function could be found. Perhaps the optimisation method here might be
 # useful also: http://stats.stackexchange.com/a/21098/7744
+```
+
+## Predicting example
+
+```{r}
+set.seed(123)
+x <- rnorm(15)
+y <- x + rnorm(15)
+plot(x,y)
+```
+
+```{r}
+## Predictions
+set.seed(123)
+x <- rnorm(15)
+y <- x + rnorm(15)
+predict(lm(y ~ x))
+
+new <- data.frame(x = seq(-3, 3, 0.5))
+predict(lm(y ~ x), new, se.fit = TRUE)
+pred.w.plim <- predict(lm(y ~ x), new, interval = "prediction")
+pred.w.clim <- predict(lm(y ~ x), new, interval = "confidence")
+matplot(new$x, cbind(pred.w.clim, pred.w.plim[,-1]),
+        lty = c(1,2,2,3,3), type = "l", ylab = "predicted y")
+```
+
+
+
+
+## Using drhov vs friction factor data
+```{r}
+# load the data from the curve
+data <- read.table(text='
+drhov   ff
+3.42747	0.24203100			
+3.88830	0.16944600			
+4.85782	0.10225300			
+6.11430	0.07001020			
+8.41248	0.04450280			
+13.22850	0.02606930			
+24.30940	0.01258930			
+34.96940	0.00868380			
+45.34020	0.00659713			
+72.90190	0.00419354', header = TRUE)
+
+data
+
+# convert the data to logarithmic
+x <- log(data$drhov)
+y <- log(data$ff)
+
+models <- vector("list", 5)
+
+predict(lm(y ~ x))
+qplot(x,y)
+```
+
+```{r}
+# linear model y(x)
+model <- lm(y ~ x)
+
+# build a test dataframe
+# new <- data.frame(x = seq(1, 4.5, 0.1))
+new <- data.frame(x = log(seq(3, 80, 2)))     # dataframe with drhov sequence 
+
+prediction  <- predict(model, new, se.fit = TRUE)
+pred.w.plim <- predict(model, new, interval = "prediction")
+pred.w.clim <- predict(model, new, interval = "confidence")
+
+matplot(new$x, cbind(pred.w.clim, pred.w.plim[,-1]),
+        lty = c(1,2,2,3,3), type = "l", ylab = "predicted y")
+
+models[[1]] = model
+```
+
+
+```{r}
+# linear model y = x + x^2 + x^3 + x^4
+model <- lm(y ~ x + I(x^2) + I(x^3) + I(x^4))
+
+# dataframe with values to test prediction
+new <- data.frame(x = log(seq(3, 80, 2)))     # dataframe with drhov sequence 
+
+pred.x4     <- predict(model, new, se.fit = TRUE)
+
+pred.w.plim <- predict(model, new, interval = "prediction")
+pred.w.clim <- predict(model, new, interval = "confidence")
+matplot(new$x, cbind(pred.w.clim, pred.w.plim[,-1]),
+        lty = c(1,2,2,3,3), type = "l", ylab = "predicted y")
+
+models[[2]] = model
+```
+
+```{r}
+models
+```
+
+
+
+```{r}
+library(ggplot2)
+## Test the model
+
+# enter the values on the x axis: drhov, rounded to 2 decimals
+drhov <- round(data$drhov, 2)     
+
+# call the model
+model <- models[[2]]
+summary(model)
+model$call            # print the formula for the model
+
+# create the dataframe of the log(drhov)
+new.df <- data.frame(x = c(log(drhov)))
+
+# get prediction values
+result <- predict(model, new.df, se.fit = TRUE)
+result$fit
+
+# get back the friction factor after e^result
+exp(result$fit)
+
+# plot the experimental data
+g <- ggplot(data, aes(x, y)) + geom_point(size = 6, col = "yellow")
+
+# add the points resulting from the model applied
+g + 
+  geom_point(method = "lm", 
+                formula = as.formula(models[[1]]), 
+                size = 3, se = TRUE, colour = "blue") + 
+  geom_point(method = "lm", 
+                formula = as.formula(models[[2]]), 
+                size = 1, se = TRUE, colour = "orange")
+```
+
+
+## Interpolation without linearizing data
+
+```{r}
+# load the data from the curve
+data <- read.table(text='
+drhov   ff
+3.42747	0.24203100			
+3.88830	0.16944600			
+4.85782	0.10225300			
+6.11430	0.07001020			
+8.41248	0.04450280			
+13.22850	0.02606930			
+24.30940	0.01258930			
+34.96940	0.00868380			
+45.34020	0.00659713			
+72.90190	0.00419354', header = TRUE)
+
+x <- data$drhov
+y <- data$ff
+data
+```
+
+```{r}
+# model <- lm(y ~ x + I(x^2) + I(x^3) + I(x^4))
+models <- list(
+  lm(y ~ x, data = data), 
+  lm(y ~ log(x), data = data),
+  lm(y ~ log(x) + I(log(x)^2) + I(log(x)^3) ),
+  lm(y ~ log(x) + I(log(x)^2) + I(log(x)^3) + I(log(x)^4) ),
+  lm(y ~ log(x) + I(log(x)^2) + I(log(x)^3) + I(log(x)^4)  + I(log(x)^5) )
+  
+)
+
+# have a quick look at the visual fit of these models
+library(ggplot2)
+ggplot(data, aes(x, y)) + geom_point(size = 5) +
+  stat_smooth(method = "lm", formula = as.formula(models[[1]]), size = 1, se = FALSE, colour = "black") +
+  stat_smooth(method = "lm", formula = as.formula(models[[2]]), size = 1, se = FALSE, colour = "blue") +
+      stat_smooth(method = "lm", formula = as.formula(models[[3]]), size = 1, se = FALSE, colour = "red") +
+      stat_smooth(method = "lm", formula = as.formula(models[[4]]), size = 1, se = FALSE, colour = "yellow") 
+      stat_smooth(method = "lm", formula = as.formula(models[[5]]), size = 1, se = FALSE, colour = "green") 
+      
+models
+```
+
+It is difficult to discern which model fits the data better, if P(x^3) or P(x^5) make any difference.
+
+```{r}
+summary(models[[3]])
+summary(models[[5]])
+```
+
+Visually, the linearization of the data seems like the best choice.
+
+
+********************************************************************
+
+
+## Simple nonlinear least squares curve fitting in R
+http://www.walkingrandomly.com/?p=5254
+
+The R code used for this example comes from Barry Rowlingson, so huge thanks to him.
+
+A question I get asked a lot is ‘How can I do nonlinear least squares curve fitting in X?’ where X might be MATLAB, Mathematica or a whole host of alternatives.  Since this is such a common query, I thought I’d write up how to do it for a very simple problem in several systems that I’m interested in
+
+
+### The problem
+```{r}
+xdata = c(-2,-1.64,-1.33,-0.7,0,0.45,1.2,1.64,2.32,2.9)
+ydata = c(0.699369,0.700462,0.695354,1.03905,1.97389,2.41143,1.91091,0.919576,-0.730975,-1.42001)
+```
+
+and you’d like to fit the function
+
+$$F(p_1, p_2, x) = p_1 cos(p_2x) + p_2 sin(p_1x)$$
+
+using nonlinear least squares.  You’re starting guesses for the parameters are p1=1 and P2=0.2
+
+For now, we are primarily interested in the following results:
+
+* The fit parameters
+* Sum of squared residuals
+* Parameter confidence intervals
+
+### plot data and build the model
+```{r}
+# construct the data vectors using c()
+xdata = c(-2,-1.64,-1.33,-0.7,0,0.45,1.2,1.64,2.32,2.9)
+ydata = c(0.699369,0.700462,0.695354,1.03905,1.97389,2.41143,1.91091,0.919576,-0.730975,-1.42001)
+
+# look at it
+plot(xdata,ydata)
+
+# some starting values
+p1 = 1
+p2 = 0.2
+
+# do the fit
+model = nls(ydata ~ p1*cos(p2*xdata) + p2*sin(p1*xdata), start = list(p1=p1, p2=p2))
+
+# summarise
+summary(model)
+```
+
+### See the fit
+Draw the fit on the plot by getting the prediction from the fit at 200 x-coordinates across the range of xdata
+
+```{r}
+new = data.frame(xdata = seq(min(xdata), max(xdata), len=200))
+
+plot(xdata, ydata)
+lines(new$xdata, predict(model, newdata=new))
+```
+
+### other fitness analysis
+Getting the sum of squared residuals is easy enough:
+```{r}
+sum(resid(model)^2)  #0.0538127
+```
+
+Finally, lets get the parameter confidence intervals.
+```{r}
+confint(model)    
+
+#              2.5%     97.5%
+#      p1 1.8206081 1.9442365
+#      p2 0.6794193 0.7209843
 ```
 
