@@ -553,6 +553,8 @@ matplot(new$x, cbind(pred.w.clim, pred.w.plim[,-1]),
 
 ## Using drhov vs friction factor data
 ```{r}
+library(ggplot2)
+
 # load the data from the curve
 data <- read.table(text='
 drhov   ff
@@ -578,6 +580,20 @@ models <- vector("list", 5)
 predict(lm(y ~ x))
 qplot(x,y)
 ```
+```{r}
+model <- lm(y ~ x)
+new <- data.frame(x = log(10))
+new
+y.ip  <- predict(model, new)
+ff <- exp(y.ip)
+ff
+
+model <- lm(y ~ x + I(x^2) + I(x^3) + I(x^4))
+y.ip  <- predict(model, new)
+ff <- exp(y.ip)
+ff
+```
+
 
 ```{r}
 # linear model y(x)
@@ -603,7 +619,7 @@ models[[1]] = model
 model <- lm(y ~ x + I(x^2) + I(x^3) + I(x^4))
 
 # dataframe with values to test prediction
-new <- data.frame(x = log(seq(3, 80, 2)))     # dataframe with drhov sequence 
+new <- data.frame(x = log(seq(2, 81, 1)))     # dataframe with drhov sequence 
 
 pred.x4     <- predict(model, new, se.fit = TRUE)
 
@@ -616,7 +632,7 @@ models[[2]] = model
 ```
 
 ```{r}
-models
+exp(pred.x4$fit)
 ```
 
 
