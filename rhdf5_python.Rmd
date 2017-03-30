@@ -1,0 +1,78 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+```{r}
+# This examaple creates an HDF5 file dset.h5 and an empty datasets /dset in it.
+library(rhdf5)
+
+#  H5Fcreate accepts H5F_ACC_EXCL or H5F_ACC_TRUNC
+fid <- H5Fcreate("ex_H5F.h5", flags = "H5F_ACC_TRUNC")
+```
+
+
+```{r}
+dataset = H5Dcreate(fid, "dset", c(4, 6))
+```
+
+
+
+## # write a dataset
+Source: https://support.hdfgroup.org/ftp/HDF5/examples/Py/h5_crtdat.py
+
+```{r}
+# create a file
+fid <- H5Fcreate("ex_H5D.h5")
+fid
+
+# create a dataspace
+sid <- H5Screate_simple(c(10,5,3))
+sid
+h5ls("ex_H5D.h5")
+```
+
+```{r}
+# create a dataset
+did <- H5Dcreate(fid, "A", "H5T_STD_I32LE", sid)
+did
+h5ls("ex_H5D.h5")
+h5dump("ex_H5D.h5")        # no datasets, no dump
+```
+
+
+```{r}
+# write data to the dataset
+H5Dwrite(did, 1L:150L, h5spaceMem = sid, h5spaceFile = sid)
+h5ls("ex_H5D.h5")
+h5dump("ex_H5D.h5")       # dataset exist, dump has output
+```
+
+```{r}
+H5Dclose(did)
+H5Sclose(sid)
+H5Fclose(fid)
+```
+
+
+
+## HDF5 Link Interface
+Source: https://www.rdocumentation.org/packages/rhdf5/versions/2.16.0/topics/HDF5%20Link%20Interface
+
+The Link interface, H5L, functions create and manipulate links in an HDF5 group. This interface includes functions that enable the creation and use of user-defined link classes.
+
+```{r}
+# create an hdf5 file and a group
+h5createFile("ex_H5L.h5")
+h5createGroup("ex_H5L.h5","foo")
+
+# reopen file and get link info
+fid <- H5Fopen("ex_H5L.h5")
+H5Lexists(fid, "foo")
+H5Lexists(fid, "baa")
+H5Lget_info(fid, "foo")
+H5Fclose(fid)
+```
+
+
