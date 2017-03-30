@@ -1,0 +1,552 @@
+<!--
+%\VignetteEngine{knitr}
+%\VignetteIndexEntry{h5vc -- Tour}
+-->
+
+h5vc -- Scalabale nucleotide tallies using HDF5
+========================================================
+
+In this document we will illustrate the use of the *h5vc* package for creating and analysing nucleotide tallies of next generation sequencing experiments. 
+
+Motivation
+----------
+
+*h5vc* is a tool that is designed to provide researchers with a more intuitive
+and effective way of interacting with data from large cohorts of samples that
+have been sequenced with next generation sequencing technologies.
+
+The challenges researchers face with the advent of massive sequencing
+efforts aimed at sequencing RNA and DNA of thousands of samples
+will need to be addressed now, before the flood of data becomes a real
+problem.
+
+The effects of the infeasibility of handling the sequencing data of
+large cohorts with the current standards (BAM, VCF, BCF, GTF, etc.)
+have become apparent in recent publications that performed population
+level analyses of mutations in many cancer samples and work
+exclusively on the level of preprocessed variant calls stored in VCF/MAF
+files simply because there is no way to look at the data itself with
+reasonable resource usage (e.g. in [Kandoth et. al 2013][1]).
+
+This challenge can be adressed by augmenting the available legacy
+formats typically used for sequencing analyses (SAM/BAM files) with an
+intermediate file format that stores only the most essential information
+and provides efficient access to the cohort level data whilst
+reducing the information loss relative to the raw alignments.
+
+This file format will store nucleotide tallies rather than alignments
+and allow for easy and efficient real-time random access to the data
+of a whole cohort of samples. The details are described in the
+following section.
+
+[1]: http://www.nature.com/nature/journal/v502/n7471/full/nature12634.html "Mutational landscape and significance across 12 major cancer types"
+
+Nucleotide Tally Definition
+---------------------------
+
+The tally data structure proposed here consists of 5 datasets that are
+stored for each chromosome (or contig). Those datasets are:
+* Counts: A table that contains the number of observed mismatches at
+  any combination of base, sample, strand and genomic position,
+* Coverages: A table that contains the number of reads overlapping at
+  any combination of sample, strand and genomic position
+* Deletions: A Table that contains the number of observed deletions
+  of bases at any combination of sample, strand and genomic position
+* Insertions: A Table that contains the number of observed insertions
+  of bases at any combination of sample, strand and genomic position (showing insertions following the position)
+* Reference: A Table that contains the reference base against which
+  the calls in the 'Deletions' and 'Counts' table were made.
+
+We outline the basic layout of this set of tables here:
+
+Name      | Dimensions                                 | Datatype 
+----------|--------------------------------------------|----------
+Counts    | [ #bases, #samples, #strands, #positions ] | int       
+Coverages | [ #samples, #strands, #positions ]         | int      
+Deletions | [ #samples, #strands, #positions ]         | int      
+Insertions| [ #samples, #strands, #positions ]         | int      
+Reference | [ #positions ]                             | int      
+
+An `HDF5` file has an internal structure that is similar to a file system, where groups are the directories and datasets are the files.
+The layout of the tally file is as follows:
+
+![The layout of a tally `HDF5` file.](tally.file.layout.png)
+
+A tally file can contain data from more than one study but each study will reside in a separte tree with a group named with the study-ID at its root and sub-groups for all the chromosomes / contigs that are present in the study. Attached to each of the chromosome groups are the 4 datasets described above.
+
+Additionally each chromsome group stores sample data about the samples involved in the experiment (patientID, type, location in the sample dimension) as `HDF5` attributes. Convenience functions for extracting the metadata are provided, see examples below.
+
+A practical example
+-------------------
+
+Before we get into the details of how to generate an HDF5 tally file for a set of sequencing experiments we will show some examples of the possible analyses one can perform on such a file. The tally file we will use is provided with the *h5vcData* package and if you have not installed this so far you should do so now.
+```{r install_h5vcData, eval=FALSE}
+source("http://bioconductor.org/biocLite.R")
+biocLite("h5vcData")
+```
+
+The first thing we do is set up the session by loading the *h5vc* and *rhdf5* packages and finding the location of the example tally file.
+
+```{r loadPackages}
+suppressPackageStartupMessages(library(h5vc))
+suppressPackageStartupMessages(library(rhdf5))
+
+tallyFile <- system.file( "extdata", "example.tally.hfs5", package = "h5vcData" )
+```
+
+We can inspect the data contained in this file with the `h5ls` function provided by *rhdf5*.
+```{r listTallyFile}
+h5ls(tallyFile)
+```
+
+In the resulting output we can find the different groups and datasets present in the file and we can extract the relevant sample data attached to those groups in the following way.
+```{r getSampleData}
+sampleData <- getSampleData( tallyFile, "/ExampleStudy/16" )
+sampleData
+```
+
+The `sampleData` object is a `data.frame` that contains information about the samples whose nucleotide tallies are present in the file. We can modify this object (e.g. add new columns) and write it back to the file using the `setSampleData` function, but we must be aware that a certain set of columns have to be present (`Sample`, `Patient`, `Column` and `Type`).
+
+```{r setSampleData}
+sampleData$ClinicalVariable <- rnorm(nrow(sampleData))
+setSampleData( tallyFile, "/ExampleStudy/16", sampleData )
+sampleData
+```
+
+Now that we can find the sample metadata in the file it is time to extract some of the nuclotide tally data stored there. We can use two functions to achieve this, `h5readBlock` can be used to read a specified block of data along a given dimension (e.g. a region along the genomic position) and `h5dapply` can be used to apply a function in a blockwise fashion along a specified dimension (e.g. calculating coverage in bins of a certain size along the genomic position dimension).
+
+We can read out a block of data in the following way:
+```{r h5readBlockExample}
+data <- h5readBlock(
+  filename = tallyFile,
+  group = "/ExampleStudy/16",
+  names = c( "Coverages", "Counts" ),
+  range = c(29000000,29001000)
+  )
+str(data)
+```
+
+When we want to read multiple blocks of data we can use the `h5dapply` function which supports the usage of `IRanges` and `GRanges` to define regions of interest, although a simpler system where the user specifies only a `start`, `end` and `blocksize` parameter exists.
+
+```{r h5dapplyGRanges}
+suppressPackageStartupMessages(require(GenomicRanges))
+data <- h5dapply(
+  filename = tallyFile,
+  group = "/ExampleStudy",
+  names = c( "Coverages" ),
+  dims = c(3),
+  range = GRanges("16", ranges = IRanges(start = seq(29e6, 30e6, 5e6), width = 1000))
+  )
+str(data)
+```
+
+Usually we do not want to load the data of all those blocks into memory (unless we need it for plotting). A typical workflow will involve some form of processing of the data and as long as this processing can be expressed as an R function that can be applied to each block separately, we can simply provide `h5dapply` with this function and only retrieve the results.
+In the following example we calculate the coverage of the samples present in the example tally file by applying the `binnedCoverage` function to blocks defined in a GRanges object.
+
+```{r h5dapplyExample}
+rangeA <- GRanges("16", ranges = IRanges(start = seq(29e6, 29.5e6, 1e5), width = 1000))
+rangeB <- GRanges("22", ranges = IRanges(start = seq(39e6, 39.5e6, 1e5), width = 1000))
+coverages <- h5dapply(
+  filename = tallyFile,
+  group = "/ExampleStudy",
+  names = c( "Coverages" ),
+  dims = c(3),
+  range = c(rangeA, rangeB),
+  FUN = binnedCoverage,
+  sampledata = sampleData
+  )
+#options(scipen=10)
+coverages <- do.call( rbind, lapply( coverages, function(x) do.call(rbind, x) ))
+#rownames(coverages) <- NULL #remove block-ids used as row-names
+coverages
+```
+
+Note that `binnedCoverage` takes an additional parameter `sampleData` which we provide to the function as well. Furthermore we specify the `blocksize` to be 500 bases and we specify the `dims` parameter to tell `h5dapply` along which dimension of the selected datasets ("Coverages" in this case) shall be processed (dimension number 3 is the genomic position in the "Coverages" dataset). The explicit specification of `dims` is only neccessary when we are not extracting the "Counts" dataset, otherwise it defaults to the genomic position.
+
+In the same way we can perform variant calling by using `h5dapply` together with a variant calling function like `callVariantsPaired` or `callVariantsSingle`.
+
+```{r callVariantsExample}
+variants <- h5dapply(
+  filename = tallyFile,
+  group = "/ExampleStudy/16",
+  names = c( "Coverages", "Counts", "Deletions", "Reference" ),
+  range = c(29950000,30000000),
+  blocksize = 10000,
+  FUN = callVariantsPaired,
+  sampledata = sampleData,
+  cl = vcConfParams(returnDataPoints = TRUE)
+  )
+variants <- do.call( rbind, variants )
+variants$AF <- (variants$caseCountFwd + variants$caseCountRev) / (variants$caseCoverageFwd + variants$caseCoverageRev)
+variants <- variants[variants$AF > 0.2,]
+rownames(variants) <- NULL # remove rownames to save some space on output :D
+variants
+```
+
+For details about the parameters and behaviour of `callVariantsPaired` have a look at the corresponding manual page ( i.e. `?callVariantsPaired` ).
+
+A function has to have a named parameter `data` as its first argument in order to be compatible with `h5dapply`, in this case data is a list of the same structure as the one returned by `h5readBlock`.
+
+Once we have determined the location of an interesting variant, like `16:29983015-29983015:C/G` in our case, we can create a `mismatchPlot` in the region around it to get a better feeling for the variant. To this end we use the `mismatchPlot` function on the tallies in the region in the following way:
+```{r mismatchPlotExample, fig.width=10.5, fig.height=8.5, dpi=300, out.width="750px", fig.retina=1}
+windowsize <- 35
+position <- variants$Start[2]
+data <- h5readBlock(
+    filename = tallyFile,
+    group = paste( "/ExampleStudy", variants$Chrom[2], sep="/" ),
+    names = c("Coverages","Counts","Deletions", "Reference"),
+    range = c( position - windowsize, position + windowsize)
+  )
+patient <- sampleData$Patient[sampleData$Sample == variants$Sample[2]]
+samples <- sampleData$Sample[sampleData$Patient == patient]
+p <- mismatchPlot(
+  data = data,
+  sampledata = sampleData,
+  samples = samples,
+  windowsize = windowsize,
+  position = position
+  )
+print(p)
+```
+
+This plot shows the region 35 bases up and downstream of the variant. It shows one panel for each sample associated with the patient that carries the variant (selected by the line `sampleData$Sample[sampleData$Patient == patient]`) and each panel is centered on the varian position in the x-axis and the y-axis encodes coverage and mismatches (negative values are on the reverse strand). The grey area is the coverage and the coloured boxes are mismatches. For more details on this plot see `?mismatchPlot`.
+
+The object returned by `mismatchPlot` is a `ggplot` object which can be manipulated in the same way as any other plot generated through a call to `ggplot`. We can for example apply a theme to the plot (see `?ggplot2::theme` for a list of possible options).
+
+```{r mismatchPlotExamplesTheming, fig.width=10.5, fig.height=8.5, dpi=300, out.width="750px", fig.show='asis'}
+print(p + theme(strip.text.y = element_text(family="serif", size=16, angle=0)))
+```
+
+Ranges interface
+----------------
+
+The `h5dapply` function can also be used with an `IRanges` object that defines the blocks to apply a function to. This can be helpful in cases where simple binning is insufficient, e.g. when we want to get data from a set of SNVs and their immediate environment, do a calculation on a set of overlapping bins or investigate specific regions of interest, e.g. annotated exons.
+
+An example of how to fetch exon annotations from BioMart and calculate coverages on those exons is given here.
+
+> this will take a while
+
+```{r}
+suppressPackageStartupMessages(require(IRanges))
+suppressPackageStartupMessages(require(biomaRt))
+mart <- useDataset(dataset = "hsapiens_gene_ensembl", mart = useMart("ENSEMBL_MART_ENSEMBL", host = "www.ensembl.org"))
+exons <- getBM(attributes = c("ensembl_exon_id", "exon_chrom_start", "exon_chrom_end"), filters = c("chromosome_name"), values = c("16"), mart)
+exons <- subset(exons, exon_chrom_start > 29e6 & exon_chrom_end < 30e6)
+ranges <- IRanges(start = exons$exon_chrom_start, end = exons$exon_chrom_end)
+coverages <- h5dapply(
+  filename = tallyFile,
+  group = "/ExampleStudy/16",
+  names = c( "Coverages" ),
+  dims = c(3),
+  range = ranges,
+  FUN = binnedCoverage,
+  sampledata = sampleData
+  )
+options(scipen=10)
+coverages <- do.call( rbind, coverages )
+rownames(coverages) <- NULL #remove block-ids used as row-names
+coverages$ExonID <- exons$ensembl_exon_id
+head(coverages)
+```
+
+Another source of useful annotation data are the `TxDB.*` Bioconductor packages, which provide gene model annotation for a wide range of organisms and reference releases as ranges objects that can be directly plugged into h5dapply to perform calculations on those objects.
+
+We can also use the ranges interface to `h5dapply` in conjunction with the `mismatchPlot` function to create mismatch plots of multiple regions at the same time. Here we plot the same variant in 3 slightly shifted windows to show the usage of ranges for plotting:
+
+```{r mismatchPlotRangesExample, fig.width=10.5, fig.height=8.5, dpi=300, out.width="750px", fig.retina=1}
+windowsize <- 35
+position <- variants$Start[2]
+data <- h5dapply(
+    filename = tallyFile,
+    group = paste( "/ExampleStudy", variants$Chrom[2], sep="/" ),
+    names = c("Coverages","Counts","Deletions", "Reference"),
+    range = flank( IRanges(start = c(position - 10, position, position + 10), width = 1), width = 15, both = TRUE )
+  )
+p <- mismatchPlot(
+  data = data,
+  sampledata = sampleData,
+  samples <- c("PT5ControlDNA", "PT5PrimaryDNA", "PT5RelapseDNA", "PT8ControlDNA", "PT8EarlyStageDNA", "PT8PrimaryDNA")
+  )
+print(p)
+```
+
+We end our practical example at this point and move on to sections detailing more involved analysis and, most importantly, the creation of tally files from bam files.
+
+Creating tally files
+--------------------
+
+Creating tally files is a time-consuming process and requires substantial compute power. It is a preprocessing step that is applied to the BAM files corresponding to the samples we want to tally and should be executed only once. In this way it represents an initial investment of time and resources that yields the HDF5 tally files which then allow for fast analysis and interactive exploration of the data in a much more intuitive way than raw BAM files.
+
+We will demonstrate the creation of a HDF5 tally file by using a set of BAM files provided by the `h5vcData` package.
+We load some required packages and extract the locations of the BAM files in question.
+```{r loadFiles, eval = .Platform$OS.type == "unix", results="hide"}
+suppressPackageStartupMessages(library("h5vc"))
+suppressPackageStartupMessages(library("rhdf5"))
+files <- list.files( system.file("extdata", package = "h5vcData"), "Pt.*bam$" )
+files
+bamFiles <- file.path( system.file("extdata", package = "h5vcData"), files)
+```
+
+Now `bamFiles` contains the paths to our BAM files, which are from pairs of cancer and control samples and contain reads overlappign the DNMT3A gene on chromosome 2.
+We will now create the tally file and create the groups that represent the study and chromosome we want to work on.
+Before we do this, we need to find out how big our datasets have to be in their genomic-position dimension, to do this we will look into the header of the bam files and extract the sequence length information.
+```{r chromDim, eval = (.Platform$OS.type == "unix")}
+suppressPackageStartupMessages(library("Rsamtools"))
+chromdim <- sapply( scanBamHeader(bamFiles), function(x) x$targets )
+colnames(chromdim) <- files
+head(chromdim)
+```
+
+All files have the same header information and are fully compatible, so we can just pick one file and take the chromosome lengths from there. Note that although we will only tally the DNMT3A gene we still instantiate the datasets in the tally file with the full chromosome length so that the index along the genomic position axis corresponds directly to the position in the genome (the internal compression of HDF5 will take care of the large blocks of zeros so that the effective filesize is similar to what it would be if we created the datasets to only hold the DNMT3A gene region).
+
+```{r hdf5SetUp, eval = .Platform$OS.type == "unix"}
+chrom <- "2"
+chromlength <- chromdim[chrom,1]
+study <- "/DNMT3A"
+tallyFile <- file.path( tempdir(), "DNMT3A.tally.hfs5" )
+if( file.exists(tallyFile) ){
+  file.remove(tallyFile)
+}
+if( prepareTallyFile( tallyFile, study, chrom, chromlength, nsamples = length(files) ) ){
+  h5ls(tallyFile)
+}else{
+  message( paste( "Preparation of:", tallyFile, "failed" ) )
+}
+```
+
+Have a look at `?prepareTallyFile` to find out more about possible parameters to this function and how they can inflence the performance of operations on the HDF5 file.
+
+Since datasets are stored in HDF5 files as matrices without dimension names we need to create a separate object (a `data.frame` in this case) to hold sample metadata that tells us which sample corresponds to which slots in the matrix and also stores additional usefull information about the samples.
+```{r sampleDataSetUp, eval = .Platform$OS.type == "unix"}
+sampleData <- data.frame(
+  File = files,
+  Type = "Control",
+  stringsAsFactors = FALSE
+  )
+sampleData$Sample <- gsub(x = sampleData$File, pattern = ".bam", replacement = "")
+sampleData$Patient <- substr(sampleData$Sample, start = 1, 4)
+sampleData$Column <- seq_along(files)
+sampleData$Type[grep(pattern = "Cancer", x = sampleData$Sample)] <- "Case"
+group <- paste( study, chrom, sep = "/" )
+setSampleData( tallyFile, group, sampleData )
+getSampleData( tallyFile, group )
+```
+
+We use a set of operations on the conveniently chosen filenames to extract the patient and sample id as well as the type of sample the file corresponds to. The `Column` slot can be populated with an arbitrary order and we simply make it a sequency along the (alphabetically ordered) filenames.
+Note a little complication that derives from the fact that R indexes arrays in a 1-based manner, while HDF5 internally does it 0-based (like, e.g. C).
+We set the columns to be `1` and `2`, respectively, while within the tally file the values `0` and `1` are stored. 
+The functions `setSampleData` and `getSampleData` automatically remove / add `1` from the value when needed.
+
+Extracting tallies from the bam files
+=====================================
+
+Now it is time to extract tally information from the bam file. We use the high-level function `tallyRanges` to do this for us (have a look at the code of that function to see what the separate steps are). This function is called with the names of the bam files, a ranges object describing the regions to tally in and a `BSgenome` reference object corresponding to the refernce that the alignments were made against. You can check out the "How to forge a BSgenome package"-vignette of the `BSgenome` Bioconductor package, in case you used a non-standard refernce. We will simply use the `BSgenome.Hsapiens.NCBI.GRCh38` annotation package provided with Bioconductor. We will load the gene annotation from a GTF formatted file containing annotated exons in trascripts of DNMT3A that was downloaded from Ensembl.org. If a compatible TxDB object is available we could also use that.
+
+We will also make use of multicore parallelisation through the `BiocParallel` package to speed up processing of the exons defined in the annotation file. Note that the data is from whole exome sequencing assays and we can focus on the annotated exons in the tallying.
+
+```{r tallyingTheBamFiles, eval = .Platform$OS.type == "unix"}
+suppressPackageStartupMessages(require(BSgenome.Hsapiens.NCBI.GRCh38))
+suppressPackageStartupMessages(require(GenomicRanges))
+dnmt3a <- read.table(system.file("extdata", "dnmt3a.txt", package = "h5vcData"), header=TRUE, stringsAsFactors = FALSE)
+dnmt3a <- with( dnmt3a, GRanges(seqname, ranges = IRanges(start = start, end = end)))
+dnmt3a <- reduce(dnmt3a)
+require(BiocParallel)
+register(MulticoreParam())
+theData <- tallyRanges( bamFiles, ranges = dnmt3a, reference = Hsapiens )
+str(theData[[1]])
+```
+
+The resulting object is a list of lists with one element per range and within those one slot per dataset using the same layout that you will get from calls to `h5readBlock` or `h5dapply`.
+
+We use the `writeTallyFile` function to write our data to the tally file. (See the function documentation for more information.)
+
+```{r writingToTallyFile, eval = .Platform$OS.type == "unix"}
+writeToTallyFile(theData, tallyFile, study = "/DNMT3A", ranges = dnmt3a)
+```
+
+Checking if everything worked
+=============================
+
+We will use the `h5dapply` function provided by `h5vc` to extract the data again and have a look at it.
+```{r extractingData, eval = .Platform$OS.type == "unix"}
+data <- h5dapply(
+    filename = tallyFile,
+    group = "/DNMT3A",
+    range = dnmt3a
+  )
+str(data[["2"]][[1]])
+```
+
+We will call variants within this gene now:
+```{r callingVariants, eval = .Platform$OS.type == "unix"}
+vars <- h5dapply(
+    filename = tallyFile,
+    group = "/DNMT3A",
+    FUN = callVariantsPaired,
+    sampledata = getSampleData(tallyFile,group),
+    cl = vcConfParams(),
+    range = dnmt3a
+  )
+vars <- do.call(rbind, vars[["2"]])
+vars
+```
+
+By cleverly selecting the example data we have found exactly one variant that seems ot be interesting and will now plot the region in question to also check if the `mismatchPlot` function will work with the tally data we created.
+
+```{r plottingVariant, eval = .Platform$OS.type == "unix"}
+position <- vars$End[1]
+windowsize <- 30
+data <- h5readBlock(
+    filename = tallyFile,
+    group = group,
+    range = c(position - windowsize, position + windowsize)
+  )
+sampleData <- getSampleData(tallyFile,group)
+p <- mismatchPlot( data, sampleData, samples = c("Pt17Control", "Pt17Cancer"), windowsize=windowsize, position=position )
+print(p)
+```
+
+Mutation Spectrum Analysis
+==========================
+
+We can also easily perform mutation spectrum analysis by using the function `mutationSpectrum` which works on a set of variant calls in a `data.frame` form as it would be produced by a call to e.g. `callVariantsPaired` and a tallyFile parameter specifying hte location of a tally file as well as a context parameter.
+The context parameter specifies how much sequence context should be taken into account for the mutation spectrum. An example with context 1 (i.e. one base up- and one base downstream of the variant) is shown below.
+```{r}
+tallyFileMS <- system.file( "extdata", "example.tally.hfs5", package = "h5vcData" )
+data( "example.variants", package = "h5vcData" ) #example variant calls
+head(variantCalls)
+ms = mutationSpectrum( variantCalls, tallyFileMS, "/ExampleStudy" )
+head(ms)
+```
+We can see the structure of the `variantCalls` object, which is simply a `data.frame`, this is the return value of a call to `callVariantsPaired`. The mutation spectrum is also a `data.frame`. You can find explanations of those data structures by looking at `?mutationSpectrum` and `?callVariantsPaired`.
+
+
+We can plot the mutation spectrum with the `plotMutationSpectrum` function. This function also returns a `ggplot` object which can be manipulated by adding `theme`s etc.
+```{r plottingMS, fig.width=10.5, fig.height=7, dpi=300, out.width="750px"}
+plotMutationSpectrum(ms) + theme(
+  strip.text.y = element_text(angle=0, size=10),
+  axis.text.x = element_text(size = 7),
+  axis.text.y = element_text(size = 10)) + scale_y_continuous(breaks = c(0,5,10,15))
+```
+
+Parallelisation
+===============
+
+In this section we will cover some of the aspects of parallelisation.
+Most notably we will talk about parallelising the tallying step. Since this step is computationally intenisive there is much to gain from parallelising it.
+
+The simplest way to parallelise is by using multicore processing on the same machine and `h5vc` supports both parallel tallying and parallel reading from a tally file.
+Let us revisit the code we used to generate the DNMT3A tally:
+
+```{r parallelTally, eval = .Platform$OS.type == "unix"}
+register(MulticoreParam())
+multicore.time <- system.time(theData <- tallyRanges( bamFiles, ranges = dnmt3a, reference = Hsapiens ))
+register(SerialParam())
+serial.time <- system.time(theData <- tallyRanges( bamFiles, ranges = dnmt3a, reference = Hsapiens ))
+serial.time["elapsed"]
+multicore.time["elapsed"]
+```
+
+The `tallyRanges` function used `bplapply` from the `BiocParallel` package. `bplapply` automatically uses the last registered processing method, e.g. the code `register(MulticoreParam())` registers a multicore processiing setup with as many workers as there are cores available on the machine, `register(SerialParam())` should be fairly self-explanatory. Have a look at `?bplapply` for more details.
+
+The `tallyRangesToFile` function uses the same method for parallelisation, the run-time might be influenced by the I/O performance of the machine it is running on.
+
+```{r parallelTallyToFile, eval = .Platform$OS.type == "unix"}
+register(MulticoreParam())
+multicore.time <- system.time(tallyRangesToFile( tallyFile, study, bamFiles, ranges = dnmt3a, reference = Hsapiens ))
+register(SerialParam())
+serial.time <- system.time(tallyRangesToFile( tallyFile, study, bamFiles, ranges = dnmt3a, reference = Hsapiens ))
+serial.time["elapsed"]
+multicore.time["elapsed"]
+```
+The performance gains (or losses) of parallel tallying and also parallel reading form a tally file are dependent on your system and it makes sense to try some timing first before commiting to a parallel execution set-up. If you are on a cluster with a powerfull file server or raid cluster the gains can be big, whereas with a local single hard-disk you might actually lose time by trying parallel execution. This is an effect you can likely experience when building this vignette on your laptop.
+
+Let's revisit the coverage example from before, and compare runtimes of the sequential and parallel versions. Note that we can parallelize all calls to `h5dapply` since by definition the results of the separate blocks can not depend on each other.
+
+```{r, eval = .Platform$OS.type == "unix"}
+tallyFile <- system.file( "extdata", "example.tally.hfs5", package = "h5vcData" )
+sampleData <- getSampleData(tallyFile, "/ExampleStudy/16")
+theRanges <- GRanges("16", ranges = IRanges(start = seq(29e6,29.2e6,1000), width = 1000))
+register(SerialParam())
+system.time(
+  coverages_serial <- h5dapply(
+    filename = tallyFile,
+    group = "/ExampleStudy",
+    names = c( "Coverages" ),
+    dims = c(3),
+    range = theRanges,
+    FUN = binnedCoverage,
+    sampledata = sampleData
+  )
+)
+register(MulticoreParam())
+system.time(
+  coverages_parallel <- h5dapply(
+    filename = tallyFile,
+    group = "/ExampleStudy",
+    names = c( "Coverages" ),
+    dims = c(3),
+    range = theRanges,
+    FUN = binnedCoverage,
+    sampledata = sampleData
+  )
+)
+```
+
+We can observer some speed-up here, but it is not extremely impressive, on big machines with many cores and powerful I/O systems we might be able to observe larger gains in speed.
+
+Using Clusters
+==============
+
+For large datasets it makes sense to do the tallying on a cluster and parallelise not only by sample but also by genomic position (usually in bins of some megabases). In order to achieve this `h5vc` provides the `tallyRangesBatch` function.
+```{r, eval = FALSE}
+tallyRangesBatch( tallyFile, study = "/DNMT3A", bamfiles = bamFiles, ranges = dnmt3a, reference = Hsapiens )
+```
+This function uses the `BatchJobs` package to set up a number of jobs on a compute cluster, each one corresponding to a range from the `ranges` parameter. It then waits for those tallying jobs to finish and collects the results and writes them to the destination file serially.
+
+Please also note that you will need a correctly configured installation of `BatchJobs` in order to use this functionality which, depending on the type of cluster you are on, might include a `.BatchJobs.R` file in your working directory and a template file defining cluster functions. I will paste my configuration files below but you will have to adapt them in orde to use the `batchTallies` function.
+
+This is the example configuration I use.
+```{r batchjobsconf, eval=FALSE}
+cluster.functions <- makeClusterFunctionsLSF("/home/pyl/batchjobs/lsf.tmpl")
+mail.start <- "first"
+mail.done <- "last"
+mail.error <- "all"
+mail.from <- "<paul.theodor.pyl@embl.de>"
+mail.to <- "<pyl@embl.de>"
+mail.control <- list(smtpServer="smtp.embl.de")
+```
+
+For explanations of how to customize this have a look at the `BatchJobs` documentation [here][batchjobs].
+
+The important part is the first line in which we specify that `LSF` shall be used. The call to `makeClusterFunctionsLSF` has one parameter specifying a template file for the cluster calls. This template file has the following content.
+
+```{r eval=FALSE}
+## Default resources can be set in your .BatchJobs.R by defining the variable 
+## 'default.resources' as a named list.
+
+## remove everthing in [] if your cluster does not support arrayjobs
+#BSUB-J <%= job.name %>[1-<%= arrayjobs %>]         # name of the job / array jobs
+#BSUB-o <%= log.file %>                             # output is sent to logfile, stdout + stderr by default
+#BSUB-n <%= resources$ncpus %>                      # Number of CPUs on the node
+#BSUB-q <%= resources$queue %>                      # Job queue
+#BSUB-W <%= resources$walltime %>                   # Walltime in minutes
+#BSUB-M <%= resources$memory %>                     # Memory requirements in Kbytes
+
+# we merge R output with stdout from LSF, which gets then logged via -o option
+R CMD BATCH --no-save --no-restore "<%= rscript %>" /dev/stdout
+```
+
+Once this setup is functional we can test it with the following little script (you might have to change your resources, e.g. the queue name etc.).
+```{r eval=FALSE}
+library("BiocParallel")
+library("BatchJobs")
+cf <- makeClusterFunctionsLSF("/home/pyl/batchjobs/lsf.tmpl")
+bjp <- BatchJobsParam( cluster.functions=cf, resources = list("queue" = "medium_priority", "memory"="4000", "ncpus"="4", walltime="00:30") )
+bplapply(1:10, sqrt)
+bplapply(1:10, sqrt, BPPARAM=bjp)
+```
+
+With the fully configured batch system you can then start tallying on the cluster.
+
+[batchjobs]: http://sfb876.tu-dortmund.de/PublicPublicationFiles/bischl_etal_2012a.pdf
