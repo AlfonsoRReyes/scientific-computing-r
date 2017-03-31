@@ -1,0 +1,133 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+http://neondataskills.org/HDF5/Imaging-Spectroscopy-HDF5-In-R/
+
+```{r}
+#use the code below to install the rhdf5 library if it's not already installed.
+#source("http://bioconductor.org/biocLite.R")
+#biocLite("rhdf5")
+
+#r Load `raster` and `rhdf5` packages and read NIS data into R
+library(raster)
+library(rhdf5)
+library(rgdal)
+```
+
+
+```{r}
+#be sure to set the working directory to the location where you saved your
+# the SJER_120123_chip.h5 file
+#setwd('pathToDataHere')
+
+#Define the file name to be opened
+f <- 'NEONDSImagingSpectrometerData.h5'
+#look at the HDF5 file structure 
+h5ls(f,all=T) 
+
+##   group        name         ltype corder_valid corder cset       otype
+## 0     / Reflectance H5L_TYPE_HARD        FALSE      0    0 H5I_DATASET
+## 1     /        fwhm H5L_TYPE_HARD        FALSE      0    0 H5I_DATASET
+## 2     /    map info H5L_TYPE_HARD        FALSE      0    0 H5I_DATASET
+## 3     / spatialInfo H5L_TYPE_HARD        FALSE      0    0   H5I_GROUP
+## 4     /  wavelength H5L_TYPE_HARD        FALSE      0    0 H5I_DATASET
+##   num_attrs  dclass          dtype  stype rank             dim
+## 0         6 INTEGER  H5T_STD_I16LE SIMPLE    3 477 x 502 x 426
+## 1         2   FLOAT H5T_IEEE_F32LE SIMPLE    2         426 x 1
+## 2         1  STRING     HST_STRING SIMPLE    1               1
+## 3        11                                  0                
+## 4         2   FLOAT H5T_IEEE_F32LE SIMPLE    2         426 x 1
+##            maxdim
+## 0 477 x 502 x 426
+## 1         426 x 1
+## 2               1
+## 3                
+## 4         426 x 1
+```
+
+```{r}
+#r get spatialInfo using the h5readAttributes function 
+spInfo <- h5readAttributes(f,"spatialInfo")
+
+#r get attributes for the Reflectance dataset
+reflInfo <- h5readAttributes(f,"Reflectance")
+```
+
+
+```{r}
+#read in the wavelength information from the HDF5 file
+wavelengths<- h5read(f,"wavelength")
+```
+
+
+```{r}
+#note that we can grab the dimensions of the dataset from the attributes
+#we can then use that information to slice out our band data
+nRows <- reflInfo$row_col_band[1]
+nCols <- reflInfo$row_col_band[2]
+nBands <- reflInfo$row_col_band[3]
+
+nRows
+
+## [1] 502
+
+nCols
+
+## [1] 477
+
+nBands
+
+## [1] 426
+
+#The HDF5 read function reads data in the order: Cols, Rows and bands
+#This is different from how R reads data (rows, columns, bands). We'll adjust for 
+#this later
+
+#Extract or "slice" data for band 34 from the HDF5 file
+b34<- h5read(f,"Reflectance",index=list(1:nCols,1:nRows,34))
+ 
+#what type of object is b34?
+class(b34)
+
+## [1] "array"
+```
+
+```{r}
+#Convert from array to matrix
+b34 <- b34[,,1]
+```
+
+```{r}
+# look at the metadata for the reflectance dataset
+h5readAttributes(f,"Reflectance")
+
+## $DIMENSION_LABELS
+## [1] "Wavelength" "Line"       "Sample"    
+## 
+## $Description
+## [1] "Atmospherically corrected reflectance."
+## 
+## $`Scale Factor`
+## [1] 10000
+## 
+## $Unit
+## [1] "unitless. Valid range 0-1."
+## 
+## $`data ignore value`
+## [1] "15000"
+## 
+## $row_col_band
+## [1] 502 477 426
+
+#plot the image
+image(b34)
+```
+
+```{r}
+#what happens if we plot a log of the data?
+image(log(b34))
+```
+

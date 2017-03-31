@@ -282,6 +282,26 @@ h5write(df, "myhdf5file.h5","df")
 
 h5ls("myhdf5file.h5")
 ```
+```{r}
+fid <- H5Fopen("myhdf5file.h5")
+# writing a matrix
+A = matrix(1:10, nr=5, nc=2)
+
+# writing an array
+B = array(seq(0.1,2.0,by=0.1), dim = c(5, 2, 2))    # 5x2x2 array
+
+# writing a dataframe
+df = data.frame(1L:5L, 
+                seq(0,1, length.out=5), 
+                c("ab","cde","fghi","a","s"), stringsAsFactors=FALSE)
+
+#h5createDataset("myhdf5file.h5", "COMP", c(5,8))
+
+h5writeDataset.data.frame(df, h5loc = fid, name = "COMP1", DataFrameAsCompound = TRUE)
+
+
+```
+
 
 
 ```{r}
@@ -411,224 +431,6 @@ h5ls("myhdf5file.h5", recursive=2)
 
 
 -----------------------------------------------------------------
-
-## R: Introduction to HDF5 Files in R
-Source: http://neondataskills.org/HDF5/Intro-To-HDF5-In-R/
-
-```{r}
-# To access HDF5 files in R, we will use the rhdf5 library which is part of the 
-#Bioconductor suite of R libraries.
-
-#install rhdf5 package
-#source("http://bioconductor.org/biocLite.R")
-#biocLite("rhdf5")
-
-#Call the R HDF5 Library
-library("rhdf5")
-```
-
-
-
-```{r}
-# Create hdf5 file
-h5createFile("vegData.h5")
-
-## [1] TRUE
-
-h5createFile()
-## Error in h5createFile(): argument "file" is missing, with no default
-
-
-```
-
-```{r}
-#create a group called aNEONSite within the H5 file
-h5createGroup("vegData.h5", "aNEONSite")
-
-## [1] TRUE
-
-#view the structure of the h5 we've created
-h5ls("vegData.h5")
-
-##   group      name     otype dclass dim
-## 0     / aNEONSite H5I_GROUP
-```
-
-```{r}
-# create some sample, numeric data 
-a <- rnorm(n=40, m=1, sd=1) 
-someData <- matrix(a,nrow=20,ncol=2)
-```
-
-
-
-
-```{r}
-# add some sample data to the H5 file located in the aNEONSite group
-# we'll call the dataset "temperature"
-h5write(someData, file = "vegData.h5", name="aNEONSite/temperature")
-
-# let's check out the H5 structure again
-h5ls("vegData.h5")
-
-##        group        name       otype dclass    dim
-## 0          /   aNEONSite   H5I_GROUP              
-## 1 /aNEONSite temperature H5I_DATASET  FLOAT 20 x 2
-```
-
-
-```{r}
-# we can look at everything too 
-# but be cautious using this command!
-h5dump("vegData.h5")
-
-## $aNEONSite
-## $aNEONSite$temperature
-##              [,1]        [,2]
-##  [1,]  0.57002015  1.65021857
-##  [2,] -0.11734323  0.67155051
-##  [3,]  1.09386684  1.50329628
-##  [4,]  0.67163631  0.30794922
-##  [5,]  0.95862965 -0.78184862
-##  [6,] -0.12896460  0.59268695
-##  [7,]  0.05685202  2.28120086
-##  [8,]  3.26047306  0.88577061
-##  [9,] -0.30819170  0.47880539
-## [10,]  0.96746933  1.82340641
-## [11,] -0.54678513  2.22194159
-## [12,]  1.29111825  1.05592524
-## [13,]  0.16009552  0.41711324
-## [14,]  1.05293700  0.07952516
-## [15,]  1.92990794 -0.41059841
-## [16,]  1.37178810  1.29995404
-## [17,]  0.43722480  1.64796389
-## [18,]  2.28480893  1.72972411
-## [19,]  1.33004885 -0.61370131
-## [20,]  1.99261923  1.64787132
-
-#Close the file. This is good practice.
-H5close()
-```
-
-### Opening a HDF5 file to write attributes
-```{r}
-# Add Metadata (attributes)
-
-# Let’s add some metadata (called attributes in HDF5 land) to our dummy temperature data. 
-# First, open up the file.
-
-#open the file, create a class
-fid <- H5Fopen("vegData.h5")                           # fid is teh file id
-
-#open up the dataset to add attributes to, as a class
-did <- H5Dopen(fid, "aNEONSite/temperature")           # did refers to the dataset
-
-# Provide the NAME and the ATTR (what the attribute says) 
-# for the attribute.
-h5writeAttribute(did, attr="Here is a description of the data",
-                 name = "Description")
-h5writeAttribute(did, attr="Meters",
-                 name = "Units")
-
-#let's add some attributes to the group
-did2 <- H5Gopen(fid, "aNEONSite/")                      # did2 refers to the group
-h5writeAttribute(did2, attr="San Joaquin Experimental Range",
-                 name="SiteName")
-h5writeAttribute(did2, attr="Southern California",
-                 name="Location")
-
-#close the files, groups and the dataset when you're done writing to them!
-H5Dclose(did)
-H5Gclose(did2)
-H5Fclose(fid)
-```
-
-
-
-### REading a HDF5 File in R
-Now that we’ve created our H5 file, let’s use it! First, let’s have a look at the attributes of the dataset and group in the file.
-
-```{r}
-#look at the attributes of the precip_data dataset
-h5readAttributes(file = "vegData.h5", 
-                 name = "aNEONSite/temperature")
-
-## $Description
-## [1] "Here is a description of the data"
-## 
-## $Units
-## [1] "Meters"
-
-#look at the attributes of the aNEONsite group
-h5readAttributes(file = "vegData.h5", 
-                 name = "aNEONSite")
-
-## $Location
-## [1] "Southern California"
-## 
-## $SiteName
-## [1] "San Joaquin Experimental Range"
-
-# let's grab some data from the H5 file
-testSubset <- h5read(file = "vegData.h5", 
-                 name = "aNEONSite/temperature")
-
-testSubset2 <- h5read(file = "vegData.h5", 
-                 name = "aNEONSite/temperature",
-                 index=list(NULL,1))
-H5close() 
-# Once we've extracted data from our H5 file, we can work with it in R. 
-
-
-#create a quick plot of the data
-hist(testSubset2)
-```
-
-
-### Challenge –
-
-Time to test your skills. Open up the D17_2013_SJER_vegStr.csv in R.
-
-* Create a new HDF5 file called vegStructure.
-* Add a group in your HDF5 file called SJER.
-* Add the veg structure data to that folder.
-* Add some attributes the SJER group and to the data.
-* Now, repeat the above with the D17_2013_SOAP_vegStr csv.
-* Name your second group SOAP
-
-Some code is below to remind you how to import a CSV into R.
-
-
-
-```{r}
-veg <- read.csv("D17_2013_SOAP_vegStr.csv")
-```
-
-
-
-```{r}
-# Create hdf5 file
-h5createFile("vegStructure.h5")
-
-#create a group called aNEONSite within the H5 file
-h5createGroup("vegStructure.h5", "SJER")
-
-# add some sample data to the H5 file located in the SJER  group
-h5write(veg, file = "vegStructure.h5", name="SJER/veg")
-
-# let's check out the H5 structure again
-h5ls("vegStructure.h5")
-
-```
-
-```{r}
-# h5dump("vegStructure.h5")
-```
-
-```{r}
-H5close() 
-```
-
 
 
 ---------------
