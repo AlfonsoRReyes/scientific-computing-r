@@ -1,0 +1,311 @@
+---
+title: "HDF5 examples"
+output:
+  html_document: default
+  html_notebook: default
+---
+
+```{r setup, include=F, error=T, message=F, warning=F}
+knitr::opts_chunk$set(echo=T, comment=NA, error=T, warning=F, message = F, fig.align = 'center')
+```
+
+
+-------
+
+Source: http://www2.epcc.ed.ac.uk/~amrey/FDM_2015/Python/
+
+
+### open a HDF5 file
+```{r}
+library(rhdf5)
+
+f <- H5Fopen("example.h5")
+
+h5ls("example.h5")
+
+```
+### open the dataset
+```{r}
+dataset <- H5Dopen(f, "dset")
+```
+
+### read the whole dataset
+```{r}
+h5read("example.h5", "dset")
+```
+
+### read a block
+```{r}
+h5read("example.h5", "dset", 
+       start =c(2,1),             # start at row=2, col=1
+       stride =c(1,3),            # only columns 1 and 3
+       count =c(2,2),             # 
+       block =c(1,2))
+```
+
+### creating groups
+As we’ve seen above, the example we were reading has only one group, the root container “/”. Now we’re going to to create a few more groups.
+
+After opening the file and reading its contents, this is how you create a new group named ‘Earthquake’:
+
+```{r}
+h5createGroup("example.h5", "Earthquake")
+h5ls("example.h5")
+```
+
+Note that groups can be created using absolute paths or relative paths:
+
+```{r}
+h5createGroup("example.h5", "/Earthquake/Laquila")
+h5ls("example.h5")
+```
+
+Now create the following group structure:
+
+![](./images/group_structure.png)
+
+```{r}
+h5createGroup("example.h5", "/Earthquake/ChristChurch")
+h5createGroup("example.h5", "/Earthquake/Laquila/Visualization")
+h5createGroup("example.h5", "/Earthquake/Laquila/Traces")
+h5ls("example.h5")
+```
+
+### creating a new dataset
+There are two ways of adding datasets:
+
+** with `h5write**
+
+```{r}
+# writing an array
+day1 = array(seq(0.1, 2.0, by=0.1), dim = c(5, 10))    # 5x2x2 array
+h5write(day1, "example.h5", "/Earthquake/Laquila/Traces/day1")
+h5ls("example.h5")
+```
+
+** with `h5createDataset` **
+
+```{r}
+# create new dataset
+h5createDataset("example.h5", "/Earthquake/Laquila/Traces/myInts", c(5,10), 
+                storage.mode = "integer", chunk=c(5,1), level=7)
+h5ls("example.h5")
+```
+
+```{r}
+h5ls("example.h5")
+```
+
+
+```{r}
+#open up the dataset to add attributes to, as a class
+did <- H5Dopen(f, "/dset")           # did refers to the dataset
+
+h5writeAttribute(did, attr="Meters per second",
+                 name = "Units")
+```
+
+
+
+```{r}
+#look at the attributes of the aNEONsite group
+h5readAttributes(file = "example.h5", 
+                 name = "/dset")
+```
+
+Source: http://www.icare.univ-lille1.fr/wiki/index.php/Reading_an_HDF_file_with_C,_FORTRAN,_Python_and_IDL#R
+
+### Read data of all datasets of a group
+```{r}
+filename = "example.h5"
+
+# Read data of all datasets of a group
+h5read(filename,"Earthquake")
+```
+
+### Read a dataset
+```{r}
+# Read a dataset
+h5read(filename,"/Earthquake/Laquila/Traces/myInts")
+```
+
+
+```{r}
+# Display the contents of main groups
+h5ls(filename, FALSE)
+
+```
+
+```{r}
+# Open a hdf5 file
+fid <-H5Fopen(filename)
+# Get the number of global attributes
+H5Oget_num_attrs(fid)
+```
+
+
+```{r}
+# Open the object "g2"
+gid <- H5Oopen(fid, "Earthquake")
+# Get group info
+H5Gget_info(gid) #or H5Gget_info_by_name(fid, "g2")
+# Get the number of group attributes
+H5Oget_num_attrs(gid) # or H5Oget_num_attrs("g2")
+```
+
+```{r}
+# Open a dataset
+did <- H5Dopen(fid, "/Earthquake/Laquila/Traces/day1")
+# Get dataspace
+dataspace <- H5Dget_space(did)
+dataspace
+```
+
+
+```{r}
+# Close dataspace access
+H5Sclose(dataspace)
+#Close dataset access
+H5Dclose(did)
+# Close group access
+H5Oclose(gid)
+# Close hdf5 file access
+H5Fclose(fid)
+```
+
+
+
+
+
+------------------------------------------------
+
+## From the HDF5 User's guide
+
+```{r}
+library(rhdf5)
+
+fid <- H5Fopen("example.h5")
+
+h5ls("example.h5")
+
+```
+
+```{r}
+dataset <- "/Earthquake/Laquila/Traces/day1"
+datatype <- H5Dget_type(dataset)
+```
+
+
+
+```{r}
+file <-  H5Fcreate("example2.h5")
+status <- H5Fclose(file)
+```
+
+```{r}
+RANK = 2
+dimsf <- matrix(1:10, nr=5, nc=2)
+dataspace <-  H5Screate(dimsf)
+```
+
+```{r}
+h5ls("example2.h5")
+```
+
+
+
+
+
+
+
+
+-----------------------------------------------------------------
+
+
+---------------
+
+## h5vc – Scalabale nucleotide tallies using HDF5
+Source: http://www.bioconductor.org/packages/devel/bioc//vignettes/h5vc/inst/doc/h5vc.tour.html
+
+In this document we will illustrate the use of the h5vc package for creating and analysing nucleotide tallies of next generation sequencing experiments.
+
+`h5vc` is a tool that is designed to provide researchers with a more intuitive and effective way of interacting with data from large cohorts of samples that have been sequenced with next generation sequencing technologies.
+
+This file format will store nucleotide tallies rather than alignments and allow for easy and efficient real-time random access to the data of a whole cohort of samples. The details are described in the following section.
+
+### Nucleotide Tally Definition
+
+The tally data structure proposed here consists of 5 datasets that are stored for each chromosome (or contig). Those datasets are:
+
+* Counts: A table that contains the number of observed mismatches at any combination of base, sample, strand and genomic position,
+* Coverages: A table that contains the number of reads overlapping at any combination of sample, strand and genomic position
+* Deletions: A Table that contains the number of observed deletions of bases at any combination of sample, strand and genomic position
+* Insertions: A Table that contains the number of observed insertions of bases at any combination of sample, strand and genomic position (showing insertions following the position)
+* Reference: A Table that contains the reference base against which the calls in the 'Deletions' and 'Counts' table were made.
+
+We outline the basic layout of this set of tables here:
+
+    Name	Dimensions	Datatype
+    Counts	[ #bases, #samples, #strands, #positions ]	int
+    Coverages	[ #samples, #strands, #positions ]	int
+    Deletions	[ #samples, #strands, #positions ]	int
+    Insertions	[ #samples, #strands, #positions ]	int
+    Reference	[ #positions ]	int
+    
+An HDF5 file has an internal structure that is similar to a file system, where groups are the directories and datasets are the files. The layout of the tally file is as follows:
+
+![](./images/hdf5_tally.png)
+
+A tally file can contain data from more than one study but each study will reside in a separte tree with a group named with the study-ID at its root and sub-groups for all the chromosomes / contigs that are present in the study. Attached to each of the chromosome groups are the 4 datasets described above.
+
+Additionally each chromsome group stores sample data about the samples involved in the experiment (patientID, type, location in the sample dimension) as HDF5 attributes. Convenience functions for extracting the metadata are provided, see examples below.
+
+### A practical example
+
+
+The first thing we do is set up the session by loading the h5vc and rhdf5 packages and finding the location of the example tally file.
+```{r}
+library(h5vc)
+library(rhdf5)
+
+tallyFile <- system.file( "extdata", "example.tally.hfs5", package = "h5vcData" )
+```
+
+
+We can inspect the data contained in this file with the h5ls function provided by rhdf5.
+
+```{r}
+h5ls(tallyFile)
+```
+
+In the resulting output we can find the different groups and datasets present in the file and we can extract the relevant sample data attached to those groups in the following way.
+
+```{r}
+sampleData <- getSampleData( tallyFile, "/ExampleStudy/16" )
+sampleData
+```
+
+The sampleData object is a data.frame that contains information about the samples whose nucleotide tallies are present in the file. We can modify this object (e.g. add new columns) and write it back to the file using the setSampleData function, but we must be aware that a certain set of columns have to be present (Sample, Patient, Column and Type).
+
+
+```{r}
+# add a column to /ExampleStudy/16
+sampleData$ClinicalVariable <- rnorm(nrow(sampleData))
+setSampleData( tallyFile, "/ExampleStudy/16", sampleData )
+sampleData
+```
+
+Now that we can find the sample metadata in the file it is time to extract some of the nuclotide tally data stored there. We can use two functions to achieve this, `h5readBlock` can be used to read a specified block of data along a given dimension (e.g. a region along the genomic position) and `h5dapply` can be used to apply a function in a blockwise fashion along a specified dimension (e.g. calculating coverage in bins of a certain size along the genomic position dimension).
+
+We can read out a block of data in the following way:
+
+```{r}
+data <- h5readBlock(
+  filename = tallyFile,
+  group = "/ExampleStudy/16",
+  names = c( "Coverages", "Counts" ),
+  range = c(29000000, 29001000)
+  )
+str(data)
+```
+

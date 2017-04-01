@@ -1,0 +1,252 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+https://bioc.ism.ac.jp/packages/2.13/bioc/vignettes/h5vc/inst/doc/h5vc.creating.tallies.within.R.html
+
+```{r}
+suppressPackageStartupMessages(library(h5vc))  # h5vc is needed
+suppressPackageStartupMessages(library(rhdf5))  # rhdf5 is needed
+ suppressPackageStartupMessages(library(deepSNV))  # we use deepSNV for tallying
+ 
+files <- c("NRAS.AML.bam", "NRAS.Control.bam")
+bamFiles <- file.path(system.file("extdata", package = "h5vcData"), files)
+```
+
+
+Those bam files contain reads from a matched pair of samples from an AML patient focusing on the region containing the gene NRAS (Chromosome 1: 115,247,090-115,259,515).
+
+We will now create the tally file and create the groups that represent the study and chromosome we want to work on. Before we do this we have to find out how big our datasets have to be in their genomic-position dimension, to do this we will look into the header of the bam files and extract the sequence length information.
+
+```{r}
+chromdim <- sapply(scanBamHeader(bamFiles), function(x) x$targets)
+colnames(chromdim) <- files
+head(chromdim)
+```
+
+```{r}
+chrom <- "1"
+chromlength <- chromdim[chrom, 1]
+
+study <- "/NRAS"
+
+tallyFile <- file.path(tempdir(), "NRAS.tally.hfs5")
+if (file.exists(tallyFile)) {
+    file.remove(tallyFile)
+}
+h5createFile(tallyFile)
+```
+
+```{r}
+group <- paste(study, chrom, sep = "/")
+h5createGroup(tallyFile, study)  # create the toplevel group first
+
+```
+
+```{r}
+h5createGroup(tallyFile, group)
+```
+
+```{r}
+h5createDataset(tallyFile, paste(group, "Counts", sep = "/"), 
+                dims = c(12, 2, 2, chromlength), 
+                storage.mode = "integer", level = 0)  
+#Creating the Counts group for chromosome 1 with 12 bases, 2 samples, 2 strands and 249250621 positions
+
+```
+
+```{r}
+h5createDataset(tallyFile, paste(group, "Deletions", sep = "/"), 
+                dims = c(2, 2, chromlength), 
+                storage.mode = "integer", level = 9)  
+#Creating the Deletions group for chromosome 1 with 2 samples, 2 strands and 249250621 positions
+
+```
+
+```{r}
+h5createDataset(tallyFile, paste(group, "Coverages", sep = "/"), 
+                dims = c(2, 2, chromlength), 
+                storage.mode = "integer", level = 9)  #Creating the Coverages group for chromosome 1 with 2 samples, 2 strands and 249250621 positions
+
+```
+
+```{r}
+h5createDataset(tallyFile, paste(group, "Reference", sep = "/"), 
+                dims = c(chromlength), 
+                storage.mode = "integer", level = 9)  
+#Creating the Reference group for chromosome 1 with 249250621 positions
+```
+
+```{r}
+h5ls(tallyFile)
+
+#     group      name       otype  dclass                    dim
+## 0       /      NRAS   H5I_GROUP                               
+## 1   /NRAS         1   H5I_GROUP                               
+## 2 /NRAS/1    Counts H5I_DATASET INTEGER 12 x 2 x 2 x 249250621
+## 3 /NRAS/1 Coverages H5I_DATASET INTEGER      2 x 2 x 249250621
+## 4 /NRAS/1 Deletions H5I_DATASET INTEGER      2 x 2 x 249250621
+## 5 /NRAS/1 Reference H5I_DATASET INTEGER              249250621
+```
+
+Note that we use the default layout for tally files with 12 slots for bases (based on c("A","C","G","T") times the 3 bins for sequencing cycle, i.e. start, middle, end ). The function bam2R from the deepSNV package, which we will use to create the tally actually does not stratify like this so we will leave the first and last 4 slots for bases empty for now.
+
+Now we will attach the sampleData to the group.
+
+```{r}
+sampleData <- data.frame(Sample = c("AML", "Control"), 
+                         Column = c(1, 2), 
+                         Patient = c("Pt1", "Pt1"), 
+                         Type = c("Case", "Control"), 
+                         stringsAsFactors = FALSE)
+
+setSampleData(tallyFile, group, sampleData)
+getSampleData(tallyFile, group)
+```
+
+Note that we set the columns to be 1 and 2 respectively while within the tally file the values 0 and 1 are stored. setSampleData and getSampleData automatically remove / add 1 from the value. This is implemented to adress the fact that R counts 1-based while HDF5 internally counts 0-based.
+
+
+## Extracting tallies from the bam files
+
+Now it is time to extract tally information from the bam files.
+
+
+```{r}
+startpos <- 115247090
+endpos <- 115259515
+Counts <- lapply(bamFiles, function(bamf) {
+    bam2R(file = bamf, chr = chrom, start = startpos, stop = endpos, head.clip = 10)  
+  #we tell it to ignore the first and last 10 sequencing cycles
+})
+```
+
+
+When we now have a look at the resulting matrix we can see that some transformations will be needed to make the data compatible with the h5vc tally file format. The good news is that we can get counts for both strands at all positions and even get deletions and insertion counts (we will ignore the latter for now). Unfortunately bam2R choses not to store the coverage separately and instead stored it implicitly in the sum of counts (technically the deletions have to be added in also here). This means we will have counts in the slot corresponding to the reference base which would break some of the downstream functions of h5vc. We will calculate the coverages by summing up the counts and deletions for each position and strand.
+
+```{r}
+Counts[[1]][5000:5010, ]
+```
+
+```{r}
+Coverages <- lapply(Counts, function(count) matrix(c(rowSums(count[, c("A", 
+    "C", "G", "T", "DEL")]), rowSums(count[, c("a", "c", "g", "t", "del")])), 
+    ncol = 2, byrow = FALSE, dimnames = list(NULL, c("Fwd", "Rev"))))
+Coverages[[1]][5000:5010, ]
+```
+
+```{r}
+Deletions <- lapply(Counts, function(count) count[, c("DEL", "del")])
+```
+
+Normally one would at this point load the reference sequence and mask out the counts for the reference base at each position. For simplicity, speed and since we want to illustrate comparative analyses mostly we will estimate the reference base as the base with the most counts in both strands and samples (potentially losing e.g. homozygous germline variants in the process).
+
+```{r}
+Counts <- lapply(Counts, 
+                 function(count) count[, c("A", "C", "G", "T", "a", 
+    "c", "g", "t")])  # kick out all unnecessary columns
+
+ref <- apply(Counts[[1]][, 1:4] + 
+               Counts[[1]][5:8] + 
+               Counts[[2]][, 1:4] + Counts[[2]][5:8], 1, which.max)
+
+for (i in seq(length(ref))) {
+    Counts[[1]][i, ref[i]] <- 0  #Set the forward strand in the first sample to zero
+    Counts[[1]][i, (ref[i] + 4)] <- 0
+    Counts[[2]][i, ref[i]] <- 0
+    Counts[[2]][i, (ref[i] + 4)] <- 0  
+    #Set the reverse strand in the first sample to zero
+}
+
+Reference <- ref - 1  #the tally file encodes the reference as A=0,C=1,G=2,T=3
+
+```
+
+## Writing to the HSF5 file
+
+Now we will write the data to the tally file.
+
+```{r}
+for (sample in 1:2) {
+    h5write(t(Counts[[sample]][, 1:4]), tallyFile, paste(group, "Counts", sep = "/"), 
+        index = list(5:8, sample, 1, startpos:endpos))  #Sample One Forward Strand
+  
+    h5write(t(Counts[[sample]][, 5:8]), tallyFile, paste(group, "Counts", sep = "/"), 
+        index = list(5:8, sample, 2, startpos:endpos))  #Sample One Reverse Strand
+
+    h5write(Coverages[[sample]][, "Fwd"], tallyFile, paste(group, "Coverages", 
+        sep = "/"), index = list(sample, 1, startpos:endpos))  #Sample One Forward Strand
+    
+    h5write(Coverages[[sample]][, "Rev"], tallyFile, paste(group, "Coverages", 
+        sep = "/"), index = list(sample, 2, startpos:endpos))  #Sample One Reverse Strand
+
+    h5write(Deletions[[sample]][, "DEL"], tallyFile, paste(group, "Deletions", 
+        sep = "/"), index = list(sample, 1, startpos:endpos))  #Sample Two Forward Strand
+    
+    h5write(Deletions[[sample]][, "del"], 
+            tallyFile, 
+            paste(group, "Deletions", sep = "/"), 
+            index = list(sample, 2, startpos:endpos))  #Sample Two Reverse Strand
+}
+
+h5write(Reference, 
+        tallyFile, 
+        paste(group, "Reference", sep = "/"), 
+        index = list(startpos:endpos))           # write the Reference
+
+h5ls(tallyFile)
+```
+
+This very explicit step-by-step implementation can be streamlined quite a bit to prevent much of the code-duplication.
+
+## Checking if everything worked
+
+We will use the `h5dapply` function provided by h5vc to extract the data again and have a look at it.
+
+```{r}
+data <- h5dapply(filename = tallyFile, 
+                 group = group, 
+                 blocksize = 1e+08, 
+                 range = c(startpos,  endpos))[[1]]  
+# we use a blocksize larger than the range to get all data in one block (extracted by [[1]])
+
+str(data)
+```
+
+We will call variants within this gene now:
+
+```{r}
+vars <- h5dapply(filename = tallyFile, 
+                 group = group, 
+                 blocksize = 1000, 
+                 FUN = callVariantsPaired, 
+                 sampledata = getSampleData(tallyFile, group), 
+                 cl = vcConfParams(returnDataPoints = TRUE), 
+                 range = c(startpos, endpos))
+
+vars <- do.call(rbind, vars)
+vars
+```
+
+By cleverly selecting the example data we have found exactly one variant that seems ot be interesting and will now plot the region in question to also check if the mismatchPlot function will work with the tally data we created.
+
+
+```{r}
+position <- vars$End[1]
+windowsize <- 50
+
+data <- h5dapply(filename = tallyFile, 
+                 group = group, 
+                 blocksize = 1e+08, 
+                 range = c(position - windowsize, position + windowsize))[[1]]
+
+p <- mismatchPlot(data, getSampleData(tallyFile, group), samples = c("AML", 
+    "Control"), windowsize = windowsize, position = position)
+
+print(p)
+```
+
+It would seem that we have found a reliable variant here.
+
+

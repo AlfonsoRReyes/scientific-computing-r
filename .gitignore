@@ -36,3 +36,16 @@ vignettes/*.pdf
 *.html
 
 wheels_totalPr\.png
+
+Tally-files
+\.directory
+
+*.out
+
+src/hello
+
+src/h5tutr_crtdat
+
+src/h5_crtdat
+
+src/h5_rdwt

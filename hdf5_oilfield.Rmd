@@ -1,0 +1,76 @@
+---
+title: "HDF5 - creating well files"
+output: html_notebook
+---
+
+## Create the HDF5 file
+```{r}
+library(rhdf5)
+
+wells.dir <- "./"
+
+wellFile <- file.path(wells.dir, "WOODLIB.01.hdf5")
+
+if (file.exists(wellFile)) {
+    file.remove(wellFile)
+}
+h5createFile(wellFile)
+```
+
+## add master groups
+
+```{r}
+wellName  <- "Example_21"
+fieldCase <- "GUO"
+
+
+group <- paste(fieldCase, wellName, sep = "/")
+h5createGroup(wellFile, fieldCase)         # create the toplevel group first
+
+h5createGroup(wellFile, group)             # add the well to the field case
+```
+
+```{r}
+stamp <- format(Sys.time(), "%Y%m%d.%H%M")
+
+wellEvent <- paste(group, stamp, sep = "/")
+
+h5createGroup(wellFile, wellEvent) 
+```
+
+
+## add datasets
+
+```{r}
+var.name <- "well.name"
+var.path <- paste(group, var.name, sep = "/")
+
+h5createDataset(wellFile, var.path, c(1,1), 
+                storage.mode = "character", 
+                size = 15)
+
+```
+
+```{r}
+# writing scalars
+var.names <- read.csv("./extdata/variable_names.csv")
+nRow <- nrow(var.names)
+
+for (v in seq_len(nRow)) {
+  #cat(v, var.names[v, 3], "\n")
+  row <- as.character(var.names[v, 1])
+  #print(unlist(row["var.name"]))
+  cat(row, "\n")
+  
+}
+
+```
+
+
+
+
+
+```{r}
+h5ls(wellFile)
+```
+
