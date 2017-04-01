@@ -1,0 +1,556 @@
+---
+title: "HDF5 package discovery"
+output: html_notebook
+---
+
+
+## 1st HDF5 example: Creating file and groups
+
+```{r}
+# Create an empty HDF5 file
+library(rhdf5)
+h5createFile("myhdf5file.h5")
+```
+
+
+The HDF5 file can contain a group hierarchy. We create a number of groups and list the file content afterwards.
+
+```{r}
+# create group foo
+h5createGroup("myhdf5file.h5","foo")
+```
+
+
+```{r}
+# create group baa
+ h5createGroup("myhdf5file.h5","baa")
+```
+
+
+```{r}
+# create sub group under foo
+h5createGroup("myhdf5file.h5","foo/foobaa")
+```
+
+
+```{r}
+# list what's in it
+h5ls("myhdf5file.h5")
+```
+
+
+
+### 2nd example: writing and reading objects
+
+```{r}
+# writing a matrix
+A = matrix(1:10, nr=5, nc=2)
+h5write(A, "myhdf5file.h5","foo/A")
+
+# writing an array
+B = array(seq(0.1,2.0,by=0.1), dim = c(5, 2, 2))    # 5x2x2 array
+attr(B, "scale") <- "liter"
+h5write(B, "myhdf5file.h5","foo/B")
+
+# writing an array of characters
+C = matrix(paste(LETTERS[1:10], LETTERS[11:20],     # matrix 2x5
+                 collapse=""), nr=2,nc=5)
+h5write(C, "myhdf5file.h5","foo/foobaa/C")
+
+# writing a dataframe
+df = data.frame(1L:5L, 
+                seq(0,1, length.out=5), 
+                c("ab","cde","fghi","a","s"), stringsAsFactors=FALSE)
+
+h5write(df, "myhdf5file.h5", "df")     
+
+h5ls("myhdf5file.h5")
+```
+
+> with write we have to specify the object and the name of the object.
+
+
+### write a dataframe with column names
+```{r}
+# writing a dataframe
+df2 = data.frame(long.int = 1L:5L, 
+                sequence =seq(0,1, length.out=5), 
+                strings = c("ab","cde","fghi","a","s"), 
+                stringsAsFactors=FALSE)
+
+h5write(df2, "myhdf5file.h5","df2")
+h5ls("myhdf5file.h5")
+```
+
+### saving individual objects wit `h5save`
+```{r}
+well.name <- "EXAMPLE_01"
+well.wh <- 100
+well.bh <- 6000
+
+h5save(well.name, well.bh, well.wh, file = "myhdf5file.h5")
+h5ls("myhdf5file.h5")
+```
+
+> with `h5save` we do not need to specify the name of the object
+
+
+### saving a list that combines different data types
+
+```{r}
+H5Fopen("myhdf5file.h5")
+
+# a list is saved like a group
+
+well.input <- list(oil.api = 40, 
+                oil.visc = 5,
+                gas.sg = 0.65,
+                liq.rt = 1000,
+                well.name = "well_01",
+                segments = as.integer(30),
+                deltaL = 1:40
+                )
+
+h5save(well.input, file = "myhdf5file.h5")
+h5ls("myhdf5file.h5")
+H5close()
+```
+
+### saving with `h5write`
+```{r}
+H5Fopen("myhdf5file.h5")
+
+# a list is saved like a group
+# each of the objects is a scalar
+# the list or group has to be removed first in order to write it
+# the list or group does not allow overwritting
+# the list or group supports sequences. they are written as 1-col vectors
+
+
+well.input2 <- list(oil.api = 40, 
+                oil.visc = 5,
+                gas.sg = 0.65,
+                liq.rt = 1000,
+                well.name = "well_01",
+                segments = as.integer(50),
+                deltaL = 1:50,
+                water.sg = 1.01
+                )
+
+h5write(well.input2, file = "myhdf5file.h5", name = "well.input2")
+h5ls("myhdf5file.h5")
+H5close()
+```
+
+### saving a list of scalars and a dataframe
+```{r}
+H5Fopen("myhdf5file.h5")
+
+# writing a dataframe
+df3 = data.frame(long.int = 1L:5L, 
+                sequence = seq(0,1, length.out=5), 
+                strings = c("ab","cde","fghi","a","s"), 
+                stringsAsFactors=FALSE)
+
+well.input3 <- list(oil.api = 40, 
+                oil.visc = 5,
+                gas.sg = 0.65,
+                liq.rt = 1000,
+                well.name = "well_01",
+                segments = as.integer(50),
+                deltaL = 1:50,
+                water.sg = 1.01,
+                dataframe = df3
+                )
+
+h5write(well.input3, file = "myhdf5file.h5", name = "well.input3")
+h5ls("myhdf5file.h5")
+H5close()
+```
+
+
+### writting attributes to group or list with `h5write`
+```{r}
+H5Fopen("myhdf5file.h5")
+
+# writing a dataframe
+df3 = data.frame(long.int = 1L:5L, 
+                sequence = seq(0,1, length.out=5), 
+                strings = c("ab","cde","fghi","a","s"), 
+                stringsAsFactors=FALSE)
+
+well.input4 <- list(oil.api = 40, 
+                oil.visc = 5,
+                gas.sg = 0.65,
+                liq.rt = 1000,
+                well.name = "well_01",
+                segments = as.integer(50),
+                deltaL = 1:50,
+                water.sg = 1.01,
+                dataframe = df3
+                )
+
+h5write(well.input4, 
+        file = "myhdf5file.h5", 
+        name = "well.input4",
+        write.attributes = TRUE
+        )
+h5ls("myhdf5file.h5")
+H5close()
+```
+
+> When write.attributes is TRUE, the group shows a red "A" letter.
+The default attributes of the list are shown as name = "names" and values are the names of the members of the list.
+
+
+
+```{r}
+h5ls("myhdf5file.h5")
+```
+
+
+```{r}
+fid <- H5Fopen("myhdf5file.h5")
+# writing a matrix
+A = matrix(1:10, nr=5, nc=2)
+
+# writing an array
+B = array(seq(0.1,2.0,by=0.1), dim = c(5, 2, 2))    # 5x2x2 array
+
+# writing a dataframe
+df = data.frame(1L:5L, 
+                seq(0,1, length.out=5), 
+                c("ab","cde","fghi","a","s"), stringsAsFactors=FALSE)
+
+#h5createDataset("myhdf5file.h5", "COMP", c(5,8))
+
+h5writeDataset.data.frame(df, h5loc = fid, name = "COMP1", DataFrameAsCompound = TRUE)
+
+
+```
+
+
+
+```{r}
+# create new dataset
+h5createDataset("myhdf5file.h5", "foo/S", c(5,8), 
+                storage.mode = "integer", chunk=c(5,1), level=7)
+h5ls("myhdf5file.h5")
+```
+
+```{r}
+h5write(matrix(1:5, nr=5, nc=1), file="myhdf5file.h5",         # matrix 5x1
+         name="foo/S", index=list(NULL,1))                     # it will write only a vector of S
+h5ls("myhdf5file.h5")
+```
+
+```{r}
+# we can see here that only the first column of the matrix S was written
+h5read("myhdf5file.h5", "foo/S")
+```
+
+```{r}
+h5write(6:10, file="myhdf5file.h5",              # write the 1st row of S, columns 2 thru 6
+        name="foo/S", index = list(1,2:6))
+
+h5read("myhdf5file.h5", "foo/S")
+```
+
+```{r}
+# write data in S on rows 1 thru 5 and columns 3 thru 8
+h5write(matrix(11:40, nr=5, nc=6), file="myhdf5file.h5",
+        name="foo/S", index=list(1:5, 3:8))
+
+h5read("myhdf5file.h5", "foo/S")
+```
+
+```{r}
+# write a sequence in rows 3,4 and columns 1,2
+h5write(matrix(141:144, nr=2, nc=2), file="myhdf5file.h5", 
+        name="foo/S", index=list(3:4, 1:2))
+
+h5read("myhdf5file.h5", "foo/S")
+```
+
+```{r}
+# write sequence 2x2 in rows 2, 3and columns 3 and 6 only
+h5write(matrix(151:154,nr=2,nc=2), file="myhdf5file.h5", 
+        name="foo/S", index=list(2:3, c(3,6)))
+h5read("myhdf5file.h5", "foo/S")
+```
+
+```{r}
+# read rows 2:3 and columns 2:3
+h5read("myhdf5file.h5", "foo/S", index=list(2:3, 2:3))
+```
+
+```{r}
+# read specific columns
+h5read("myhdf5file.h5", "foo/S", index=list(2:3,c(2,4)))
+```
+
+```{r}
+# read 4 specified columns
+h5read("myhdf5file.h5", "foo/S", index=list(2:3,c(1,2,4,5)))
+```
+
+###
+
+```{r}
+# create another dataset H with 5x8 
+h5createDataset("myhdf5file.h5", "foo/H", c(5,8), 
+                storage.mode = "integer",
+                chunk=c(5,1), level=7)
+h5read("myhdf5file.h5", "foo/H")
+```
+
+```{r}
+h5write(matrix(1:5,nr=5,nc=1), file="myhdf5file.h5", name="foo/H", 
+        start=c(1,1))
+h5read("myhdf5file.h5", "foo/H")
+```
+
+
+```{r}
+h5write(6:10, file="myhdf5file.h5", name="foo/H",
+        start=c(1,2), count=c(1,5))
+h5read("myhdf5file.h5", "foo/H")
+```
+
+```{r}
+h5write(matrix(11:40,nr=5,nc=6), file="myhdf5file.h5", name="foo/H",
+        start=c(1,3))
+h5read("myhdf5file.h5", "foo/H")
+```
+
+
+```{r}
+h5write(matrix(141:144,nr=2,nc=2), file="myhdf5file.h5", name="foo/H", 
+          start=c(3,1))
+ h5read("myhdf5file.h5", "foo/H")
+```
+
+```{r}
+# write small matrix in two different columns
+h5write(matrix(151:154,nr=2,nc=2), file="myhdf5file.h5", name="foo/H",
+        start=c(2,3), stride=c(1,3))
+
+h5read("myhdf5file.h5", "foo/H")
+```
+
+```{r}
+h5read("myhdf5file.h5", "foo/H", 
+       start=c(2,1),             # start at row=2, col=1
+       stride=c(1,3),            # only columns 1 and 3
+       count=c(2,2),             # 
+       block=c(1,2))
+```
+
+
+```{r}
+h5ls("myhdf5file.h5", all=TRUE)
+```
+
+
+```{r}
+h5ls("myhdf5file.h5", recursive=2)
+```
+
+
+## the attribute interface
+```{r}
+H5close()
+
+aFile <- file.path("./", "ex_H5A.h5")
+if (file.exists(aFile)) {
+    file.remove(aFile)
+}
+
+# create a file and write something
+h5createFile(aFile)
+h5write(1:15, aFile, "A")
+
+# write an attribute 'unit' to 'A'
+fid <- H5Fopen(aFile)        # open file
+did <- H5Dopen(fid, "A")           # open dataset
+sid <- H5Screate_simple(c(1,1))    # create the dataspace
+
+# datatype setting
+tid <- H5Tcopy("H5T_C_S1")         # copy the datatype string
+H5Tset_size(tid, 10L)              # string of size 10
+
+# create the attribute passing 
+#                dataset, name of attribute, dataspace, datatype
+aid <- H5Acreate(did,     "unit",            tid,       sid)
+cat("\nThis is the attribute id \n")
+aid
+
+# write the value of the attribute
+H5Awrite(aid, "liter")
+
+cat("\nThis is the attribute id and value \n")
+res <-  H5Aread(aid)
+res
+
+H5Aclose(aid)         # close
+H5Sclose(sid)         # close
+
+# check if attribute exist
+cat("\ncheck if attribute exist \n")
+H5Aexists(did, "unit")
+# [1] TRUE
+
+
+H5Dclose(did)
+H5Fclose(fid)
+cat("\n dump the file\n")
+h5dump(aFile)
+```
+
+## the dataset interface
+
+```{r}
+
+aFile <- file.path("./", "ex_H5D.h5")
+if (file.exists(aFile)) {
+    file.remove(aFile)
+}
+
+# write a dataset
+fid <- H5Fcreate(aFile)
+fid
+sid <- H5Screate_simple(c(10,5,3))
+sid
+did <- H5Dcreate(fid, "A", "H5T_STD_I32LE", sid)
+did
+H5Dwrite(did, 1L:150L, h5spaceMem = sid, h5spaceFile = sid)
+H5Dclose(did)
+H5Sclose(sid)
+H5Fclose(fid)
+
+# read a dataset
+fid <- H5Fopen(aFile)
+fid
+did <- H5Dopen(fid, "A")
+did
+sid <- H5Dget_space(did)
+sid
+B <- H5Dread(did)
+B
+H5Dclose(did)
+H5Sclose(sid)
+H5Fclose(fid)
+
+# write a subarray
+fid <- H5Fopen(aFile)
+fid
+did <- H5Dopen(fid, "A")
+did
+sid <- H5Dget_space(did)
+sid
+H5Sselect_index(sid, list(1:3,2:4,2))
+sidmem <- H5Screate_simple(c(3,3,1))
+sidmem
+A = array(-801:-809,dim=c(3,3,1))
+H5Dwrite(did, A, h5spaceMem = sidmem, h5spaceFile = sid)
+H5Dread(did)
+H5Sclose(sid)
+H5Dclose(did)
+H5Sclose(sidmem)
+H5Fclose(fid)
+```
+
+## the file interface
+```{r}
+fid <- H5Fcreate("ex_H5F.h5")
+fid
+H5Fclose(fid)
+
+fid2 <- H5Fopen("ex_H5F.h5")
+fid2
+H5Fclose(fid2)
+```
+
+## the group interface
+
+```{r}
+aFile <- file.path("./", "ex_H5G.h5")
+if (file.exists(aFile)) {
+    file.remove(aFile)
+}
+
+fid <- H5Fcreate(aFile)
+gid <- H5Gcreate(fid, "foo")
+gid
+
+H5Gget_info(gid)
+H5Gclose(gid)
+
+H5Gget_info_by_idx(fid,1)
+H5Gget_info_by_name(fid,"foo")
+
+H5Fclose(fid)
+```
+
+## the link interface
+
+```{r}
+aFile <- file.path("./", "ex_H5L.h5")
+if (file.exists(aFile)) file.remove(aFile)
+
+# create an hdf5 file and a group
+h5createFile(aFile)
+h5createGroup(aFile, "foo")
+
+# reopen file and get link info
+fid <- H5Fopen(aFile)
+cat("\n Does foo link exist? \n")
+H5Lexists(fid, "foo")
+cat("\n Does baa link exist? \n")
+H5Lexists(fid, "baa")
+
+cat("\nGet info \n")
+H5Lget_info(fid, "foo")
+H5Fclose(fid) 
+```
+
+## the object interface
+```{r}
+aFile <- file.path("./", "ex_H5O.h5")
+if (file.exists(aFile)) file.remove(aFile)
+
+# create an hdf5 file and write something
+h5createFile(aFile)
+h5createGroup(aFile,"foo")
+B = array(seq(0.1,2.0,by=0.1),dim=c(5,2,2))
+h5write(B, aFile, "foo/B")
+
+# reopen file and dataset and get object info
+fid <- H5Fopen(aFile)
+oid <- H5Oopen(fid, "foo")
+
+H5Oget_num_attrs(oid)
+H5Oclose(oid)
+H5Fclose(fid)
+```
+
+## Create attribute
+
+```{r}
+H5close()
+aFile <- file.path("./", "ex_createAttribute.h5")
+if (file.exists(aFile)) file.remove(aFile)
+
+h5createFile(aFile)
+h5write(1:1, aFile, "A")
+fid <- H5Fopen(aFile)
+did <- H5Dopen(fid, "A")
+h5createAttribute (did, "time", c(1,10))
+h5createAttribute (did, "units", 0)
+h5createAttribute (did, "width", 100)
+did
+h5ls(aFile)
+H5Dclose(did)
+H5Fclose(fid)
+```
+
