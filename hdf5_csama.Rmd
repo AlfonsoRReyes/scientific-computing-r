@@ -1,0 +1,60 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+Intorduction to HDF5
+
+The following code examples create an HDF5 ﬁle and ﬁll it with some random data
+to illustrate the functions we can use to interact with HDF5 ﬁles.
+
+```{r}
+#We use the rhdf5 package
+library(rhdf5)
+filename <- tempfile() #using a temporary file
+h5createFile(filename) #creating the basic file layoutញ剆䕅淑
+```
+
+
+```{r}
+h5ls(filename)
+```
+
+Let us use h5write to write some stuﬀ into the ﬁle (we use small examples, in a
+nucleotide tally ﬁle the array dimensions will be several orders of magnitude
+larger).
+
+```{r}
+# write an 4x5 array
+h5write(obj = array(rnorm(20), dim=c(4,5)), file = filename, name = "/RandomArray")
+
+# write a 100x1 vector
+h5write(obj = rpois(100, 10), file = filename, name = "/PoissonVector")
+h5ls(filename)
+```
+
+As you can see each dataset shows up in the listing of the ﬁle content
+(h5ls(filename)). We can use h5read to extract the data from the ﬁle again, if
+we simpy specify a ﬁlename and dataset name we will retrieve the whole dataset.
+
+Since this is a really bad idea for large scale projects (e.g. nucleotide
+tallies of human samples), we can also use subsetting to extract parts of the
+data. Have a look at ?h5read if you want to know more about the possible ways of
+retrieving data.￿
+
+```{r}
+h5read(file = filename, name = "/PoissonVector")
+```
+
+
+```{r}
+# extract a part
+h5read(file = filename, name = "/RandomArray", index = list(2:4, 3:5))
+```
+
+This should give you a basic idea of how we can interact with HDF5 ﬁles on a low
+level. Luckily there are wrapper functions in h5vc that we can use to access the
+ﬁle in a more eﬃcient way. Those will be discussed in the following sections.￿
+
+
