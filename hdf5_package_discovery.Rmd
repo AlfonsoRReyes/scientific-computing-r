@@ -1,5 +1,5 @@
 ---
-title: "HDF5 package discovery"
+title: "HDF5 rhdf5 package discovery"
 output: html_notebook
 ---
 
@@ -534,7 +534,7 @@ H5Oclose(oid)
 H5Fclose(fid)
 ```
 
-## Create attribute
+## Create attributes
 
 ```{r}
 H5close()

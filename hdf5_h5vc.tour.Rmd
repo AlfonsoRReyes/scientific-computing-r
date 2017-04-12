@@ -76,6 +76,7 @@ Nucleotide Tally Definition
 
 The tally data structure proposed here consists of 5 datasets that are
 stored for each chromosome (or contig). Those datasets are:
+
 * Counts: A table that contains the number of observed mismatches at
   any combination of base, sample, strand and genomic position,
 * Coverages: A table that contains the number of reads overlapping at
@@ -147,6 +148,15 @@ sampleData$ClinicalVariable <- rnorm(nrow(sampleData))
 setSampleData( tallyFile, "/ExampleStudy/16", sampleData )
 sampleData
 ```
+
+```{r}
+# adding a new column
+sampleData$new_column <- rnorm(nrow(sampleData))
+setSampleData( tallyFile, "/ExampleStudy/16", sampleData )
+sampleData
+```
+
+
 
 Now that we can find the sample metadata in the file it is time to extract some of the nuclotide tally data stored there. We can use two functions to achieve this, `h5readBlock` can be used to read a specified block of data along a given dimension (e.g. a region along the genomic position) and `h5dapply` can be used to apply a function in a blockwise fashion along a specified dimension (e.g. calculating coverage in bins of a certain size along the genomic position dimension).
 

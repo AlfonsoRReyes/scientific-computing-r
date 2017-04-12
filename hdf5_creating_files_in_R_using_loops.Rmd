@@ -26,9 +26,11 @@ Let’s first create the HDF5 file and call it “sensorData.h5”. Next, we wil
 
 ```{r}
 #create hdf5 file
-h5createFile("sensorData.h5")
+hdf5File <- "sensorData.h5"
+if (file.exists(hdf5File)) file.remove(hdf5File)
+h5createFile(hdf5File)
 #create group for location 1
-h5createGroup("sensorData.h5", "location1")
+h5createGroup(hdf5File, "location1")
 ```
 
 Remember from the discussion above that we want to create 3 location groups. The process of creating nested groups can be simplified with loops and nested loops. While the for loop below might seem excessive for adding three groups, it will become increasingly more efficient as we need to add more groups to our file.
@@ -38,7 +40,7 @@ Remember from the discussion above that we want to create 3 location groups. The
 #file
 l1 <- c("location2","location3")
 for(i in 1:length(l1)){
-  	  h5createGroup("sensorData.h5", l1[i])
+  	  h5createGroup(hdf5File, l1[i])
 }
 ```
 
@@ -48,7 +50,7 @@ Now let’s view the structure of our HDF5 file. We’ll use the h5ls() function
 
 ```{r}
 # View HDF5 File Structure
-h5ls("sensorData.h5")
+h5ls(hdf5File)
 ```
 
 Our group structure that will contain location information is now set-up. However, it doesn’t contain any data. Let’s simulate some data pretending that each sensor took replicate measurements for 100 minutes. We’ll add a 100 x 3 matrix that will be stored as a dataset in our HDF5 file. We’ll populate this dataset with simulated data for each of our groups. We’ll use loops to create these matrices and then paste them into each location group within the HDF5 file as datasets.

@@ -1,0 +1,281 @@
+---
+title: "HDF5 - creating well files #01"
+output: html_notebook
+---
+
+## Create the HDF5 file
+```{r}
+library(rhdf5)
+
+wells.dir <- "./"
+
+wellFile <- file.path(wells.dir, "WOODLIB.01.hdf5")
+if (file.exists(wellFile)) file.remove(wellFile)
+
+h5createFile(wellFile)
+```
+
+## add master groups
+
+```{r}
+fieldCase <- "GUO"            # field name
+wellName  <- "Example_21"     # well name
+
+group <- paste(fieldCase, wellName, sep = "/")
+h5createGroup(wellFile, fieldCase)         # create the toplevel group first
+
+h5createGroup(wellFile, group)             # add the well to the field case
+
+# create sub-group based on current date and time
+stamp <- format(Sys.time(), "%Y%m%d.%H%M")
+
+wellEvent <- paste(group, stamp, sep = "/")
+
+h5createGroup(wellFile, wellEvent) 
+```
+
+
+
+## add datasets
+
+```{r}
+# add a dataset with the well name
+var.name <- "well.name"
+var.path <- paste(group, var.name, sep = "/")
+
+h5createDataset(wellFile, 
+                var.path, 
+                c(1,1), 
+                storage.mode = "character", 
+                size = 15)
+
+```
+
+
+### saving individual objects wit `h5save`
+```{r}
+well.name <- "EXAMPLE_01"
+well.wh <- 100
+well.bh <- 6000
+
+h5save(well.name, well.bh, well.wh, file = wellFile)
+h5ls(wellFile)
+```
+
+> with `h5save` we do not need to specify the name of the object
+
+
+
+### saving a list that combines different data types
+
+```{r}
+H5Fopen(wellFile)
+
+# a list is saved like a group
+
+well.input <- list(oil.api = 40, 
+                oil.visc = 5,
+                gas.sg = 0.65,
+                liq.rt = 1000,
+                well.name = "well_01",
+                segments = as.integer(30),
+                deltaL = 1:40
+                )
+
+h5save(well.input, file = wellFile)
+h5ls(wellFile)
+H5close()
+```
+
+
+
+### saving with `h5write`
+```{r}
+H5Fopen(wellFile)
+
+# a list is saved like a group
+# each of the objects is a scalar
+# the list or group has to be removed first in order to write it
+# the list or group does not allow overwritting
+# the list or group supports sequences. they are written as 1-col vectors
+
+
+well.input2 <- list(oil.api = 40, 
+                oil.visc = 5,
+                gas.sg = 0.65,
+                liq.rt = 1000,
+                well.name = "well_01",
+                segments = as.integer(50),
+                deltaL = 1:50,
+                water.sg = 1.01
+                )
+
+h5write(well.input2, file = wellFile, name = "well.input2")
+h5ls(wellFile)
+H5close()
+```
+
+
+### saving a list of scalars and a dataframe
+```{r}
+H5Fopen(wellFile)
+
+# writing a dataframe
+df3 = data.frame(long.int = 1L:5L, 
+                sequence = seq(0,1, length.out=5), 
+                strings = c("ab","cde","fghi","a","s"), 
+                stringsAsFactors=FALSE)
+
+well.input3 <- list(oil.api = 40, 
+                oil.visc = 5,
+                gas.sg = 0.65,
+                liq.rt = 1000,
+                well.name = "well_01",
+                segments = as.integer(50),
+                deltaL = 1:50,
+                water.sg = 1.01,
+                dataframe = df3
+                )
+
+h5write(well.input3, file = wellFile, name = "well.input3")
+h5ls(wellFile)
+H5close()
+```
+
+### writting attributes to group or list with `h5write`
+```{r}
+H5Fopen(wellFile)
+
+# writing a dataframe
+df3 = data.frame(long.int = 1L:5L, 
+                sequence = seq(0,1, length.out=5), 
+                strings = c("ab","cde","fghi","a","s"), 
+                stringsAsFactors=FALSE)
+
+well.input4 <- list(oil.api = 40, 
+                oil.visc = 5,
+                gas.sg = 0.65,
+                liq.rt = 1000,
+                well.name = "well_01",
+                segments = as.integer(50),
+                deltaL = 1:50,
+                water.sg = 1.01,
+                dataframe = df3
+                )
+
+h5write(well.input4, 
+        file = wellFile, 
+        name = "well.input4",
+        write.attributes = TRUE
+        )
+
+h5ls(wellFile)
+H5close()
+```
+
+> When write.attributes is TRUE, the group shows a red "A" letter.
+The default attributes of the list are shown as name = "names" and values are the names of the members of the list.
+
+
+
+## write attributes
+
+```{r}
+# Open a hdf5 file
+fid <- H5Fopen(wellFile)
+
+#open up the dataset to add attributes to, as a class
+did <- H5Dopen(fid, "/well.input3/deltaL")           # did refers to the dataset
+
+h5writeAttribute(did, 
+                 attr = "feet",
+                 name = "Units")
+
+h5ls(wellFile)
+H5close()
+```
+
+
+```{r}
+# Open a hdf5 file
+fid <- H5Fopen(wellFile)
+
+#open up the dataset to add attributes to, as a class
+did <- H5Dopen(fid, "/well.input3/gas.sg")           # did refers to the dataset
+
+h5writeAttribute(did, 
+                 attr = "specific gravity",
+                 name = "Units")
+
+did <- H5Dopen(fid, "/well.input3/liq.rt")           # did refers to the dataset
+h5writeAttribute(did, 
+                 attr = "barrel per day",
+                 name = "Units")
+
+h5ls(wellFile)
+H5close()
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```{r}
+# writing scalars
+var.names <- read.csv("./extdata/variable_names.csv")
+nRow <- nrow(var.names)
+
+for (v in seq_len(nRow)) {
+  #cat(v, var.names[v, 3], "\n")
+  row <- as.character(var.names[v, 1])
+  #print(unlist(row["var.name"]))
+  cat(row, "\n")
+  
+}
+
+```
+
+
+
+
+
+```{r}
+h5ls(wellFile)
+```
+

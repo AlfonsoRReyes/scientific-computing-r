@@ -192,3 +192,13 @@ h5close(file)
 
 ```
 
+```{r}
+hdf_name <- "test.h5"
+h5file <- h5file(hdf_name, mode = "r")
+```
+
+
+```{r}
+get
+```
+

@@ -8,7 +8,7 @@ https://bioc.ism.ac.jp/packages/2.13/bioc/vignettes/h5vc/inst/doc/h5vc.creating.
 ```{r}
 suppressPackageStartupMessages(library(h5vc))  # h5vc is needed
 suppressPackageStartupMessages(library(rhdf5))  # rhdf5 is needed
- suppressPackageStartupMessages(library(deepSNV))  # we use deepSNV for tallying
+suppressPackageStartupMessages(library(deepSNV))  # we use deepSNV for tallying
  
 files <- c("NRAS.AML.bam", "NRAS.Control.bam")
 bamFiles <- file.path(system.file("extdata", package = "h5vcData"), files)
