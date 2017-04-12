@@ -24,7 +24,7 @@ library(rgdal)
 #setwd('pathToDataHere')
 
 #Define the file name to be opened
-f <- 'NEONDSImagingSpectrometerData.h5'
+f <- '~/Downloads/NEONDSImagingSpectrometerData.h5'
 #look at the HDF5 file structure 
 h5ls(f,all=T) 
 

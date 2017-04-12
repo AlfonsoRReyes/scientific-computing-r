@@ -1,7 +1,0 @@
-var.name,var.type,var.size,var.dim,description
-well.name,character,15,"1,1",well name
-depth.wh,float,,"1,1",depth wellhead
-depth.bh,float,,"1,1",depth bottomhole
-liq.rate,float,,"1,1",liquid rate
-oil.api,float,,"1,1",API of oil
-gas.sg,float,,"1,1",specific gravity of gas

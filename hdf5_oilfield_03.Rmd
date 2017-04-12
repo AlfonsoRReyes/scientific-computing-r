@@ -1,0 +1,152 @@
+---
+title: "hdf5 oilfield #03"
+output: html_notebook
+---
+
+
+```{r warning=FALSE}
+# create a new well record including FIELD and WELL
+
+library(rhdf5)
+library(dplyr)
+
+wells.dir <- "./"
+wellFile <- file.path(wells.dir, "WOODLIB.01.hdf5")
+
+# if hdf5 file exist, then open for reading
+
+# otherwise create a new hdf5 file
+if (!file.exists(wellFile)) 
+  fid <- H5Fcreate(wellFile) else fid <- H5Fopen(wellFile)
+
+# add FIELD group and WELL group
+fieldName <- "POETTMANN"            # field name
+wellName  <- "Example_001"     # well name
+
+.fieldName <- paste0("/", fieldName)
+field.well <- paste(.fieldName, wellName, sep = "/")
+
+
+# check if FIELD exists
+if (!hGroup.exists(wellFile, fieldName)) {
+  # if group field.well does not exist
+  h5createGroup(wellFile, fieldName)         # create the toplevel group first
+  # check if combination of FIELD/WELL exists
+  if (!hGroup.exists(wellFile, field.well)) {
+    h5createGroup(wellFile, field.well)             # add the well to the field case
+  }
+}
+
+
+
+stamp <- format(Sys.time(), "%Y%m%d.%H%M%S")      # get datetime up to seconds
+wellEvent <- paste(field.well, stamp, sep = "/")  # join field+well+datetime
+h5createGroup(wellFile, wellEvent)                # create datetime for well
+
+
+H5close()
+```
+
+```{r}
+# function that check the existance of field or well
+# 
+hGroup.exists <- function(hFile, hGroup) {
+  df <- h5ls(hFile, recursive = 1)
+
+  all.matches <- df %>%
+  filter(name == hGroup)
+
+if (length(unique(all.matches$group)) > 0)
+  return(TRUE)
+else 
+  return(FALSE)
+}
+
+
+hGroup.exists(wellFile, "GUO")
+```
+
+
+
+```{r}
+add.wellRecord <- function(hFile, fieldName, wellName) {
+  library(rhdf5)
+  library(dplyr)
+
+  # otherwise create a new hdf5 file
+  if (!file.exists(hFile)) 
+    fid <- H5Fcreate(hFile) #else fid <- H5Fopen(hFile)
+  
+  .fieldName <- paste0("/", fieldName)
+  field.well <- paste(.fieldName, wellName, sep = "/")
+  
+  
+  # check if FIELD exists
+  if (!hGroup.exists(hFile, fieldName)) {
+    # if group field.well does not exist
+    h5createGroup(hFile, fieldName)         # create the toplevel group first
+  }
+  # check if combination of FIELD/WELL exists
+  if (!hGroup.exists(hFile, field.well)) {
+    h5createGroup(hFile, field.well)             # add the well to the field case
+  }
+  
+  stamp <- format(Sys.time(), "%Y%m%d.%H%M%S")      # get datetime up to seconds
+  wellEvent <- paste(field.well, stamp, sep = "/")  # join field+well+datetime
+  hG <- h5createGroup(hFile, wellEvent)                   # create datetime for well
+  H5close()  
+  ifelse(hG, return(wellEvent), return(NULL)  )
+}
+
+
+
+wells.dir <- "./"
+wellFile <- file.path(wells.dir, "WOODLIB.01.hdf5")
+
+# add FIELD group and WELL group
+field <- "DUNSROS"            # field name
+well  <- "ExampleGuo"       # well name
+
+hg <- add.wellRecord(wellFile, field, well)
+
+```
+
+
+
+```{r}
+status = H5Gget_objinfo (file_id, "/MyGroup/Group_A", 0, NULL);
+```
+
+```{r}
+fid <- H5Fcreate("ex_H5G.h5")
+gid <- H5Gcreate(fid, "foo")
+gid <- H5Gcreate(fid, "oof")
+gid
+H5Gget_info(gid)
+H5Gclose(gid)
+
+H5Gget_info_by_idx(fid,1)
+H5Gget_info_by_name(fid, "foo")
+
+H5Fclose(fid)
+```
+
+```{r}
+fid <- H5Fopen("ex_H5G.h5")
+gid <- H5Gcreate(fid, "oof")
+H5Gget_info_by_idx(fid, 1)
+H5Gget_info_by_name(fid, "foo")
+```
+
+```{r}
+H5Gget_info_by_name(fid, "bar")
+```
+
+```{r}
+H5Gget_info(fid)
+```
+
+```{r}
+fid
+```
+
