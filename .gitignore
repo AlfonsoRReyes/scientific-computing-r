@@ -49,3 +49,7 @@ src/h5tutr_crtdat
 src/h5_crtdat
 
 src/h5_rdwt
+
+*.so
+
+*.o

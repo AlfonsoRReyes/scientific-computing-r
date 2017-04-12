@@ -1,0 +1,61 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+Source: https://www.r-bloggers.com/fortran-and-r-speed-things-up/
+
+```{r}
+convolvef77 <- function(x,y) {
+  dyn.load('convolvef77.so')
+  lx = length(x)
+  ly = length(y)
+  
+  retdata <- .Fortran("convolvef77",
+                       x = as.double(x),
+                       lx = as.integer(lx), 
+                       y = as.double(y), 
+                       ly = as.integer(ly), 
+                       xy = double(lx+ly-1))$xy
+  return(retdata)
+}
+ 
+# Now let's throw some large vectors at it. Look at how much better the times are
+ 
+v1 = rnorm(4000); v2 = rnorm(4000)
+ 
+system.time(convolvef77(v1,v2))
+```
+
+```{r}
+v1 = rnorm(8000); v2 = rnorm(8000)
+ 
+system.time(convolvef77(v1,v2))
+```
+
+
+```{r}
+timewrap <- function(x) {
+    times <- system.time(convolvef77(rnorm(x),rnorm(x)))[3]
+    return(c(size=x,times))
+}
+ 
+(convtimes <- sapply(c(100,1000,2000,4000),timewrap))
+```
+
+```{r}
+# Wow. This is FAST !!!!! Let's throw some bigger vectors at it.
+ 
+(convtimes <- sapply(c(100,1000,2000,4000,10000,20000,50000),timewrap))
+```
+
+```{r}
+library(lattice)
+# Plot the times
+ 
+xyplot(convtimes[2,]~convtimes[1,],type=c("p","l","g"),
+       xlab = "vector size", ylab = "elapsed time in seconds",
+       main = "Execution times for Convolution in Fortran", pch = 19)
+
+```
+
