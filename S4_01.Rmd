@@ -1,0 +1,170 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+setClass("Passenger", 
+         representation(name = "character", 
+                        origin = "character", 
+                        destination = "character"))
+
+```
+
+```{r}
+setClass("FreqFlyer", 
+         representation(ffnumber = "numeric"), 
+         contains = "Passenger")
+```
+
+
+```{r}
+getClass("FreqFlyer")
+```
+
+```{r}
+subClassMetaName("Passenger")
+```
+
+```{r}
+superClassNames("FreqFlyer")
+```
+
+## 3.2.3 Abstract data types
+
+Consider the following simple example, in S4. Suppose that we have a
+Rectangle class and that this class should respond to requests that ask for
+the area of the rectangle. We ﬁrst deﬁne a class for rectangle that includes
+a speciﬁc slot for the area. We next deﬁne a generic function for area, and
+deﬁne a method for the Rectangle class.
+
+```{r}
+setClass("Rectangle", representation(h = "numeric", 
+                                     w = "numeric", 
+                                     area = "numeric"))
+
+myr = new("Rectangle", h = 10, w = 20, area = 200)
+
+setGeneric("area", function(shape) standardGeneric("area"))
+```
+
+```{r}
+setMethod("area", signature(shape = "Rectangle"), 
+          function(shape) shape@area)
+```
+
+```{r}
+myr@area
+```
+
+```{r}
+area(myr)
+```
+
+Any user can either access the area directly by accessing the slot with
+myr@area or by calling the area generic function. Accessing the slot breaks
+the data type abstraction; you are relying on the implementation. Using the
+generic function makes use of the ADT. If the representation were to change
+to that shown below, any code relying on the generic function will continue
+to work and any code relying on slot access will fail. By using ADTs, it is
+simpler to change the representation of data types as a project evolves.
+
+```{r}
+setClass("Rectangle", representation(h = "numeric", w = "numeric"))
+setMethod("area", "Rectangle", function(shape) shape@h * shape@w)
+
+```
+
+```{r}
+myr = new("Rectangle", h = 15, w = 25)
+area(myr)
+```
+
+## 3.2.4 Self-describing data
+
+One of the major uses of OOP within the Bioconductor Project is in the
+construction of self-describing data classes. The most widely used is the
+ExpressionSet class deﬁned in the Biobase package. Our goal is to deﬁne
+a self-describing data object that can be used to carry out a reasonable anal-
+ysis of the data. If all information is stored in a single object it is easier to
+save it, to share it with others, or to use it as input to a function. This is
+consistent with the notion that you would like to place all data relevant to
+the experiment into a single ﬁle folder and to place it into a ﬁling cabinet so
+that later you can ﬁnd all the information you need in one place.
+
+The data might be stored in either a matrix or a data.frame. And while
+informative row and column labels can be used, it is diﬃcult to encode all
+relevant information about the variables in the labels. One solution is to
+create a compound object that holds both the data and the metadata about
+the variables, and possibly about the samples. Deﬁning a suitable class yields
+self-describing data.
+
+The major beneﬁts that we have found to programming with self-describing
+data are that it is easy to return to a project after some months and re-do an
+analysis. We have also found that it is relatively easy to hand oﬀ a project
+from one analyst to another. But perhaps the greatest beneﬁt has come from
+deﬁning specialized subsetting methods, that is, methods for [ that help to
+construct an appropriate subset of the object, with all variables correctly
+aligned.
+
+```{r}
+setClass("A", representation(s1 = "numeric"), 
+         prototype = prototype(s1 = 0))
+
+myA = new("A")
+myA
+```
+
+```{r}
+m2 = new("A", s1 = 10)
+m2
+```
+
+We can create a second class B that contains A, so that B is a direct
+subclass of A or, put another way, B inherits from class A. Any instance
+of the class B will have all the slots in the A class and any additional ones
+deﬁned speciﬁcally for B. Duplicate slot names are not allowed, so the slot
+names for B must be distinct from those for A.
+
+```{r}
+setClass("B", contains = "A", 
+         representation(s2 = "character"), 
+         prototype = list(s2 = "hi"))
+
+myB = new("B")
+myB
+```
+
+
+```{r}
+getSlots("A")
+```
+
+```{r}
+slotNames("A")
+```
+
+```{r}
+getClass("A")
+```
+
+```{r}
+extends("B")
+```
+
+```{r}
+extends("B", "A")
+
+extends("A", "B")
+```
+
+Install first RBioinf with `BiocInstaller::biocLite("RBioinf")`
+
+```{r}
+RBioinf::superClassNames("B")
+```
+
+```{r}
+RBioinf::subClassNames("A")
+```
+

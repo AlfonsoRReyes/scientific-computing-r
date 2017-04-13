@@ -1,0 +1,332 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+## R fundamentals
+```{r}
+x = 10
+y = x
+
+ls()
+# [1] "x" "y"
+```
+
+
+```{r}
+# variable names that do not follow the standard rules have to be quoted or
+# use backticks
+`_foo` = 10
+"10:10" = 20
+
+ls()
+
+# [1] "_foo"  "10:10" "x"     "y" 
+```
+
+## attributes
+```{r}
+x = 1:10
+attr(x, "foo") = 11   # add an attribute to x
+x
+#  [1]  1  2  3  4  5  6  7  8  9 10
+# attr(,"foo")
+# [1] 11
+```
+
+## intro to OOP in R
+
+```{r}
+mean
+# function (x, ...) 
+# UseMethod("mean")
+# <bytecode: 0x0000000009d70470>
+# <environment: namespace:base>
+```
+
+We can see all the deﬁned methods for this function using the methods command.
+
+```{r}
+methods(mean)
+```
+
+And see that they all begin with the name mean, then a period. 
+
+## Numerical computing
+One of the strengths of R is its various numerical computing capabilities. It
+is important to remember that computers cannot represent all numbers and
+that machine computation is not identical to computation with real numbers.
+
+And a classical example of the problem is given in the code below.
+
+```{r}
+a = sqrt(2)
+a * a == 2
+# [1] FALSE
+
+a * a - 2
+# [1] 4.440892e-16
+```
+
+      
+      > .Machine
+      
+      $double.eps
+      [1] 2.220446e-16
+      
+      $double.neg.eps
+      [1] 1.110223e-16
+      
+      $double.xmin
+      [1] 2.225074e-308
+      
+      $double.xmax
+      [1] 1.797693e+308
+      
+      $double.base
+      [1] 2
+      
+      $double.digits
+      [1] 53
+      
+      $double.rounding
+      [1] 5
+      
+      $double.guard
+      [1] 0
+      
+      $double.ulp.digits
+      [1] -52
+      
+      $double.neg.ulp.digits
+      [1] -53
+      
+      $double.exponent
+      [1] 11
+      
+      $double.min.exp
+      [1] -1022
+      
+      $double.max.exp
+      [1] 1024
+      
+      $integer.max
+      [1] 2147483647
+      
+      $sizeof.long
+      [1] 4
+      
+      $sizeof.longlong
+      [1] 8
+      
+      $sizeof.longdouble
+      [1] 16
+      
+      $sizeof.pointer
+      [1] 8
+
+
+## Environments
+ In the code below, we create
+an environment, create the symbol value pair that relates the symbol a to the
+value 10 and then list the contents of the hash table.
+
+```{r}
+e1 = new.env(hash = TRUE)
+e1$a = 10
+ls(e1)
+# [1] "a"
+```
+
+```{r}
+e1[["a"]]
+# [1] 10
+```
+
+```{r}
+e1$b = 20
+e1$c = 30
+
+```
+
+In order to retrieve multiple values simultaneously from an environment, the
+mget function should be used.
+
+```{r}
+mget(c("a", "b", "c"), e1)
+```
+
+In the next code segment, an environment, e1, is created and has some
+values assigned in to it. Then a function is deﬁned and that function has
+some free variables (variables that are not parameters and are not deﬁned
+in the function). We then make e1 be the environment associated with the
+function and then the free variables will obtain values from e1. Then we
+change the value of one of the free variables by accessing e1 and that changes
+the behavior of the function, which demonstrates that no copy of e1 was made.
+
+```{r}
+e1 = new.env()
+e1$z = 10
+
+f = function(x) {
+  x + z
+}
+
+environment(f) = e1
+f(10)
+
+e1$z = 20
+f(10)
+```
+
+Next, we demonstrate the semantics of rm in this context. If we remove e1,
+what should happen to f? If the eﬀect of the command environment(f) = e1
+was to make a copy of e1, then rm(e1) should have no eﬀect, but we know
+that no copy was made and yet, as we see, removing e1 appears to have no
+eﬀect.
+```{r}
+rm(e1)
+f(10)
+```
+
+What rm(e1) does is to remove the binding between the symbol e1 and the
+internal data structure that contains the data, but that internal data structure
+is itself left alone. Since it can also be reached as the environment of f, it will remain available.
+
+
+## Managing your R session
+
+```{r}
+R.version$platform
+
+Sys.info()
+
+.Platform
+
+capabilities()
+```
+
+## 2.4 Language basics
+
+```{r}
+colSums
+```
+
+```{r}
+get("+")
+
+x = 1:4
+myP = get("+")
+
+myP(x, 5)
+```
+
+
+users can deﬁne their
+own using any text string in place of any. The function should be a function of
+two arguments, although currently this is not checked. In the example below
+we deﬁne a simple operator that pastes together its two arguments.
+
+```{r}
+"%p%" = function(x, y) paste(x, y, sep = "")
+
+"hi" %p% "there"
+```
+
+
+```{r}
+foo = function(x) {
+  if (x < 3)
+    list() + x
+  else {
+    if (x < 10)
+      warning("ouch")
+    else 33
+  }
+}
+
+tryCatch(foo(2), error = function(e) "an error", 
+         warning = function(e) "a warning")
+```
+
+```{r}
+tryCatch(foo(5), error = function(e) "an error", 
+         warning = function(e) "a warning")
+```
+
+## 2.11 Exception handling
+```{r}
+tryCatch(foo(29))
+```
+
+
+```{r}
+even = function(i) i %% 2 == 0
+
+testEven = function(i) if (even(i) ) i else stop("not even")
+
+vals = NULL
+
+withCallingHandlers({ 
+  for (i in seq_len(10)) { 
+    val = withRestarts(testEven(i), 
+                       skipError=function() return(NULL))
+    if (!is.null(val))
+      vals = c(vals, val) }
+  }, 
+  error=function(e) invokeRestart("skipError"))
+
+vals
+```
+
+## 2.12.4 Indirect function invocation
+
+```{r}
+b = get("foo")
+b(23)
+# [1] 33
+```
+
+```{r}
+do.call("foo", list(23))
+```
+
+```{r}
+x = expression(1:10)
+x
+```
+
+```{r}
+eval(x)
+```
+
+```{r}
+evalq(x)
+```
+```{r}
+eval(quote(x))
+```
+
+## 2.13.1 Lexical scope. Likelihoods
+
+```{r}
+Rmlfun = function(x) {
+  sumx = sum(x)
+    n = length(x)
+    function(mu) n * log(mu) - mu * sumx
+}
+
+efun = Rmlfun(1:10)
+efun(3)
+```
+
+```{r}
+efun2 = Rmlfun(20:30)
+efun2(3)
+```
+
+```{r}
+efun = Rmlfun(1:10)
+efun(3)
+```
+
