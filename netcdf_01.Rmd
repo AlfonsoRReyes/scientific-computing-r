@@ -2,6 +2,8 @@
 title: "netcdf versus HDF5"
 output: html_notebook
 ---
+
+
 ## `netcdf` Datasets
 Datasets can be found here: http://geog.uoregon.edu/GeogR/topics/raster02.html
 
@@ -22,7 +24,7 @@ library(chron)
 library(RColorBrewer)
 library(lattice)
 
-ncname <- "cru10min30_tmp"  
+ncname <- "D:/Dropbox/git/extdata/cru10min30_tmp"  
 ncfname <- paste(ncname,".nc", sep="")
 dname <- "tmp"                          # note: tmp means temperature (not temporary)
 
@@ -235,7 +237,7 @@ head(na.omit(tmp.df01), 20)
 Finally the data frame is written out to the working directory as a .csv file, using na.omit() again to drop the observations with missing data (i.e. ocean points and Antarctica).
 
 ```{r}
-csvfile <- "cru_tmp_1.csv"
+csvfile <- "./inst/extdata/cru_tmp_1.csv"
 write.table(na.omit(tmp.df01), csvfile, row.names = FALSE, sep = ",")
 ```
 
@@ -287,7 +289,7 @@ dim(na.omit(tmp.df02))
 
 Write the second data frame out as a .csv file, dropping NAs.
 ```{r}
-csvfile <- "cru_tmp_2.csv"
+csvfile <- "./inst/extdata/cru_tmp_2.csv"
 write.table(na.omit(tmp.df02), csvfile, row.names = FALSE, sep = ",")
 ```
 
@@ -303,6 +305,10 @@ head(tmp.df03)
 
 
 
+```{r}
+file.remove(c("./inst/extdata/cru_tmp_1.csv"))
+file.remove(c("./inst/extdata/cru_tmp_2.csv"))
+```
 
 
 
