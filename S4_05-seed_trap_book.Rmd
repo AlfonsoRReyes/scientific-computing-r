@@ -1,0 +1,108 @@
+---
+title: "S4_05: the seed trap example"
+output: html_notebook
+---
+
+Source: book
+
+First, we tell R about the class itself, using the setClass function, which
+takes the proposed class name and the proposed structure of the objects of
+the class as arguments.
+
+```{r}
+setClass("trapTransect", representation(distances = "numeric", 
+                                        seed.counts = "numeric",
+                                        trap.area = "numeric"))
+```
+
+Writing an object constructor is a little more involved than for S3 classes.
+The constructor function is called `new`, but if we wish to do any processing
+of the arguments, including validity checks, then we need to add a speciﬁc
+initialize function, which will be called by new.
+
+```{r}
+setMethod("initialize", "trapTransect", 
+          function(.Object, 
+                   distances = numeric(0), 
+                   seed.counts = numeric(0), 
+                   trap.area = numeric(0)) {
+                if (length(distances) != length(seed.counts))
+                    stop("Lengths of distances and counts differ.")
+                if (length(trap.area) != 1)
+                    stop("Ambiguous trap area.")
+               .Object@distances <- distances
+               .Object@seed.counts <- seed.counts
+               .Object@trap.area <- trap.area
+               .Object
+               })
+```
+
+`new` creates an empty object and passes it to initialize, along with the
+arguments that were provided to it. initialize then returns the updated
+object, if the evaluations are successful.
+
+```{r}
+s1 <- new("trapTransect",
+                         distances = 1:4,
+                         seed.counts = c(4, 3, 2, 0),
+                         trap.area = 0.0001)
+```
+
+
+Objects from S4 classes diﬀer from objects of S3 classes in a few important
+ways. The elements that comprise the object, as deﬁned in the setClass
+function, are called slots. The names of the slots can be found by
+
+```{r}
+slotNames(s1)
+```
+
+The values in the slots are accessed by either the slot function or the “@”
+operator, which takes the place of the $ operator used previously.
+
+```{r}
+s1@distances
+```
+
+We now add two methods for the class: `show`, to print objects of the class when
+just the object name is input, and `mean`, to compute and return the mean seed
+distance from the object. In each case we use the `setMethod` function, which
+requires the method name, the pattern of expected formal arguments (called
+the signature), and the function itself.
+
+```{r}
+setMethod("mean", 
+          signature(x = "trapTransect"), 
+          function(x, ...) 
+              weighted.mean(x@distances, w = x@seed.counts))
+```
+
+```{r}
+setMethod("show", 
+          signature(object = "trapTransect"), 
+          function(object) 
+              str(object))
+```
+
+We demonstrate the application of the new methods to the object.
+
+```{r}
+s1
+```
+
+```{r}
+mean(s1)
+```
+
+We list the S4 methods for the trapTransect class by
+
+```{r}
+showMethods(classes = "trapTransect")
+```
+
+To display the code for a particular S4 method, we use
+
+```{r}
+ getMethod("mean", "trapTransect")
+```
+

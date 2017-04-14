@@ -1,0 +1,379 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+Source: https://github.com/lgatto/S4-tutorial
+
+We choose to represent the microarray results as a matrix of size n×m, where
+n is the number of probes on the microarray and m is the number of samples.
+The matrix that stores the intensities (these could also be fold-changes) is
+named marray.
+
+The sample annotation (meta-data) is described using a data.frame with
+exactly m rows and any number of columns. It is named pmeta.
+
+The feature (probe) annotation (meta-data) is described using a data.frame
+with exactly n rows and any number of columns. Let’s call it fmeta.
+
+```{r}
+n <- 10
+m <- 6
+
+marray <- matrix(rnorm(n * m, 10, 5), ncol = m)
+
+# add the row names and column names to the matrix
+rownames(marray) <- paste0("probe", 1:n)
+colnames(marray) <- LETTERS[1:m]
+
+marray
+```
+
+
+```{r}
+# build the annotations dataframe for the samples
+pmeta <- data.frame(sampleId = 1:m, condition = rep(c("WT", "MUT"), each = 3))
+rownames(pmeta) <- colnames(marray)
+
+pmeta
+```
+
+
+```{r}
+# build the annotations dataframe for the probes
+fmeta <- data.frame(geneId = 1:n, pathway = sample(LETTERS, n, replace = TRUE))
+rownames(fmeta) <- rownames(marray)
+fmeta
+```
+
+Finally, to link these related pieces of information together, marray, pmeta and
+fmetawill all be combined into a listthat will represent our microarray experiment.
+
+```{r}
+maexp <- list(marray = marray, 
+              fmeta = fmeta, 
+              pmeta = pmeta)
+
+
+rm(marray, fmeta, pmeta) ## clean up
+str(maexp)
+```
+
+We can access and manipulate the respective elements of our microarray experi-
+ment with the `$` operator.
+
+```{r}
+maexp$pmeta
+```
+
+
+```{r}
+# get the summary for column A in the array
+summary(maexp$marray[, "A"])
+```
+
+```{r}
+# for the condition "WT" in the sample annotations, 
+# get the array values for probe8
+wt <- maexp$pmeta[, "condition"] == "WT"
+maexp$marray["probe8", wt]
+```
+
+```{r}
+# get values from probe3 for conditions different that "WT"
+ maexp[["marray"]]["probe3", !wt] ## different syntax
+```
+
+The above solution does not provide a clean syntax. As a user, we have to know
+the names or positions of the respective elements of the microarray list elements to directly access the parts of interest.
+
+```{r}
+ boxplot(maexp$marray)
+```
+
+Figure 1: Boxplot representing the intensity distributions of the 10 probes for the 6 samples.
+
+## Challenge
+But what if we want to subset the experiment. How would we extract
+the 5 ﬁrst probes for the 3 ﬁrst samples?
+
+We have to manually subset the individual elements of our list, making sure that
+the number of rows of the marray and fmeta elements remain identical as well as
+the number of columns of marray and the number of columns of pmeta.
+
+```{r}
+x <- 1:5
+y <- 1:3
+
+marray2 <- maexp$marray[x, y]
+
+fmeta2 <- maexp$fmeta[x, ]
+pmeta2 <- maexp$pmeta[y, ]
+
+maexp2 <- list(marray = marray2, fmeta = fmeta2, pmeta = pmeta2)
+
+rm(marray2, fmeta2, pmeta2) ## clean up
+str(maexp2)
+```
+
+A simple operation like sub-setting the microarray experiment is very cumbersome
+and prone to errors. If we were to use this implementation for further work, we would of course want to write a custom function to perform the above.
+
+## The MArray class
+We can deﬁne a class with the setClass function. Our class is deﬁned by a name, 
+MArray, and a content structure. The diﬀerent elements/ﬁelds of an S4 class are 
+called slots4. When deﬁning the slots, we provide their respective names and
+classes as a (named) vector or list. It will only be possible to create objects
+with exactly these types of slots.
+
+
+```{r}
+MArray <- setClass("MArray",
+                   slots = c(marray = "matrix",
+                             fmeta = "data.frame",
+                             pmeta = "data.frame")
+                       )
+```
+
+>  the representation function is deprecated from version 3.0.0 and should be
+avoided.
+
+The setClass function returns a special function called a constructor, that can
+be used to create an instance of the class.
+
+```{r}
+MArray() ## an empty object
+```
+
+```{r}
+# we use the previous list
+ma <- MArray(marray = maexp[[1]],
+             pmeta = maexp[["pmeta"]],
+             fmeta = maexp[["fmeta"]]
+             )
+ma
+```
+
+```{r}
+class(ma)
+```
+
+
+To access individual slots, we need to use the @. This is equivalent to using the `$` for a list.
+
+```{r}
+ma@pmeta
+```
+
+But this is something we do not want a user to do. To access a slot like this, one needs to know its name, i.e. the underlying plumbing of the class. This breaks the notion of encapsulation. Instead, the developer will provide the user with speciﬁc accessor methods (see section 5.2) to extract (or update using a replace method, section 5.5) speciﬁc slots.
+
+## MArray methods
+Before proceeding, we need to explain the concept of generic function. A generic
+function, or generic for short, is a function that dispatches methods to their appro-
+priate class-speciﬁc implementation. A method do will implement behaviour for a
+speciﬁc class A, while another implementation of do, will deﬁne another behaviour
+for class B. The generic do is the link between the class and its dedicated implemen-
+tation. If we have do(a) (where a is of class A), than the generic will make sure that
+the A-speciﬁc code of do will be executed.
+
+Before we deﬁne a method with setMethod, we will always want to ﬁrst check if
+such a method does not exists (in which case there is already a generic function), as
+illustrated with the show method in section 5.1. If it is the case, we write our new
+methods. If not, we ﬁrst create the generic and then proceed with the method.
+
+
+## The show method
+The show method (it is a method, as it exhibits custom behaviour depending on
+the class of its argument) is a very helpful one. It allows to deﬁne custom summary
+view of an object when we type its name in the console, instead of having all its
+(possibly very long content) displayed.
+
+
+```{r}
+setMethod("show", 
+          signature = "MArray", 
+          definition = function(object) {
+            cat("An object of class ", class(object), "\n", sep = "")
+            cat(" ", nrow(object@marray), " features by ", ncol(object@marray), 
+                " samples.\n", sep = "")
+            #invisible(NULL) 
+            })
+```
+
+```{r}
+ma
+```
+
+## 5.2 Accessors
+As mentioned above, we want to provide customised and controlled access to the 
+class slots. This does not prevent us, as developers, to use the @ accessor, but
+does not force others to know the implementation details. Let’s create an
+accessor for the marray slot and call the accessor marray. There is no harm in
+naming the slot and its accessor with the same name but there is no constrain in
+doing so. There is no such method or generic; just typing marray with tell you
+that no such object is found. Below, we create a new generic function with 
+setGeneric. We deﬁne the name of our new generic as well as the name of the
+argument(s) that will have to be re-used when deﬁning class-speciﬁc method.
+
+
+```{r}
+setGeneric("marray", function(object) standardGeneric("marray"))
+```
+
+In general, it is considered good practice to add a ... in the signature of a generic
+function. It provides the ﬂexibility for other methods to use more arguments.
+
+```{r}
+setGeneric("marray", function(object, ...) standardGeneric("marray"))
+```
+
+We now proceed in the same way as above, using setMethod. The deﬁnition of our
+method (i.e. the actual code that will be executed) is very short and of course 
+uses @ to access (and return) the slot content.
+
+```{r}
+setMethod("marray", "MArray", function(object) object@marray)
+```
+
+```{r}
+marray(ma)
+```
+
+If we change the underlying implementation by changing the name of the slot or 
+using an environment instead of a matrix, the ma@marrayis going to break.
+However, when providing accessors, we can echo the changes in the accessor
+implementation without aﬀecting the users’ behaviour or existing scripts.
+
+## Accessors for pmeta and fmeta
+
+```{r}
+setGeneric("pmeta", function(object, ...) standardGeneric("pmeta"))
+setMethod("pmeta", "MArray", function(object) object@pmeta)
+
+setGeneric("fmeta", function(object, ...) standardGeneric("fmeta"))
+setMethod("fmeta", "MArray", function(object) object@fmeta)
+
+```
+
+```{r}
+pmeta(ma)
+```
+
+```{r}
+fmeta(ma)
+```
+
+## The sub-setting operation
+The documentation help("[") shows that, in addition to x, the object to be 
+subset, we also have to take the i and j indices into account and the drop
+argument. When an argument is not relevant, we specify this by declaring that it
+is "missing".
+
+```{r}
+setMethod("[", "MArray", 
+          function(x, i, j, drop = "missing") { 
+              .marray <- x@marray[i, j] 
+              .pmeta <- x@pmeta[j, ] 
+              .fmeta <- x@fmeta[i, ]
+                MArray(marray = .marray,
+                        fmeta = .fmeta,
+                        pmeta = .pmeta)
+})
+```
+
+
+```{r}
+ma[1:5, 1:3]
+```
+
+## Implement the summary of a sample
+
+```{r}
+isGeneric("summary")
+```
+
+```{r}
+setMethod("summary", "MArray", 
+          function(object, sample) {
+              summary(object@marray[, sample])
+          }          )
+```
+
+
+```{r}
+# get the summary
+summary(ma, "D")
+```
+
+## For a condition in `probe` get the value for any probe
+
+
+```{r}
+# for the condition "WT" in the sample annotations, 
+# get the array values for probe8
+wt <- maexp$pmeta[, "condition"] == "WT"
+maexp$marray["probe8", wt]
+```
+
+
+```{r}
+setGeneric("getValuesForProbeCondition", 
+           function(object, ...) standardGeneric("getValuesForProbeCondition"))
+
+setMethod("getValuesForProbeCondition", "MArray",
+          function(object, probe, condition) {
+              cond = object@pmeta[, "condition"] == condition
+              return(object@marray[probe, cond])
+          })
+```
+
+```{r}
+getValuesForProbeCondition(ma, "probe3", "WT")
+```
+
+## Get type of conditions in the samples
+
+```{r}
+setGeneric("getSampleConditions", function(object, ...) 
+    standardGeneric("getSampleConditions"))
+
+setMethod("getSampleConditions", "MArray", 
+          function(object) {
+              unique(object@pmeta$condition)
+          })
+```
+
+```{r}
+getSampleConditions(ma)
+```
+
+## Get type of pathways in the probes
+
+```{r}
+setGeneric("getProbePathways", function(object, ...)
+           standardGeneric("getProbePathways"))
+
+setMethod("getProbePathways", "MArray", 
+          function(object) {
+              unique(object@fmeta$pathway)
+          })
+```
+
+```{r}
+getProbePathways(ma)
+```
+
+## Introspection
+
+```{r}
+slotNames(ma)
+```
+
+```{r}
+getClass("MArray")
+```
+
+```{r}
+showMethods(classes = "MArray")
+```
+

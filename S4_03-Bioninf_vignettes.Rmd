@@ -1,0 +1,520 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+### R code from vignette source 'ExpressionSetIntroduction.Rnw'
+
+###################################################
+### code chunk number 1: init
+###################################################
+options(width=65)
+
+
+###################################################
+### code chunk number 2: install-pkg (eval = FALSE)
+###################################################
+## source("http://bioconductor.org/biocLite.R")
+## biocLite(c("Biobase"))
+
+
+###################################################
+### code chunk number 3: loadlib
+###################################################
+library("Biobase")
+
+
+###################################################
+### code chunk number 4: convert (eval = FALSE)
+###################################################
+## library(convert)
+## as(object, "ExpressionSet")
+
+
+###################################################
+### code chunk number 5: read-table-geneData
+###################################################
+dataDirectory <- system.file("extdata", package="Biobase")
+exprsFile <- file.path(dataDirectory, "exprsData.txt")
+exprs <- as.matrix(read.table(exprsFile, header=TRUE, sep="\t",
+                              row.names=1,
+                              as.is=TRUE))
+
+
+###################################################
+### code chunk number 6: exprsFile (eval = FALSE)
+###################################################
+## exprsFile <- "c:/path/to/exprsData.txt"
+
+
+###################################################
+### code chunk number 7: geneData-peak
+###################################################
+class(exprs)
+dim(exprs)
+colnames(exprs)
+head(exprs[,1:5])
+
+
+###################################################
+### code chunk number 8: ExpressionSet-basic
+###################################################
+minimalSet <- ExpressionSet(assayData=exprs)
+
+
+###################################################
+### code chunk number 9: pData
+###################################################
+pDataFile <- file.path(dataDirectory, "pData.txt")
+pData <- read.table(pDataFile,
+                    row.names=1, header=TRUE, sep="\t")
+dim(pData)
+rownames(pData)
+summary(pData)
+
+
+###################################################
+### code chunk number 10: geneCovariate-geneData-name-match
+###################################################
+all(rownames(pData)==colnames(exprs))
+
+
+###################################################
+### code chunk number 11: colnames
+###################################################
+names(pData)
+
+
+###################################################
+### code chunk number 12: sapplyClasses
+###################################################
+sapply(pData, class)
+
+
+###################################################
+### code chunk number 13: simpleSubsetting
+###################################################
+pData[c(15, 20), c("gender", "type")]
+pData[pData$score>0.8,]
+
+
+###################################################
+### code chunk number 14: metadata-create
+###################################################
+metadata <- data.frame(labelDescription=
+                       c("Patient gender", 
+                         "Case/control status", 
+                         "Tumor progress on XYZ scale"),
+                       row.names=c("gender", "type", "score"))
+
+
+###################################################
+### code chunk number 15: AnnotatedDataFrame
+###################################################
+phenoData <- new("AnnotatedDataFrame", 
+                 data=pData, varMetadata=metadata)
+phenoData
+
+
+###################################################
+### code chunk number 16: AnnotatedDataFrame-subset
+###################################################
+head(pData(phenoData))
+phenoData[c("A","Z"),"gender"]
+pData(phenoData[phenoData$score>0.8,])
+
+
+###################################################
+### code chunk number 17: annotation
+###################################################
+annotation <- "hgu95av2"
+
+
+###################################################
+### code chunk number 18: R.MIAME
+###################################################
+experimentData <- new("MIAME",
+  name="Pierre Fermat",
+  lab="Francis Galton Lab",
+  contact="pfermat@lab.not.exist",
+  title="Smoking-Cancer Experiment",
+  abstract="An example ExpressionSet",
+  url="www.lab.not.exist",
+  other=list(
+    notes="Created from text files"
+  ))
+
+
+###################################################
+### code chunk number 19: ExpressionSetFinally
+###################################################
+exampleSet <- ExpressionSet(assayData=exprs, 
+                  phenoData=phenoData, 
+                  experimentData=experimentData,
+                  annotation="hgu95av2")
+
+
+###################################################
+### code chunk number 20: ExpressionSet-minimal
+###################################################
+minimalSet <- ExpressionSet(assayData=exprs)
+
+
+###################################################
+### code chunk number 21: helpExpressionSet (eval = FALSE)
+###################################################
+## help("ExpressionSet-class")
+
+
+###################################################
+### code chunk number 22: showExpressionSet
+###################################################
+exampleSet
+
+
+###################################################
+### code chunk number 23: usingDollar
+###################################################
+exampleSet$gender[1:5]
+exampleSet$gender[1:5] == "Female"
+
+
+###################################################
+### code chunk number 24: featureNames
+###################################################
+featureNames(exampleSet)[1:5]
+
+
+###################################################
+### code chunk number 25: sampleNames
+###################################################
+sampleNames(exampleSet)[1:5]
+varLabels(exampleSet)
+
+
+###################################################
+### code chunk number 26: exprs
+###################################################
+mat <- exprs(exampleSet)
+dim(mat)
+
+
+###################################################
+### code chunk number 27: first10
+###################################################
+vv <- exampleSet[1:5, 1:3]
+dim(vv)
+featureNames(vv)
+sampleNames(vv)
+
+
+###################################################
+### code chunk number 28: males
+###################################################
+males <- exampleSet[ , exampleSet$gender == "Male"]
+males
+
+
+###################################################
+### code chunk number 29: ExpressionSetIntroduction.Rnw:489-490
+###################################################
+toLatex(sessionInfo())
+
+
+```
+
+
+```{r}
+### R code from vignette source 'esApply.Rnw'
+
+###################################################
+### code chunk number 1: R.hide
+###################################################
+library(Biobase)
+data(sample.ExpressionSet)
+
+
+###################################################
+### code chunk number 2: R
+###################################################
+print(sample.ExpressionSet)
+print(exprs(sample.ExpressionSet)[1,])
+print(pData(sample.ExpressionSet)[1:2,1:3])
+
+
+###################################################
+### code chunk number 3: R
+###################################################
+print(rbind(exprs(sample.ExpressionSet[1,]),
+sex <- t(pData(sample.ExpressionSet))[1,]))
+
+
+###################################################
+### code chunk number 4: R
+###################################################
+medContr <- function( y, x ) {
+ ys <- split(y,x)
+ median(ys[[1]]) - median(ys[[2]])
+}
+
+
+###################################################
+### code chunk number 5: R
+###################################################
+print(apply(exprs(sample.ExpressionSet[1,,drop=F]), 1,
+  medContr, pData(sample.ExpressionSet)[["sex"]]))
+
+
+###################################################
+### code chunk number 6: R
+###################################################
+medContr1 <- function(y) {
+ ys <- split(y,sex)
+ median(ys[[1]]) - median(ys[[2]])
+}
+
+print(esApply( sample.ExpressionSet, 1, medContr1)[1])
+
+
+###################################################
+### code chunk number 7: esApply.Rnw:126-127
+###################################################
+sessionInfo()
+
+
+```
+
+```{r}
+### R code from vignette source 'BiobaseDevelopment.Rnw'
+
+###################################################
+### code chunk number 1: Biobase
+###################################################
+options(width=69)
+library(Biobase)
+
+
+###################################################
+### code chunk number 2: eSet-class
+###################################################
+getClass("eSet")
+
+
+###################################################
+### code chunk number 3: eSet-validity
+###################################################
+getValidity(getClass("eSet"))
+
+
+###################################################
+### code chunk number 4: ExpressionSet-initialize (eval = FALSE)
+###################################################
+## obj <- new("ExpressionSet", phenoData = new("AnnotatedDataFrame"), experimentData = new("MIAME"), annotation = character(), exprs = new("matrix")) 
+
+
+###################################################
+### code chunk number 5: newAssayData (eval = FALSE)
+###################################################
+## assayDataNew("environment", elt)
+
+
+###################################################
+### code chunk number 6: assayData-storageMode
+###################################################
+data(sample.ExpressionSet)
+storageMode(sample.ExpressionSet)
+tryCatch(assayData(sample.ExpressionSet)$exprs <- log(exprs(sample.ExpressionSet)),
+         error=function(err) cat(conditionMessage(err)))
+exprs(sample.ExpressionSet) <- log(exprs(sample.ExpressionSet))
+
+
+###################################################
+### code chunk number 7: ExpressionSet-class
+###################################################
+getClass("ExpressionSet")
+getValidity(getClass("ExpressionSet"))
+
+
+###################################################
+### code chunk number 8: SwirlSet-class
+###################################################
+setClass("SwirlSet", contains="eSet")
+
+
+###################################################
+### code chunk number 9: SwirlSet-initialize
+###################################################
+setMethod("initialize", "SwirlSet",
+          function(.Object,
+                   R = new("matrix"),
+                   G = new("matrix"),
+                   Rb = new("matrix"),
+                   Gb = new("matrix"),
+                   ...) {
+            callNextMethod(.Object,
+                           R=R, G=G, Rb=Rb, Gb=Gb,
+                           ...)
+        })
+
+
+###################################################
+### code chunk number 10: SwirlSet-initialize-2
+###################################################
+setMethod("initialize", "SwirlSet",
+          function(.Object,
+                   assayData=assayDataNew(
+                     R=R, G=G, Rb=Rb, Gb=Gb),
+                   R = new("matrix"),
+                   G = new("matrix"),
+                   Rb = new("matrix"),
+                   Gb = new("matrix"),
+                   ...) {
+            if (!missing(assayData) && 
+                any(!missing(R), !missing(G), !missing(Rb), !missing(Gb))) {
+                warning("using 'assayData'; ignoring 'R', 'G', 'Rb', 'Gb'")
+            }
+            callNextMethod(.Object, assayData=assayData, ...)
+        })
+
+
+###################################################
+### code chunk number 11: SwirlSet-new
+###################################################
+new("SwirlSet")
+
+
+###################################################
+### code chunk number 12: initialize-.Object (eval = FALSE)
+###################################################
+## setMethod("initialize", "MySet",
+##           function(.Object, ...) {
+##               .Object <- callNextMethod(.Object, ...)
+##           })
+##               .
+
+
+###################################################
+### code chunk number 13: SwirlSet-validity
+###################################################
+setValidity("SwirlSet", function(object) {
+  assayDataValidMembers(assayData(object), c("R", "G", "Rb", "Gb"))
+})
+
+
+###################################################
+### code chunk number 14: validity-sometimes (eval = FALSE)
+###################################################
+## myFancyFunction <- function(obj) {
+##   assayData(obj) <- fancyAssaydData # obj invalid...
+##   phenoData(obj) <- justAsFancyPhenoData # but now valid
+##   validObject(obj)
+##   obj
+## }
+
+
+###################################################
+### code chunk number 15: updateObject-eg
+###################################################
+data(sample.ExpressionSet)
+classVersion(sample.ExpressionSet)
+obj <- updateObject(sample.ExpressionSet)
+
+
+###################################################
+### code chunk number 16: isCurrent
+###################################################
+isCurrent(sample.ExpressionSet)[c("eSet", "ExpressionSet")]
+
+
+###################################################
+### code chunk number 17: MultiSet-obj
+###################################################
+setClass("MySet",
+         contains = "eSet",
+         prototype = prototype(
+           new("VersionedBiobase",
+               versions=c(classVersion("eSet"), MySet="1.0.0"))))
+obj <- new("MySet")
+classVersion(obj)
+
+
+###################################################
+### code chunk number 18: MultiSetRevised
+###################################################
+setClass("MySet",
+         contains = "eSet",
+         prototype = prototype(
+           new("VersionedBiobase",
+               versions=c(classVersion("eSet"), MySet="1.0.1"))))
+isCurrent(obj)
+
+
+###################################################
+### code chunk number 19: updateObject-MultiSet
+###################################################
+setMethod("updateObject", signature(object="MySet"),
+          function(object, ..., verbose=FALSE) {
+              if (verbose) message("updateObject(object = 'MySet')")
+              object <- callNextMethod()
+              if (isCurrent(object)["MySet"]) return(object)
+              ## Create an updated instance.
+              if (!isVersioned(object))
+                  ## Radical surgery -- create a new, up-to-date instance
+                  new("MySet",
+                      assayData = updateObject(assayData(object),
+                        ...., verbose=verbose),
+                      phenoData = updateObject(phenoData(object),
+                        ..., verbose=verbose),
+                      experimentData = updateObject(experimentData(object),
+                        ..., verbose=verbose),
+                      annotation = updateObject(annotation(object),
+                        ..., verbose=verbose))
+              else {
+                  ## Make minor changes, and update version by consulting class definition
+                  classVersion(object)["MySet"] <-
+                      classVersion("MySet")["MySet"]
+                  object
+              }
+          })
+
+
+###################################################
+### code chunk number 20: updateObject
+###################################################
+classVersion(updateObject(obj))
+
+
+###################################################
+### code chunk number 21: classVersion-AnnotatedDataFrame
+###################################################
+classVersion(new("AnnotatedDataFrame"))
+
+
+###################################################
+### code chunk number 22: SwirlSet-version
+###################################################
+setClass("SwirlSet", contains = "eSet",
+         prototype = prototype(
+           new("VersionedBiobase",
+               versions=c(classVersion("eSet"), SwirlSet="1.0.0"))))
+classVersion(new("SwirlSet"))
+
+
+###################################################
+### code chunk number 23: arbitraryClassVersions
+###################################################
+obj <- new("SwirlSet")
+classVersion(obj)["MyID"] <- "0.0.1"
+classVersion(obj)
+classVersion(updateObject(obj))
+
+
+###################################################
+### code chunk number 24: BiobaseDevelopment.Rnw:680-681
+###################################################
+toLatex(sessionInfo())
+
+
+```
+
