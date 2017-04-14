@@ -20,14 +20,23 @@ setClass("FreqFlyer",
 
 ```{r}
 getClass("FreqFlyer")
+
+# Class "FreqFlyer" [in ".GlobalEnv"]
+# 
+# Slots:
+#                                                       
+# Name:     ffnumber        name      origin destination
+# Class:     numeric   character   character   character
+# 
+# Extends: "Passenger"
 ```
 
 ```{r}
-subClassMetaName("Passenger")
+RBioinf::subClassNames("Passenger")
 ```
 
 ```{r}
-superClassNames("FreqFlyer")
+RBioinf::superClassNames("FreqFlyer")
 ```
 
 ## 3.2.3 Abstract data types

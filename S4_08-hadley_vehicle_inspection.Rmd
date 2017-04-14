@@ -1,0 +1,98 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+Source: http://adv-r.had.co.nz/S4.html
+
+## Inheritance
+Let’s develop a fuller example. This is inspired by an example from the Dylan language reference, one of the languages that inspired the S4 object system. In this example we’ll develop a simple model of vehicle inspections that vary depending on the type of vehicle (car or truck) and type of inspector (normal or state).
+
+In S4, it’s the callNextMethod that (surprise!) is used to call the next method. It figures out which method to call by pretending the current method doesn’t exist, and looking for the next closest match.
+
+First we set up the classes: two types of vehicle (car and truck), and two types of inspect.
+
+
+```{r}
+setClass("Vehicle")
+setClass("Truck", contains = "Vehicle")
+setClass("Car", contains = "Vehicle")
+
+setClass("Inspector", slots = c(name = "character"))
+setClass("StateInspector", contains = "Inspector")
+```
+
+
+Next we define the generic function for inspecting a vehicle. It has two arguments: the vehicle being inspected and the person doing the inspection.
+
+```{r}
+setGeneric("inspect.vehicle", function(v, i) {
+   standardGeneric("inspect.vehicle")
+ })
+```
+
+All vehicle must be checked for rust by all inspectors, so we’ll add the first. Cars also need to have working seatbelts.
+
+```{r}
+setMethod("inspect.vehicle", 
+  signature(v = "Vehicle", i = "Inspector"), 
+  function(v, i) {
+    message("Looking for rust")
+  })
+
+
+setMethod("inspect.vehicle", 
+  signature(v = "Car", i = "Inspector"),
+  function(v, i) {  
+   callNextMethod() # perform vehicle inspection
+   message("Checking seat belts")
+  })
+
+inspect.vehicle(new("Car"), new("Inspector"))
+# Looking for rust
+# Checking seat belts
+```
+
+Note that it’s the most specific method that’s responsible for ensuring that the more generic methods are called.
+
+We’ll next add methods for trucks (cargo attachments need to be ok), and the special task that the state inspector performs on cars: checking for insurance.
+
+```{r}
+setMethod("inspect.vehicle", 
+  signature(v = "Truck", i = "Inspector"),
+  function(v, i) {
+    callNextMethod() # perform vehicle inspection
+    message("Checking cargo attachments")
+  })
+
+inspect.vehicle(new("Truck"), new("Inspector"))
+# Looking for rust
+# Checking cargo attachments
+
+
+```
+
+
+
+```{r}
+setMethod("inspect.vehicle", 
+  signature(v = "Car", i = "StateInspector"),
+  function(v, i) {
+    callNextMethod() # perform car inspection
+    message("Checking insurance")
+})
+
+inspect.vehicle(new("Car"), new("StateInspector"))
+# Looking for rust
+# Checking seat belts
+# Checking insurance
+```
+
+This set up ensures that when a state inspector checks a truck, they perform all of the checks a regular inspector would:
+
+```{r}
+inspect.vehicle(new("Truck"), new("StateInspector"))
+# Looking for rust
+# Checking cargo attachments
+```
+
