@@ -3,6 +3,7 @@ title: "Using the RNetCDF package"
 output: html_notebook
 ---
 
+
 ## RNetCDF
 Source: https://journal.r-project.org/archive/2013-2/michna-woods.pdf
 
@@ -24,6 +25,7 @@ mytime_units <- "days since 1970-01-01 00:00:00"
 mytemperature <- matrix(c(1.1, 2.2, 3.3, 4.4, 5.5, 6.6, 7.7, NA, NA, 9.9), 
                         ncol=2, nrow=5)
 
+# write to dataset "name"
 myname <- c("Alfa", "Bravo", "Charlie", "Delta", "Echo")
 
 ```
@@ -49,8 +51,11 @@ var.def.nc(nc, "name", "NC_CHAR", c("max_string_length", "station"))
 At this point, missing values (NA) cannot be written and the time axis is not yet defined. For this purpose, attributes have to be set and the time matrix needs to be converted into a vector with a reference time (as defined already above):
 
 ```{r}
+# write the attributes
 att.put.nc(nc, "temperature", "_FillValue", "NC_DOUBLE", -99999.9)
 att.put.nc(nc, "time", "units", "NC_CHAR", mytime_units)
+att.put.nc(nc, "name", "WhatsThis", "NC_CHAR", "this is an attribute")
+
 mytime_ut <- utinvcal.nc(mytime_units, mytime)
 ```
 
@@ -62,6 +67,7 @@ Now the variable data can be written. To ensure that the data are written to the
 var.put.nc(nc, "name", myname)
 var.put.nc(nc, "time", mytime_ut)
 var.put.nc(nc, "temperature", mytemperature)
+
 close.nc(nc)
 ```
 
@@ -98,6 +104,7 @@ Although this function has no equivalent in the NetCDF C-interface, it has been 
 ```{r}
 nc_data <- read.nc(nc)
 mytemp <- nc_data$temperature
+mytemp
 ```
 
 Attributes can be read from variables that are identified by name or number, and global attributes can be read using the special variable name ‘NC_GLOBAL’. For example, conversion of relative times into calendar times requires the ‘units’ attribute from the ‘time’ variable, which may be read using the att.get.nc() function:

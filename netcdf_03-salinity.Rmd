@@ -1,0 +1,95 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+## salinity dataset
+```{r}
+library(ncdf4)
+
+# Define some straightforward dimensions
+x <- ncdim_def( "Lon", units = "degreesE", vals = 0.5:359.5)
+y <- ncdim_def( "Lat", "degreesN", as.double(-89:89))
+t <- ncdim_def( "Time", "days since 1900-01-01", 1:10, unlim=TRUE)
+
+# Make a variable with those dimensions.  Note order: time is LAST
+salinity <- ncvar_def("Salinity", units = "points", dim = list(x,y,t), 1.e30 )
+
+# Create a netCDF file with this variable
+ncnew <- nc_create( "./inst/extdata/salinity.nc", salinity )
+
+nc_close(ncnew)
+```
+
+
+```{r}
+df <- read.csv("./inst/extdata/snpdata.csv")
+
+chromosome <- df$Chromosome
+positions  <- df$Positions
+subjects   <- df[, 3:ncol(df)]
+```
+
+
+```{r}
+library(ncdf4)
+
+chrom <- ncdim_def("chromosome", units = "chromo", vals = chromosome)
+pos   <- ncdim_def("positions",  units = "pos", vals = positions)
+subj  <- ncdim_def("subjects",  units = "subj", vals = 1:ncol(subjects))
+
+snp <- ncvar_def("SNP", units = "snp", dim = list(subj, chrom), subjects )
+
+ncnew <- nc_create( "./inst/extdata/snpdata.nc", snp )
+nc_close(ncnew)
+
+```
+
+
+```{r}
+nc <- create.nc("./inst/extdata/snpdata.nc")
+
+dim.def.nc(nc, "subjects", ncol(subjects))
+var.def.nc(nc, "temperature", "NC_DOUBLE", c("station", "time"))
+
+```
+
+
+
+```{r}
+
+
+dim.def.nc(nc, "time", unlim=TRUE)
+dim.def.nc(nc, "max_string_length", 32)
+dim.def.nc(nc, "station", 5)
+
+var.def.nc(nc, "time", "NC_INT", "time")
+var.def.nc(nc, "temperature", "NC_DOUBLE", c("station", "time"))
+var.def.nc(nc, "name", "NC_CHAR", c("max_string_length", "station"))
+```
+
+
+### set the attributes
+At this point, missing values (NA) cannot be written and the time axis is not yet defined. For this purpose, attributes have to be set and the time matrix needs to be converted into a vector with a reference time (as defined already above):
+
+```{r}
+# write the attributes
+att.put.nc(nc, "temperature", "_FillValue", "NC_DOUBLE", -99999.9)
+att.put.nc(nc, "time", "units", "NC_CHAR", mytime_units)
+att.put.nc(nc, "name", "WhatsThis", "NC_CHAR", "this is an attribute")
+
+mytime_ut <- utinvcal.nc(mytime_units, mytime)
+```
+
+
+### write the data and close the file
+Now the variable data can be written. To ensure that the data are written to the file and not buffered in memory, the file should be closed when all operations are complete:
+
+```{r}
+var.put.nc(nc, "name", myname)
+var.put.nc(nc, "time", mytime_ut)
+var.put.nc(nc, "temperature", mytemperature)
+
+close.nc(nc)
+```
+
