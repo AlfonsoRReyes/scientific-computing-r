@@ -1,0 +1,72 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(Biobase)
+```
+
+
+```{r}
+data(sample.ExpressionSet)
+```
+
+
+```{r}
+eset <-  sample.ExpressionSet
+eset
+```
+
+```{r}
+dim(eset)
+```
+
+```{r}
+exprs(eset)[1:5,1:6]  # extract expression values
+```
+
+
+```{r}
+#assayData(eset)
+head(assayDataElement(eset, "exprs"))
+```
+
+```{r}
+head(assayDataElement(eset, "se.exprs"))
+```
+
+```{r}
+pheno <- phenoData(eset)
+pheno
+```
+
+```{r}
+rownames(pheno)
+```
+
+```{r}
+colnames(pheno)
+```
+
+```{r}
+mat <- exprs(eset)
+dim(mat)
+```
+
+```{r}
+varLabels(eset)
+```
+
+```{r}
+length(featureNames(eset))
+```
+
+```{r}
+eset[1:4,3:20]
+```
+
+```{r}
+eset[, eset$sex=="Male"]
+```
+
