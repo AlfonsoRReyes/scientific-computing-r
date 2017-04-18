@@ -53,3 +53,5 @@ src/h5_rdwt
 *.so
 
 *.o
+
+\.RDataTmp

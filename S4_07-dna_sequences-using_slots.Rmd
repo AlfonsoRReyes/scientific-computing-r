@@ -1,20 +1,10 @@
 ---
-title: "S4 classes"
+title: "S4 classes - Gene sequence class using slots"
 output: html_notebook
 ---
 
+
 FUll example of using S4 to create a gene sequence class.
-
-Let's start by loading the package and read a fasta sequence 
-
-```{r}
-read.csv("./inst/extdata/aDnaSeq.fasta", header = FALSE)
-```
-
-```{r}
-read.csv("./inst/extdata/moreDnaSeqs.fasta", header = FALSE)
-```
-
 
 
 ## Define the super class and sub classes
@@ -22,16 +12,15 @@ Source: https://github.com/cran/sequences/blob/master/R/DataClasses.R
 
 ```{r}
 setClass("GenericSeq",
-         representation = representation(
-           id = "character",
-           alphabet = "character",
-           sequence =  "character",
-           "VIRTUAL"),
+         slots = c(id = "character", 
+                   alphabet = "character", 
+                   sequence =  "character"), 
+         contains = "VIRTUAL",
          validity = function(object) {
-           isValid <- TRUE
-           if (length(object@sequence)>0) {
-             chars <- casefold(unique(unlist(strsplit(object@sequence,""))))
-             isValid <- all(chars %in% casefold(object@alphabet))
+           isValid <- TRUE                       # check if valid
+           if (length(object@sequence) > 0) {
+             chars <- casefold(unique(unlist(strsplit(object@sequence, ""))))
+             isValid <- all(chars %in% casefold(object@alphabet))    # casefold same as tolower()
            }
            if (!isValid)
              cat("Some characters are not defined in the alphabet.\n")
@@ -40,16 +29,16 @@ setClass("GenericSeq",
 
 
 setClass("DnaSeq",
-         contains="GenericSeq",
-         prototype = prototype(
-           id = paste("my DNA sequence",date()),
+         contains = "GenericSeq",                     # subclass of GenericSeq
+         prototype = list(
+           id = paste("my DNA sequence", date()),
            alphabet = c("A","C","G","T"),
            sequence = character())
          )
 
 setClass("RnaSeq",
-         contains="GenericSeq",
-         prototype = prototype(
+         contains = "GenericSeq",                      # subclass of GenericSeq
+         prototype = list(
            id = paste("my RNA sequence",date()),
            alphabet = c("A","C","G","U"),
            sequence = character())
@@ -76,6 +65,7 @@ setGeneric("alphabet", function(object, ...) standardGeneric("alphabet"))
 ## although not a generic one (see isGeneric(seq))
 setGeneric("seq", function(...) standardGeneric("seq"))
 setGeneric("seq<-", function(object,value) standardGeneric("seq<-"))
+
 ## Same note that above for print
 setGeneric("print", function(x, ...) standardGeneric("print"))
 
@@ -85,39 +75,12 @@ setGeneric("comp",function(object, ...) standardGeneric("comp"))
 setGeneric("transcribe", function(object, ...) standardGeneric("transcribe"))
 ```
 
-## Methods for DNA and RNA
-Source: https://github.com/cran/sequences/blob/master/R/methods-DnaSeq.R
-
-```{r}
-setMethod("comp", "DnaSeq",
-          function(object, ...) {
-            chartr("ACGT","TGCA",seq(object))
-          })
-
-
-setMethod("transcribe", "DnaSeq",
-          function(object, ...) {
-            .sequence <- chartr("T","U",toupper(seq(object)))
-            .id <-  paste(id(object),"-- transcribed")
-            rna <- new("RnaSeq",
-                       id=.id,
-                       alphabet=c("A","C","G","U"),
-                       sequence=.sequence)
-            return(rna)
-          })
-
-setMethod("comp", "RnaSeq",
-          function(object, ...) {
-            chartr("ACGU","UGCA",seq(object))
-          })
-```
 
 ## Generic sequence methods
 Source: https://github.com/cran/sequences/blob/master/R/methods-GenSeq.R
 
 ```{r}
-setMethod("show",
-          "GenericSeq",
+setMethod("show", "GenericSeq",
           function(object) {
             cat("Object of class",class(object),"\n")
             cat(" Id:",id(object),"\n")
@@ -127,8 +90,7 @@ setMethod("show",
           })
 
 
-setMethod("print",
-          "GenericSeq",
+setMethod("print", "GenericSeq",
           function(x) {
             sq <- strsplit(seq(x), "")[[1]]
             cat(">",id(x),"\n")
@@ -145,6 +107,7 @@ setMethod("print",
 
 
 setMethod("id", "GenericSeq", function(object, ...) object@id)
+
 setMethod("id<-", "GenericSeq",
           function(object,value) object@id <- value)
 
@@ -178,15 +141,15 @@ setMethod("rev","GenericSeq",
 ## this is only an example of initialize function,
 ## note Generic is in fact virtual          
 setMethod("initialize", "GenericSeq",
-          function(.Object, ..., id="", sequence=""){
+          function(.Object, ..., id = "", sequence = ""){
             .Object@id <- id
             .Object@sequence <- toupper(sequence)
             callNextMethod(.Object, ...)
           })
 	
 
-setMethod("[","GenericSeq",
-          function(x, i, j="missing",drop="missing") {
+setMethod("[", "GenericSeq",
+          function(x, i, j="missing", drop="missing") {
             if (any(i > length(x)))
               stop("subscript out of bounds")
             s <- seq(x)
@@ -197,6 +160,34 @@ setMethod("[","GenericSeq",
           })
 ```
 
+
+## Specific methods for DNA and RNA
+Source: https://github.com/cran/sequences/blob/master/R/methods-DnaSeq.R
+
+```{r}
+setMethod("comp", "DnaSeq",
+          function(object, ...) {
+            chartr("ACGT","TGCA", seq(object))
+          })
+
+
+setMethod("transcribe", "DnaSeq",
+          function(object, ...) {
+            .sequence <- chartr("T","U", toupper(seq(object)))
+            .id <-  paste(id(object), "-- transcribed")
+            rna <- new("RnaSeq",
+                       id = .id,
+                       alphabet = c("A","C","G","U"),
+                       sequence = .sequence)
+            return(rna)
+          })
+
+setMethod("comp", "RnaSeq",
+          function(object, ...) {
+            chartr("ACGU","UGCA",seq(object))
+          })
+```
+
 ## Function to read sequences
 
 ```{r}
@@ -204,40 +195,38 @@ readFasta <- function(infile){
   lines <- readLines(infile)
   header <- grep("^>", lines)
   cat("Sequences found at lines: ", header, "\n")
-  if (length(header)>1) {
+  if (length(header) > 1) {
     warning("Reading first sequence only.\n")
     lines <- lines[header[1]:(header[2]-1)]
     header <- header[1]
   }
-  .id <- sub("^> *","",lines[header],perl=TRUE)
-  .sequence <- toupper(paste(lines[(header+1):length(lines)],collapse=""))
+  .id <- sub("^> *","", lines[header], perl=TRUE)
+  .sequence <- toupper(paste(lines[(header+1):length(lines)], collapse=""))
   .alphabet <- toupper(unique(strsplit(.sequence,"")[[1]]))
   if (all(.alphabet %in% c("A","C","G","T"))) {
-    # newseq <- new("DnaSeq",
-    #               id=.id,
-    #               sequence=.sequence)
-    newseq <- DnaSeq(.id, .sequence)
-    
+      newseq <- DnaSeq(.id, .sequence)
   } else if (all(.alphabet %in% c("A","C","G","U"))) {
-    # newseq <- new("RnaSeq",
-    #               id=.id,
-    #               sequence=.sequence)
       newSeq <- RnaSeq(.id, .sequence)
   } else {
-    stop("Alphabet ",.alphabet," is unknown.")
+      stop("Alphabet ", .alphabet," is unknown.")
   }
   if (validObject(newseq))
     return(newseq)
 }
 ```
 
-## Read 1st sequence
+
+
 
 ```{r}
 fastafilename <- dir(path="./inst/extdata",
                      full.name=TRUE,
                      pattern="fasta$")
 fastafilename
+```
+
+## Read 1st sequence
+```{r}
 myseq <- readFasta(fastafilename[1])
 myseq
 ```
@@ -292,3 +281,25 @@ myseq2 <- readFasta(fastafilename[2])
 myseq2
 ```
 
+```{r}
+# using setReplaceMethod
+id(myseq2) <- "Sequence #1"
+myseq2
+```
+
+```{r}
+# using setReplaceMethod
+`id<-`(myseq2, "this is sequence no. 1")
+```
+
+
+
+Let's start by loading the package and read a fasta sequence 
+
+```{r}
+read.csv("./inst/extdata/aDnaSeq.fasta", header = FALSE)
+```
+
+```{r}
+read.csv("./inst/extdata/moreDnaSeqs.fasta", header = FALSE)
+```
