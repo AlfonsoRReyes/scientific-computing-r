@@ -49,6 +49,8 @@ FallingBall <- function(y, v, t, dt) {
 ```
 
 ```{r}
+library(data.table)
+
 y0 <- 10
 v0 <- 0
 t  <- 0
@@ -56,10 +58,16 @@ dt <- 0.01
 
 ball <- FallingBall(y = y0, v = v0, t = t, dt = dt)
 
+v = vector("list")
+i <-  1
 while (ball@y > 0) {
     ball <- step(ball)
-    cat(ball@v, ball@y, "\n")
+    v[[i]] <- list(velocity = ball@v, ycoord = ball@y, t = ball@t, dt = ball@dt)
+    # cat(ball@v, ball@y, "\n")
+    i <-  i + 1
 }
+dT <- data.table::rbindlist(v)
+dT
 
 cat("Final time", ball@t)
 cat("\tFinal y: ", ball@y, "\tFinal v:", ball@v, "\n")
