@@ -14,8 +14,13 @@ setClass("FallingBall", slots = c(
 
 
 setGeneric("step", function(object, ...) standardGeneric("step"))
-setGeneric("analyticalPosition", function(object, ...) standardGeneric("analyticalPosition"))
-setGeneric("analyticalVelocity", function(object, ...) standardGeneric("analyticalVelocity"))
+setGeneric("analyticalPosition", function(object, ...) 
+    standardGeneric("analyticalPosition"))
+setGeneric("analyticalVelocity", function(object, ...) 
+    standardGeneric("analyticalVelocity"))
+setGeneric("getY", function(object, ...) 
+    standardGeneric("getY"))
+
 
 setMethod("initialize", "FallingBall",
           function(.Object, y, v, t, dt){
@@ -41,7 +46,11 @@ setMethod("analyticalVelocity", "FallingBall", function(object, v0, ...) {
     return(v0 * 9.8 * object@t)
 })
 
+setMethod("getY", "FallingBall", function(object) {
+    return(object@v)
+})
 
+# constructor
 FallingBall <- function(y, v, t, dt) {
     new("FallingBall", y = y, v = v, t = t, dt = dt)
 }
@@ -62,7 +71,7 @@ v = vector("list")
 i <-  1
 while (ball@y > 0) {
     ball <- step(ball)
-    v[[i]] <- list(velocity = ball@v, ycoord = ball@y, t = ball@t, dt = ball@dt)
+    v[[i]] <- list(velocity = ball@v, ycoord = getY(ball), t = ball@t, dt = ball@dt)
     # cat(ball@v, ball@y, "\n")
     i <-  i + 1
 }
