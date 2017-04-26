@@ -1,0 +1,60 @@
+---
+title: "Open a Java Dialog"
+output: html_notebook
+---
+
+Source: http://www.deducer.org/pmwiki/pmwiki.php?n=Main.Development#wwjoir
+
+## Getting Started
+
+Lets start by making a `JDialog` object. `JDialog` is a class used to make a
+dialog window, and is a part of the Swing GUI library.
+
+The first thing we need to do is create a variable representing the class. This
+can be done with the `J` function, which takes as an argument the class location,
+and returns a reference to that location (an S4 object of class `jclassName`).
+`JDialog` is located in the javax.swing Java package, so we simply need to call.
+
+```{r}
+library(rJava)
+
+Jdialog <- J("javax.swing.JDialog")
+print(Jdialog)
+```
+
+Now that we have a reference to the JDialog class, we can a new object by calling the new function. new takes as its first argument a jclassName (e.g. JDialog), and any further arguments are passed to the JDialog constructor.
+
+```{r}
+myDialog <- new(Jdialog)
+```
+
+`myDialog` is now a reference (of S4 class jobjRef) to an instance of JDialog. We
+don't see anything yet, because we have not made the dialog visible. There is a
+JDialog method called setVisible which we can use to make the dialog visible.
+Set visible takes a boolean (true/false) as a parameter. rJava transparently
+takes care of the conversion between R logical and Java boolean. We will go into
+conversions later on.
+
+```{r}
+myDialog$setVisible(TRUE)
+```
+
+You should now see a small empty dialog window.
+
+
+```{r}
+.jfloat(1)
+```
+
+
+```{r}
+# careful! You may have to terminate R to close the Java window
+
+.jcall("java/lang/System","S","getProperty","os.name")
+if (!nzchar(Sys.getenv("NOAWT"))) {
+  f <- .jnew("java/awt/Frame","Hello")
+  .jcall(f,,"setVisible",TRUE)
+}
+
+```
+

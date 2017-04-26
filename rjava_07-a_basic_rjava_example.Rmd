@@ -1,0 +1,71 @@
+---
+title: "A basic rJava example by Scott Hoover"
+output: html_notebook
+---
+
+Source: https://scottdhoover.wordpress.com/2013/03/05/a-basic-rjava-example/
+
+        public class myExchange {
+         
+            public String getString() {
+                return "Testing";
+            }
+        ...
+
+```{r}
+# compile Java file. Same name as the class
+system("javac -verbose ./src/myExchange.java")
+```
+
+
+```{r}
+# preliminaries #
+library(rJava)
+
+# start the Java Virtual Machine
+.jinit()
+
+# replace with the path to the folder containing your class
+.jaddClassPath("./inst/java")     
+
+# show the Java class path
+.jclassPath()
+```
+
+```{r}
+# instantiate the class
+myExchange <- .jnew("myExchange")
+```
+
+
+
+
+
+
+```{r}
+# read the Java objects in the class
+
+# strings #
+stringTest <- .jcall(myExchange, "S", "getString")
+stringArrayTest <- .jcall(myExchange, "[S", "getStringArray")
+stringTest; stringArrayTest
+ 
+# doubles #
+doubleTest <- .jcall(myExchange, "D", "getdouble")
+doubleArrayTest <- .jcall(myExchange, "[D", "getdoubleArray")
+doubleMatrixTest <- .jcall(myExchange, "[[D", "getdoubleMatrix", simplify=T)
+doubleTest; doubleArrayTest; doubleMatrixTest
+ 
+# integers #
+intTest <- .jcall(myExchange, "I", "getInt")
+intArrayTest <- .jcall(myExchange, "[I", "getIntArray")
+intMatrixTest <- .jcall(myExchange, "[[I", "getIntMatrix", simplify=T)
+intTest; intArrayTest; intMatrixTest
+ 
+# boolean #
+booleanTest <- .jcall(myExchange, "Z", "getboolean")
+booleanArrayTest <- .jcall(myExchange, "[Z", "getbooleanArray")
+booleanMatrixTest <- .jcall(myExchange, "[[Z", "getbooleanMatrix", simplify=T)
+booleanTest; booleanArrayTest; booleanMatrixTest
+```
+

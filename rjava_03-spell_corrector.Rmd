@@ -1,0 +1,54 @@
+---
+title: "Using JAR SpellCorrector with rJava"
+output: html_notebook
+---
+
+Source: https://datawarrior.wordpress.com/2016/09/10/rjava-running-java-from-r-and-building-r-packages-wrapping-a-jar/
+
+
+
+
+```{r}
+library(rJava)
+
+# start JVM in ./src
+.jinit()
+
+# add the JAR file to the classpath
+.jaddClassPath("./inst/java/spellcorrector.jar")   # .jar file in ./src
+
+# confirm it has been added to classpath
+.jclassPath()
+```
+
+```{r}
+# call the class SpellCorrector and create an instance
+corrector <- .jnew('home/kwyho/spellcheck/SpellCorrector')
+
+# load the file big.txt
+bigfile <- .jnew('java/io/File', './inst/java/big.txt')
+.jcall(corrector, 'V', 'train', bigfile)
+```
+
+```{r}
+# an R function to call the Java method 'correct'
+correct <- function(word) {
+   javaStrtext <- .jnew('java/lang/String', word)
+   .jcall(corrector, 'Ljava/lang/String;', 'correct', javaStrtext)
+}
+```
+
+
+```{r}
+correct("boook")
+```
+
+```{r}
+correct("statistiscs")
+```
+
+```{r}
+correct("Internet")
+```
+
+

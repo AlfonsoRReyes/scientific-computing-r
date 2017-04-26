@@ -1,0 +1,129 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+## Run Java class from the console
+
+```{r}
+# function contributed by Bazz: stackoverflow.com/a/30802765/5270873 
+command <- function(command, intern = TRUE, wait = FALSE){
+  system(paste("cmd.exe /c", command), intern = T, wait = wait)
+}
+
+cmd <- paste("cd ./inst/java",                      # change to Java folder
+             "javac gibbs_sa.java",                 # compile Java code
+             "java Gibbs 10 1000 1", # create JAR   # Run the Java class
+             sep = "&& ")
+
+command(cmd)
+```
+
+
+## Run
+
+```{r}
+# preliminaries #
+library(rJava)
+
+# start the Java Virtual Machine
+.jinit()
+
+# replace with the path to the folder containing your class
+.jaddClassPath("./inst/java")     
+
+# show the Java class path
+.jclassPath()
+```
+
+```{r warning=FALSE}
+
+# function contributed by Bazz: stackoverflow.com/a/30802765/5270873 
+command <- function(command, intern = TRUE, wait = FALSE){
+  system(paste("cmd.exe /c", command), intern = T, wait = wait)
+}
+
+# generate numbers using Gibbs
+gibbs <- function(N = 10000, 
+                  thin = 500, 
+                  seed = trunc(runif(1) * 1e6), 
+                  exec = "Gibbs", 
+                  tmpfile = tempfile()) { 
+    
+    cmd2 = paste("java", exec, N, thin, seed, ">", tmpfile) # run Gibbs
+    cmd <- paste("cd ./inst/java", cmd2, sep = "&& ")       # change to Java folder 1st
+    command(cmd) # show.output.on.console = TRUE)           # run the shell commands
+    read.table(tmpfile, header=TRUE)                        # read the text table
+}
+
+gibbs()
+```
+
+
+
+## Change original Gibbs to get output directly in R
+
+```{r}
+# function contributed by Bazz: stackoverflow.com/a/30802765/5270873 
+command <- function(command, intern = TRUE, wait = FALSE){
+  system(paste("cmd.exe /c", command), intern = T, wait = wait)
+}
+
+# compile new Gibbs for R
+cmd <- paste("cd ./inst/java",                      # change to Java folder
+             "javac GibbsR.java",                 # compile Java code
+             sep = "&& ")
+
+command(cmd)
+```
+
+```{r warning=FALSE}
+
+# function contributed by Bazz: stackoverflow.com/a/30802765/5270873 
+command <- function(command, intern = TRUE, wait = FALSE){
+  system(paste("cmd.exe /c", command), intern = T, wait = wait)
+}
+
+# generate numbers using Gibbs
+gibbsR <- function(N = 10000, 
+                  thin = 500, 
+                  seed = trunc(runif(1) * 1e6), 
+                  exec = "GibbsR", 
+                  tmpfile = tempfile()) { 
+    
+    cmd2 = paste("java", exec, N, thin, seed, ">", tmpfile) # run Gibbs
+    cmd <- paste("cd ./inst/java", cmd2, sep = "&& ")       # change to Java folder 1st
+    command(cmd) # show.output.on.console = TRUE)           # run the shell commands
+    read.table(tmpfile, header=TRUE)                        # read the text table
+}
+
+gibbsR()
+```
+
+
+```{r}
+# preliminaries #
+library(rJava)
+
+.jinit()
+
+# replace with the path to the folder containing your class
+.jaddClassPath("./inst/java")     
+
+.jclassPath()
+```
+
+```{r}
+obj = .jnew("GibbsR")
+```
+
+
+```{r}
+result =.jcall(obj,"[[D","gibbs",as.integer(N),as.integer(thin),as.integer(seed))
+    mat=sapply(result,.jevalArray)
+    mat=cbind(1:N,mat)
+    colnames(mat)=c("Iter","x","y")
+    mat
+```
+
+ 

@@ -1,0 +1,90 @@
+---
+title: "convolve and rJava"
+output: html_notebook
+---
+
+Source: https://stat.ethz.ch/pipermail/r-help/2006-November/118431.html
+
+The following Java code has to be compiled first. Save it as `my_convolve.java` in ./src.
+
+
+        public class my_convolve
+        {            	
+             public static double[] convolve(double[] a, double[] b)
+             {
+                 int n1 = a.length;
+                 int n2 = b.length;
+                 int n3 = n1+n1-1;
+                 
+                 double[] c = new double[n3];
+                 for(int i=0; i<n1; i++)
+                    for(int j=0; j<n2; j++) c[i+j] += a[i]*b[j];
+                    
+                 return c;
+              }   
+            }  
+```{r}
+# optional info
+system("java -version")
+system("javac -version")
+```
+
+
+```{r}
+# compile Java code
+system("javac -verbose ./inst/java//my_convolve.java")
+```
+
+
+```{r}
+# preliminaries #
+library(rJava)
+
+# start the Java Virtual Machine
+.jinit()
+
+# replace with the path to the folder containing your class
+.jaddClassPath("./inst/java")     
+
+# show the Java class path
+.jclassPath()
+```
+
+```{r}
+x = runif(10)
+y = runif(10)
+```
+
+```{r}
+# call the my_convolve.class
+z=.jcall("my_convolve", "[D", "convolve", x, y)
+z
+```
+
+
+
+
+
+
+
+
+
+```{r}
+jobject <- .jnew("org.opensourcephysics.controls.*")
+```
+
+```{r}
+f <- .jnew("java/awt/Frame", "Hello")
+#.jcall(f, , "setVisible", TRUE)
+```
+
+
+```{r}
+g <- .jnew("org.opensourcephysics.frames", "PlotFrame")
+```
+
+```{r}
+g <- .jnew("org/opensourcephysics/frames", "PlotFrame")
+```
+```
+

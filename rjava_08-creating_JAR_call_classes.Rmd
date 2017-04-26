@@ -1,0 +1,96 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+Source: http://stackoverflow.com/a/39929961/5270873
+
+We have this Java class. Use `rJava` to call the methods after creating a
+package JAR from the class.
+
+        package hello;
+        
+            public class Hello extends Object {
+        
+                public String sayHello2(String name) {
+                    String result = new String("Hello " + name);
+                    return result;
+                }
+        
+                public Hello sayHello3(String name) {
+                    String result = new String("Hello " + name);
+                    return new Hello();
+                }
+        
+            } 
+            
+```{r}
+# compile Java file. Same name as the class
+system("javac -verbose ./inst/java/Hello.java")
+```
+
+To create a jar :
+
+       java -cp .   hello/Hello.java
+       jar cvf Hello.jar hello/Hello.class
+       
+       
+```{r}
+# function contributed by Bazz: stackoverflow.com/a/30802765/5270873 
+command <- function(command, intern = TRUE, wait = FALSE){
+  system(paste("cmd.exe /c", command), intern = T, wait = wait)
+}
+
+cmd <- paste("cd ./inst/java",                      # change to Java folder
+             "javac hello/Hello.java",              # compile Java code
+             "jar cvf Hello.jar hello/Hello.class", # create JAR
+             sep = "&& ")
+
+command(cmd)
+```
+
+```{r}
+library(rJava)
+
+.jinit()
+.jaddClassPath(dir( "./inst/java", full.names=TRUE ))
+.jclassPath()
+hjw <- .jnew("hello.Hello")     # create instance of hell/Hello class
+```
+
+```{r}
+outRef <- .jcall(hjw, "S", "sayHello2", "toto", evalString = FALSE)
+.jstrVal(outRef)
+```
+
+```{r}
+# And a call to a function returning a java reference:
+outRef2 <- .jcall(hjw, "Lhello/Hello;", "sayHello3", "Universe", evalString = T)
+.jstrVal(outRef2)
+
+outRef3 <- .jcall(outRef2, "S", "sayHello2", "New Universe", evalString = FALSE)
+.jstrVal(outRef3)
+```
+
+
+
+
+## R and System calls
+
+Source: http://stackoverflow.com/a/30802765/5270873
+
+```{r}
+command <- function(command, intern = TRUE, wait = FALSE){
+  system(paste("cmd.exe /c", command), intern = T, wait = wait)
+}
+
+cmdStr <- paste("cd", "./inst/java", "&&", "dir > aList.txt")
+command("cd ./inst/java && dir > any.txt")
+```
+
+```{r}
+# R and System calls
+cmdStr <- paste("cd", "./inst/java", "&&", "dir > aList.txt", sep = " ")
+command(cmdStr)
+```
+

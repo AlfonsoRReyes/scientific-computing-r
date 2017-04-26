@@ -1,0 +1,33 @@
+---
+title: "Java vectors"
+output: html_notebook
+---
+
+Source: http://stackoverflow.com/questions/5781972/where-do-i-start-with-rjava?rq=1
+
+The somewhat harder solution is to edit your Java code so it doesn't read from
+stdin, but gets passed a vector, or other Java object. I can't really generalize
+about how to alter your Java code, but if the Java function ultimately needs to
+be fed a vector, you'd do it something like this:
+
+```{r}
+library(rJava)
+
+.jinit()                          # start the JVM
+v <- .jnew("java/util/Vector")    # create a Java vector instance
+
+rVector <- as.character(1:10)     # create an R charaater vector
+
+addToV <- function( item ){       # function that uses Java vector
+  v$add( item )                   # add item to Java vector
+}
+
+sapply(rVector, addToV)
+```
+
+
+One tip that will save you considerable time is this: When you have a Java object created in rJava you can figure out its methods by typing the name, a dollar sign, and then hit tab. So using the v object created above type "v$" and you should get this:
+
+
+
+
