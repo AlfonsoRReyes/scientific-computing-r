@@ -1,0 +1,145 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+# cmaJarFile <- paste(find.package("rCMA"), "java/cma_jAll.jar",sep="/");
+cmaJarFile <- paste("./inst/cma", "cma_jAll.jar", sep = "/")
+propFile <- paste("./inst/cma", "CMAEvolutionStrategy.properties", sep = "/")
+cmaJarFile
+propFile
+```
+
+
+```{r}
+require(rJava)
+
+rJava::.jinit()          # initialize Java-VM
+rJava::.jaddClassPath(cmaJarFile)
+rJava::.jclassPath()
+```
+
+
+```{r}
+cma <- rJava::.jnew("fr/inria/optimization/cmaes/CMAEvolutionStrategy")
+```
+
+
+```{r}
+props <- rJava::.jcall(cma,"Ljava/util/Properties;","readProperties",propFile);
+```
+
+```{r}
+attr(cma,"props") <- props
+  cma;
+```
+
+```{r}
+cmaNew <- function() {
+    require(rJava)
+  rJava::.jinit()          # initialize Java-VM
+  rJava::.jaddClassPath(cmaJarFile)
+  rJava::.jclassPath()
+  cma <- rJava::.jnew("fr/inria/optimization/cmaes/CMAEvolutionStrategy")
+  props <- rJava::.jcall(cma,"Ljava/util/Properties;","readProperties",propFile);
+  attr(cma,"props") <- props
+  cma;
+}
+```
+
+
+```{r}
+cmaInit <- function(cma,seed=NULL,dimension=NULL,initialX=NULL, initialStandardDeviations=NULL) {
+  if (!is.null(seed)) rJava::.jcall(cma,,"setSeed",rJava::.jlong(seed));
+  if (!is.null(dimension)) rJava::.jcall(cma,,"setDimension",as.integer(dimension));
+  if (!is.null(initialX)) rJava::.jcall(cma,,"setInitialX",rJava::.jarray(initialX));
+  if (!is.null(initialStandardDeviations)) rJava::.jcall(cma,,"setInitialStandardDeviations",rJava::.jarray(initialStandardDeviations));
+  fitness <- rJava::.jcall(cma,"[D","init");
+}
+```
+
+
+```{r}
+# demoCMA1.R
+fitFunc <- function(x) {  sum(x*x); }
+    
+cma <- cmaNew();
+cmaInit(cma,seed=42,dimension=2,initialX=1.5, initialStandardDeviations=0.2);
+res1 = cmaOptimDP(cma, fitFunc, iterPrint=30)
+
+plot(res1$fitnessVec,type="l",log="y",col="blue",xlab="Iteration",ylab="Fitness");
+str(res1)
+```
+
+
+
+```{r}
+cmaCalcFitness <- function(cma,popR,fitFunc) {
+      fitness = sapply(1:ncol(popR), function(i) { x=popR[,i]; fitFunc(x); });
+}
+
+cmaOptimDP <- function( cma
+                      , fitFunc
+                      , isFeasible=function(x){TRUE}
+                      , maxDimPrint=5, iterPrint=10, verbose=2)
+{
+  if (rJava::.jcall(cma,"D","getState")<0) stop("CMA object is not yet initialized. Use cmaInit() first.");
+  cfe = 0;
+  sMsg = NULL;      # holds console output as string vector
+  fitnessVec=NULL;  # best-ever fitness after each iteration
+  xMat = NULL;      # (nIter x dimension) matrix: row i holds bestX after iteration i
+  iter = rJava::.jcall(cma,"J","getCountIter");          # when the while-loop is never entered 
+  while(rJava::.jcall(cma,"I","getStopConditionNumber")==0) {
+      pop = rJava::.jcall(cma,"[[D","samplePopulation");
+      LP = length(pop);       # population size
+      popR = sapply(pop,rJava::.jevalArray)
+      ## popR is a (2 x LP)-R-matrix  with popR[,1] being the first individuum in the population
+      cfe = cfe + LP;
+
+      resampleFunc <- function(i) {
+        while (!isFeasible(popR[,i])) {
+          ## death penalty (DP): if an individual is not feasible, throw it away and sample a new one:
+          popR[,i] <<- rJava::.jcall(cma,"[D","resampleSingle",as.integer(i-1));
+          ## it is important to use "<<-" here, otherwise a local copy popR[,i] is
+          ## made and nothing changed in the popR of the while-loop (!)
+          cfe <<- cfe+1;
+        }
+      }
+      feasible = sapply(1:LP, resampleFunc);
+      fitness = sapply(1:LP, function(i) { x=popR[,i]; fitFunc(x); });
+      iter = rJava::.jcall(cma,"J","getCountIter")    # note that "J" is the JNI field descriptor for 'long'
+      if (iter %% iterPrint == 0) {
+        i = which.min(fitness);
+        dimPrint = min(maxDimPrint,rJava::.jcall(cma,"I","getDimension"));
+        s=sprintf("%04d  %e | %s\n", iter, fitness[i], paste(sprintf("%11.4e",popR[1:dimPrint,i]),collapse=", "));
+        sMsg = c(sMsg,s);
+        if (verbose>0) {
+          cat(s);
+          flush.console();
+        }
+      }
+      rJava::.jcall(cma,,"updateDistribution",fitness);
+      fitnessVec[iter] = rJava::.jcall(cma,"D","getBestFunctionValue");
+      xMat = rbind(xMat,rJava::.jcall(cma,"[D","getBestX"));
+  }
+  bestSolution = rJava::.jcall(cma,"Lfr/inria/optimization/cmaes/CMASolution;","getBestSolution");
+  ffe = rJava::.jcall(cma,"J","getCountEval")    # number of fitness function evaluations (fitFunc)
+  s1 = sprintf("Terminated due to %s\n",rJava::.jcall(cma,"[S","getStopConditionMessages"));
+  s2 = sprintf("cfe,ffe, %%infeasible: %d %d %f\n",cfe,ffe,(cfe-ffe)/ffe);
+  sMsg = c(sMsg,s1,s2);
+  if (verbose>0) cat(s1,s2);
+
+  res = list( sMsg=sMsg      # to print it: 'cat(sMsg)' or 'for (x in sMsg) cat(x)'
+            , bestX = rJava::.jcall(bestSolution,"[D","getX")
+            , bestFitness = rJava::.jcall(bestSolution,"D","getFitness")
+            , bestEvalNum = rJava::.jcall(bestSolution,"J","getEvaluationNumber")
+            , nIter = iter   # number of iterations
+            , fitnessVec = fitnessVec
+            , xMat = xMat
+            , cfe = cfe      # number of constraint function evaluations (isFeasible)
+            , ffe = ffe      # number of fitness function evaluations (fitFunc)
+            );
+}
+```
+
