@@ -1,0 +1,77 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+```{r}
+library(rJava)
+ospClasses <- "./inst/osp" 
+.jinit()          # initialize Java-VM
+.jaddClassPath(ospClasses)
+.jclassPath()
+```
+
+
+```{r}
+dp <- J("org.opensourcephysics.display.DrawingPanel")
+df <- J("org.opensourcephysics.display.DrawingFrame")
+```
+
+    import org.opensourcephysics.display2d.ArrayData;
+    DrawingPanel drawingPanel = new DrawingPanel();
+    drawingPanel.setShowCoordinates(false);
+    DrawingFrame frame = new DrawingFrame(drawingPanel);
+    ArrayData arraydata = new ArrayData(32, 32, 1);
+    arraydata.setScale(-1, 1, -1, 1);
+        double[][] data = arraydata.getData()[0];
+    double x = arraydata.getLeft(), dx = arraydata.getDx();
+
+    
+```{r}
+dpanel <- new(J("org.opensourcephysics.display.DrawingPanel"))
+dpanel$setShowCoordinates(FALSE)
+dframe <- new(J("org.opensourcephysics.display.DrawingFrame"))
+```
+
+
+```{r}
+arraydata <- new(J("org.opensourcephysics.display2d.ArrayData"), 
+                 as.integer(32), as.integer(32), as.integer(1))
+arraydata$setScale(-1, 1, -1, 1)
+
+adata <- arraydata$getData()
+# data$length
+x <- arraydata$getLeft()
+dx <- arraydata$getDx()
+```
+
+
+        for(int i = 0, nx = data.length;i<nx;i++) {
+          double y = arraydata.getTop(), dy = arraydata.getDy();
+          for(int j = 0, ny = data[0].length;j<ny;j++) {
+            data[i][j] = y*x; // magnitude
+            y += dy;
+          }
+          x += dx;
+        }
+
+
+```{r}
+head(.jevalArray(adata, simplify = TRUE))
+```
+
+
+```{r}
+for (i in seq(1, 32, 1 )) {
+    y <- arraydata$getTop()
+    dy <- arraydata$getDy()
+    for (j in seq(1, 32, 1)) {
+        adata[[i,j]] <- y * x
+        y <- y + dy
+    }
+    x <- x + dx
+}
+```
+
+

@@ -1,0 +1,165 @@
+---
+title: "OSP, Using the JAR"
+output: html_notebook
+---
+
+
+```{r}
+require(rJava)
+
+ospJarFile <- paste("./inst/ospjar", "osp.jar", sep = "/")
+ospJarFile
+
+rJava::.jinit()          # initialize Java-VM
+rJava::.jaddClassPath(ospJarFile)
+rJava::.jclassPath()
+```
+
+```{r}
+fft <- rJava::.jnew("org/opensourcephysics/numerics/FFT")
+rJava::.jcall(fft, "V", "setN", as.integer(5))
+rJava::.jcall(fft, "I", "getN")
+```
+
+
+```{r}
+ rJava::.jnew("org/opensourcephysics/numerics/FFTReal")
+```
+
+```{r}
+ rJava::.jnew("org/opensourcephysics/numerics/Integral")
+```
+
+```{r}
+Interpolation <- rJava::.jnew("org/opensourcephysics/numerics/Interpolation")
+Interpolation$linear(1, 20, 3, 4,5)
+```
+
+
+```{r}
+CurveFitting <- rJava::.jnew("org/opensourcephysics/numerics/CurveFitting")
+CurveFitting$linearRegression(runif(5), runif(5))
+```
+
+```{r}
+Derivative <- rJava::.jnew("org/opensourcephysics/numerics/Derivative")
+```
+
+
+
+```{r}
+Legendre <- rJava::.jnew("org/opensourcephysics/numerics/Legendre")
+```
+
+
+
+```{r}
+PBC <- rJava::.jnew("org/opensourcephysics/numerics/PBC")
+```
+
+
+```{r}
+Quaternion <- rJava::.jnew("org/opensourcephysics/numerics/Quaternion")
+```
+
+
+```{r}
+Util <- rJava::.jnew("org/opensourcephysics/numerics/Util")
+.jmethods(Util)
+```
+
+
+```{r}
+Vec3D <- rJava::.jnew("org/opensourcephysics/numerics/Vec3D")
+.jmethods(Vec3D)
+```
+
+
+
+```{r}
+VectorMath <- rJava::.jnew("org/opensourcephysics/numerics/VectorMath")
+.jmethods(VectorMath, as.obj = FALSE)
+```
+
+
+
+```{r}
+PlotFrame <- rJava::.jnew("org/opensourcephysics/frames/PlotFrame", "PlotFrame")
+```
+
+
+
+```{r}
+numerics <- rJava::javaImport("org/opensourcephysics/numerics/*")
+```
+
+```{r}
+rJava::.jcall(numerics, "V" , "Complex")
+```
+
+```{r}
+rJava::.jnew(numerics, "Complex")
+```
+
+
+
+```{r}
+# ODE
+# ComparisonApp.java
+
+cmd <- paste("cd ./inst/osp",                      # change to Java folder
+             "javac org/opensourcephysics/manual/ch09/ComparisonApp.java",
+             "java org.opensourcephysics.manual.ch09.ComparisonApp",
+             sep = "&& ")
+
+command(cmd)
+```
+
+
+```{r}
+library(rJava)
+
+.jinit()
+
+# replace with the path to the folder containing your class
+.jaddClassPath(dir( "./inst/osp", full.names=TRUE ))  
+
+# show the Java class path
+.jclassPath()
+
+```
+
+```{r}
+
+ode <- .jnew("org/opensourcephysics/manual/ch09/ODETest")
+
+```
+
+```{r}
+ode <- .jnew("org.opensourcephysics.manual.ch09.ODETest")
+```
+
+
+```{r}
+ji1 <- javaImport("org.opensourcephysics.numerics.*")
+ji2 <- javaImport("import org.opensourcephysics.ode.*")
+```
+
+
+```{r}
+ji1
+```
+
+```{r}
+# import org.opensourcephysics.frames.PlotFrame
+pf <- javaImport("org.opensourcephysics.frames.PlotFrame")
+```
+
+```{r}
+frame <- .jnew("PlotFrame", "position", "amplitude", "First Plot")
+```
+
+```{r}
+f <- .jnew("org.opensourcephysics.frames")
+```
+

@@ -1,0 +1,171 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+```{r}
+library(rJava)
+
+ospJarFile <- paste("./inst/ospjar", "osp.jar", sep = "/")
+ospJarFile
+
+.jinit()          # initialize Java-VM
+.jaddClassPath(ospJarFile)
+.jclassPath()
+```
+
+
+        import org.opensourcephysics.controls.AbstractSimulation;
+        import org.opensourcephysics.controls.SimulationControl;
+        
+        
+
+
+
+```{r}
+SimulationApp <- J("org.opensourcephysics.controls.AbstractSimulation")
+SimulationControl <- J("org.opensourcephysics.controls.SimulationControl")
+```
+
+            SimulationControl.createApp(new SimulationApp())
+            
+            
+```{r}
+.jcall(SimulationApp)
+```
+
+```{r}
+# SimulationControl$createApp(SimulationApp)
+SimulationControl$createApp(SimulationApp())
+```
+
+
+```{r}
+# Error in new(SimulationControl) : object 'SimulationControl' not found
+attach(javaImport("org/opensourcephysics/controls/SimulationControl"), 
+       pos = 2 , 
+       name = "java:org.opensourcephysics.controls.SimulationControl" )
+sim <- new(SimulationControl)
+```
+
+
+```{r}
+# Error in new(SimulationControl) : object 'SimulationControl' not found
+attach(javaImport("org/opensourcephysics/controls/SimulationControl"), 
+       pos = 3, 
+       name = "org.opensourcephysics.controls.SimulationControl" )
+
+sim <- new(SimulationControl)
+```
+
+```{r}
+# Error in new(SimulationControl) : object 'SimulationControl' not found
+# Error in new(AbstractSimulation) : object 'AbstractSimulation' not found
+attach(javaImport("org/opensourcephysics/controls/AbstractSimulation"), 
+       pos = 5, 
+       name = "java:org.opensourcephysics.controls.AbstractSimulation" )
+
+sim <- new(AbstractSimulation)
+```
+
+
+```{r}
+.jnew(AbstractSimulation)
+```
+
+
+```{r}
+attach(javaImport("org/opensourcephysics/controls/SimulationControl"), 
+       pos = 2 , 
+       name = "java:org.opensourcephysics.controls.SimulationControl" )
+# attach( javaImport( "org/opensourcephysics/controls" ), pos = 3 , name = "java:org.opensourcephysics.controls" )
+```
+
+
+
+```{r}
+# java.lang.NoSuchMethodError: <init>
+# sim <- .jnew("org/opensourcephysics/controls/SimulationControl", "SimulationControl")
+
+# java.lang.ClassNotFoundException
+#  method SimulationControl with signature (Ljava/lang/String;)V not found
+sim <- .jcall("org/opensourcephysics/controls/SimulationControl",, "SimulationControl", "createApp")
+
+# java.lang.ClassNotFoundException
+# sim <- .jnew("org/opensourcephysics/controls", "SimulationControl")
+
+# #java.lang.NoSuchMethodError: <init>
+# sim <- .jnew("org/opensourcephysics/controls/SimulationControl")
+
+#  method createApp with signature ()V not found
+# sim <- .jcall("org/opensourcephysics/controls/SimulationControl",, "createApp")
+
+# RcallMethod: cannot determine object class
+sim <- .jcall("org/opensourcephysics/controls",, "SimulationControl")
+
+# java.lang.ClassNotFoundException
+# sim <- .jnew("org/opensourcephysics/controls", "SimulationControl")
+```
+
+```{r}
+AbstractSimulation
+SimulationControl
+createApp
+```
+
+
+```{r}
+SimulationApp <- new(SimulationControl)
+```
+
+
+
+
+```{r}
+library(rJava)
+
+.jinit()          # initialize Java-VM
+.jaddClassPath("./inst/ospApps")
+.jclassPath()
+```
+
+
+```{r}
+.jcall("SimulationControlApp")
+```
+
+```{r}
+# SimulationApp.java
+# function contributed by Bazz: stackoverflow.com/a/30802765/5270873 
+command <- function(command, intern = TRUE, wait = FALSE){
+  system(paste("cmd.exe /c", command), intern = T, wait = wait)
+}
+
+
+cmd <- paste("cd ./inst/ospApps",                      # change to Java folder
+             "javac SimulationApp2.java",              # compile Java code
+             "java SimulationApp2",
+             sep = "&& ")
+
+command(cmd)
+
+```
+
+```{r}
+.jnew("SimulationControlApp")
+```
+
+```{r}
+.jnew("SimulationApp2")
+```
+
+
+```{r}
+J("SimulationApp2")
+```
+
+```{r}
+J("SimulationControlApp")
+```
+
