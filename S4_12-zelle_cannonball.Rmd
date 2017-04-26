@@ -1,5 +1,5 @@
 ---
-title: "Zelle Cannonball"
+title: "Zelle Cannonball S4 class"
 output: html_notebook
 ---
 
