@@ -1,0 +1,69 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+```{r}
+setClass("FallingBall", slots = c(
+    y = "numeric",
+    v = "numeric",
+    t = "numeric",
+    dt = "numeric"
+))
+
+
+setGeneric("step", function(object, ...) standardGeneric("step"))
+setGeneric("analyticalPosition", function(object, ...) standardGeneric("analyticalPosition"))
+setGeneric("analyticalVelocity", function(object, ...) standardGeneric("analyticalVelocity"))
+
+setMethod("initialize", "FallingBall",
+          function(.Object, y, v, t, dt){
+            .Object@y  <- y
+            .Object@v  <- v
+            .Object@t  <- t
+            .Object@dt <- dt
+            return(.Object)
+          })
+
+setMethod("step", "FallingBall", function(object, ...) {
+    object@y <- object@y + object@v * object@dt
+    object@v = object@v - 9.8 * object@dt
+    object@t <- object@t + object@dt
+    return(object)
+})
+
+setMethod("analyticalPosition", "FallingBall", function(object, y0, v0, ...) {
+    return(y0 + v0 * object@t - 0.5 * 9.8 * object@t^2)
+})
+
+setMethod("analyticalVelocity", "FallingBall", function(object, v0, ...) {
+    return(v0 * 9.8 * object@t)
+})
+
+
+FallingBall <- function(y, v, t, dt) {
+    new("FallingBall", y = y, v = v, t = t, dt = dt)
+}
+
+```
+
+```{r}
+y0 <- 10
+v0 <- 0
+t  <- 0
+dt <- 0.01
+
+ball <- FallingBall(y = y0, v = v0, t = t, dt = dt)
+
+while (ball@y > 0) {
+    ball <- step(ball)
+    cat(ball@v, ball@y, "\n")
+}
+
+cat("Final time", ball@t)
+cat("\tFinal y: ", ball@y, "\tFinal v:", ball@v, "\n")
+cat("Analytic y:", analyticalPosition(ball, y0, v0), "\n")
+cat("Analytic v:", analyticalVelocity(ball, v0))
+```
+

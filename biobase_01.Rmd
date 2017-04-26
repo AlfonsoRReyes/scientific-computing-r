@@ -1,0 +1,59 @@
+---
+title: "Biobase 01 - Stackoverflow question"
+output: html_notebook
+---
+
+Source: http://stackoverflow.com/a/7364256/5270873
+
+```{r}
+library(Biobase)
+```
+
+
+```{r}
+exprs <- matrix(0, nrow=5, ncol=3,
+                dimnames=list(letters[1:5], LETTERS[1:3]))
+pData <- data.frame(id=c("foo", "bar", "baz"),
+                    row.names=c("x", "y", "z"))
+phenoData <- AnnotatedDataFrame(data=pData)
+```
+
+```{r}
+ExpressionSet(exprs, phenoData=phenoData)
+```
+
+The problem is that the colname of exprs (i.e., the names of the samples in the experiment) differ frrom the row.names of pData (i.e., the description of the samples)
+
+```{r}
+row.names(pData)
+colnames(exprs)
+```
+
+and the solution is to make them the same
+
+
+```{r}
+colnames(exprs) <- row.names(pData)
+eset <- ExpressionSet(exprs, phenoData=phenoData)
+eset
+```
+
+Additional elements can be added to an existing ExpressionSet using assayDataReplace(), e.g.,
+
+
+```{r}
+assayDataElement(eset, "foo") <- sqrt(exprs)
+eset
+```
+
+or from the start
+
+
+```{r}
+ env = new.env()
+ env$exprs = exprs
+ env$sqrt = sqrt(exprs)
+ lockEnvironment(env)
+ ExpressionSet(env, pData=pData)
+```
+

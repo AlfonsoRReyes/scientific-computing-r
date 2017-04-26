@@ -1,0 +1,205 @@
+---
+title: "Run OSP apps from shell"
+output: html_notebook
+---
+
+```{r}
+# function contributed by Bazz: stackoverflow.com/a/30802765/5270873 
+command <- function(command, intern = TRUE, wait = FALSE){
+  system(paste("cmd.exe /c", command), intern = T, wait = wait)
+}
+
+cmd <- paste("cd ./inst/ospApps",                      # change to Java folder
+             "javac FirstPlotApp.java",              # compile Java code
+             "java FirstPlotApp",
+             sep = "&& ")
+
+command(cmd)
+```
+
+
+```{r}
+
+cmd <- paste("cd ./inst/ospApps",                      # change to Java folder
+             "javac HelloWorldApp.java",              # compile Java code
+             "java HelloWorldApp",
+             sep = "&& ")
+
+command(cmd)
+```
+
+```{r}
+# TableFrameApp.java
+
+cmd <- paste("cd ./inst/ospApps",                      # change to Java folder
+             "javac TableFrameApp.java",              # compile Java code
+             "java TableFrameApp",
+             sep = "&& ")
+
+command(cmd)
+
+```
+
+```{r}
+# EJSSliderApp.java
+
+cmd <- paste("cd ./inst/ospApps",                      # change to Java folder
+             "javac EJSSliderApp.java",              # compile Java code
+             "java EJSSliderApp",
+             sep = "&& ")
+
+command(cmd)
+```
+
+```{r}
+# PolarPlottingApp.java
+
+cmd <- paste("cd ./inst/ospApps",                      # change to Java folder
+             "javac PolarPlottingApp.java",              # compile Java code
+             "java PolarPlottingApp",
+             sep = "&& ")
+
+command(cmd)
+```
+
+
+```{r}
+# CalcComplexPlotApp.java
+
+cmd <- paste("cd ./inst/ospApps",                      # change to Java folder
+             "javac CalcComplexPlotApp.java",              # compile Java code
+             "java CalcComplexPlotApp",
+             sep = "&& ")
+
+command(cmd)
+```
+
+```{r}
+# SurfaceArrayApp.java
+
+cmd <- paste("cd ./inst/ospApps",                      # change to Java folder
+             "javac SurfaceArrayApp.java",              # compile Java code
+             "java SurfaceArrayApp",
+             sep = "&& ")
+
+command(cmd)
+```
+
+```{r}
+# CubicSplineApp.java
+
+cmd <- paste("cd ./inst/ospApps",                      # change to Java folder
+             "javac CubicSplineApp.java",              # compile Java code
+             "java CubicSplineApp",
+             sep = "&& ")
+
+command(cmd)
+
+```
+
+```{r}
+# SimulationApp.java
+
+cmd <- paste("cd ./inst/ospApps",                      # change to Java folder
+             "javac SimulationApp.java",              # compile Java code
+             "java SimulationApp",
+             sep = "&& ")
+
+command(cmd)
+
+```
+
+```{r}
+# ProjectileApp.java
+
+cmd <- paste("cd ./inst/ospApps",                      # change to Java folder
+             "javac ProjectileApp.java",              # compile Java code
+             "java ProjectileApp",
+             sep = "&& ")
+
+command(cmd)
+```
+
+```{r}
+# PendulumApp.java
+
+cmd <- paste("cd ./inst/ospApps",                      # change to Java folder
+             "javac PendulumApp.java",              # compile Java code
+             "java PendulumApp",
+             sep = "&& ")
+
+command(cmd)
+
+```
+
+```{r}
+# ReactionApp.java
+
+cmd <- paste("cd ./inst/ospApps",                      # change to Java folder
+             "javac ReactionApp.java",              # compile Java code
+             "java ReactionApp",
+             sep = "&& ")
+
+command(cmd)
+
+```
+
+```{r}
+# centralApp.java
+
+cmd <- paste("cd ./inst/ospApps",                      # change to Java folder
+             "javac centralApp.java",              # compile Java code
+             "java centralApp",
+             sep = "&& ")
+
+command(cmd)
+
+```
+
+```{r}
+# molec_muApp.java
+
+cmd <- paste("cd ./inst/ospApps",                      # change to Java folder
+             "javac molec_muApp.java",              # compile Java code
+             "java molec_muApp",
+             sep = "&& ")
+
+command(cmd)
+```
+
+```{r}
+# CustomButtonApp.java
+
+
+cmd <- paste("cd ./inst/ospApps",                      # change to Java folder
+             "javac CustomButtonApp.java",              # compile Java code
+             "java CustomButtonApp",
+             sep = "&& ")
+
+command(cmd)
+```
+
+```{r}
+# OSPControlApp.java
+
+cmd <- paste("cd ./inst/ospApps",                      # change to Java folder
+             "javac OSPControlApp.java",              # compile Java code
+             "java OSPControlApp",
+             sep = "&& ")
+
+command(cmd)
+
+```
+
+```{r}
+# PolynomialApp.java
+
+cmd <- paste("cd ./inst/ospApps",                      # change to Java folder
+             "javac PolynomialApp.java",              # compile Java code
+             "java PolynomialApp",
+             sep = "&& ")
+
+command(cmd)
+```
+
+

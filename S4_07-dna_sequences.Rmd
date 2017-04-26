@@ -1,7 +1,9 @@
 ---
-title: "R Notebook"
+title: "S4 classes"
 output: html_notebook
 ---
+
+FUll example of using S4 to create a gene sequence class.
 
 Let's start by loading the package and read a fasta sequence 
 
@@ -16,6 +18,7 @@ read.csv("./inst/extdata/moreDnaSeqs.fasta", header = FALSE)
 
 
 ## Define the super class and sub classes
+Source: https://github.com/cran/sequences/blob/master/R/DataClasses.R
 
 ```{r}
 setClass("GenericSeq",
@@ -62,6 +65,7 @@ RnaSeq <- function(id, sequence)
 
 
 ## Define the generics
+Source: https://github.com/cran/sequences/blob/master/R/AllGenerics.R
 
 ```{r}
 setGeneric("id", function(object, ...) standardGeneric("id"))
@@ -82,6 +86,7 @@ setGeneric("transcribe", function(object, ...) standardGeneric("transcribe"))
 ```
 
 ## Methods for DNA and RNA
+Source: https://github.com/cran/sequences/blob/master/R/methods-DnaSeq.R
 
 ```{r}
 setMethod("comp", "DnaSeq",
@@ -108,6 +113,7 @@ setMethod("comp", "RnaSeq",
 ```
 
 ## Generic sequence methods
+Source: https://github.com/cran/sequences/blob/master/R/methods-GenSeq.R
 
 ```{r}
 setMethod("show",
@@ -225,7 +231,7 @@ readFasta <- function(infile){
 }
 ```
 
-## Raad 1st sequence
+## Read 1st sequence
 
 ```{r}
 fastafilename <- dir(path="./inst/extdata",

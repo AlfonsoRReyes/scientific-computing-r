@@ -1,0 +1,465 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+In this section we look at another example, and we examine some of the functions
+associated with S4 classes. The example we define will be used to motivate the
+use of methods associated with a class, and it will be used to demonstrate
+inheritance later. The idea is that we want to create a program to simulate a
+cellular automata model of a predator-prey system.
+
+We do not develop the whole code here but concentrate on the data structures. In
+particular we will create a base class for the agents. In the next section we
+will create the basic methods for the class. In the inheritance section we will
+discuss how to build on the class to create different predators and different
+prey species. The basic structure of the class is shown in Figure 1.
+
+The methods for this class are defined in the following section. Here we define
+the class and its slots, and the code to define the class is given below:
+
+```{r}
+######################################################################
+# Create the base Agent class
+#
+# This is used to represent the most basic agent in a simulation.
+Agent <- setClass(
+        # Set the name for the class
+        "Agent",
+
+        # Define the slots
+        slots = c(
+                location = "numeric",
+                velocity   = "numeric",
+                active   = "logical"
+                ),
+
+        # Set the default values for the slots. (optional)
+        prototype = list(
+                location = c(0.0,0.0),
+                active   = TRUE,
+                velocity = c(0.0,0.0)
+                ),
+
+        # Make a function that can test to see if the data is consistent.
+        # This is not called if you have an initialize function defined!
+        validity = function(object) {
+                if(sum(object@velocity^2)>100.0) {
+                        return("The velocity level is out of bounds.")
+                }
+                return(TRUE)
+        })
+```
+
+Now that the code to define the class is given we can create an object whose class is Agent.
+
+
+```{r}
+a <- Agent()
+a
+```
+
+Before we define the methods for the class a number of additional commands are
+explored. The first set of functions explored are the `is.object` and the `isS4`
+commands. The `is.object` command determines whether or not a variable refers to
+an object. The `isS4` command determines whether or not the variable is an S4
+object. The reason both are required is that the isS4 command alone cannot
+determine if a variable is an S3 object. You need to determine if the variable
+is an object and then decide if it is S4 or not.
+
+```{r}
+is.object(a)
+isS4(a)
+```
+
+The next set of commands are used to get information about the data elements, or
+slots, within an object. The first is the `slotNames` command. This command can
+take either an object or the name of a class. It returns the names of the slots
+associated with the class as strings.
+
+```{r}
+slotNames(a)
+slotNames("Agent")
+```
+
+The `getSlots` command is similar to the `slotNames` command. It takes the name of a
+class as a string. It returns a vector whose entries are the types associated
+with the slots, and the names of the entries are the names of the slots.
+
+```{r}
+getSlots("Agent")
+s <- getSlots("Agent")
+s[1]
+s[[1]]
+names(s)
+```
+
+The next command examined is the `getClass` command. It has two forms. If you give
+it a variable that is an S4 class it returns a list of slots for the class
+associated with the variable. If you give it a character string with the name of
+a class it gives the slots and their data types.
+
+```{r}
+getClass(a)
+getClass("Agent")
+```
+
+The final command examined is the `slot command`. It can be used to get or set the
+value of a slot in an object. It can be used in place of the “@” operator.
+
+```{r}
+slot(a,"location")              # get the value of location
+slot(a, "location") <- c(1, 5)  # set the value in location
+a
+```
+
+## 2.3. Creating Methods
+We now build on the Agent class defined above. Once the class and its data
+elements are defined we can define the methods associated with the class. The
+basic idea is that if the name of a function has not been defined, the name must
+first be reserved using the `setGeneric` function. The `setMethod` can then be used
+to define which function is called based on the class names of the objects sent
+to it.
+
+We define the methods associated with the Agent method given in the previous
+section. Note that the `validity` function for an object is only called when it is
+first created and when an explicit call to the `validObject` function is made. We
+make use of the `validObject` command in the methods below that are used to change
+the value of a data element within an object.
+
+```{r}
+# create a method to assign the value of the location
+setGeneric(name="setLocation", def = function(theObject,position) {
+                               standardGeneric("setLocation")
+                       })
+
+setMethod(f="setLocation", signature="Agent", definition=function(theObject,position) {
+                              theObject@location <- position
+                              validObject(theObject)
+                              return(theObject)
+                      })
+
+# create a method to get the value of the location
+setGeneric(name="getLocation", def=function(theObject) {
+                               standardGeneric("getLocation")
+                       })
+
+setMethod(f="getLocation", signature="Agent", definition=function(theObject) {
+                              return(theObject@location)
+                      })
+
+
+# create a method to assign the value of active
+setGeneric(name="setActive", def=function(theObject,active) {
+                               standardGeneric("setActive")
+                       })
+
+setMethod(f="setActive", signature="Agent", definition=function(theObject,active) {
+                              theObject@active <- active
+                              validObject(theObject)
+                              return(theObject)
+                      })
+
+# create a method to get the value of active
+setGeneric(name="getActive", def=function(theObject) {
+                               standardGeneric("getActive")
+                       })
+
+setMethod(f="getActive", signature="Agent", definition=function(theObject) {
+                              return(theObject@active)
+                      })
+
+
+# create a method to assign the value of velocity
+setGeneric(name="setVelocity", def=function(theObject,velocity) {
+                               standardGeneric("setVelocity")
+                       })
+
+setMethod(f="setVelocity", signature="Agent", definition=function(theObject,velocity) {
+                              theObject@velocity <- velocity
+                              validObject(theObject)
+                              return(theObject)
+                      })
+
+# create a method to get the value of the velocity
+setGeneric(name="getVelocity", def=function(theObject) {
+                               standardGeneric("getVelocity")
+                       })
+
+setMethod(f="getVelocity", signature="Agent", definition=function(theObject) {
+                              return(theObject@velocity)
+                      })
+```
+
+With these definitions the data elements are encapsulated and can be accessed
+and set using the methods given above. It is generally good practice in object
+oriented programming to keep your data private and not show them to everybody
+willy nilly.
+
+```{r}
+a <- Agent()
+getVelocity(a)
+
+a <-  setVelocity(a, c(1, 2))
+getVelocity(a)
+```
+
+The last topic examined is the idea of overloading functions. In the examples
+above the signature is set to a single element. The signature is a vector of
+characters and specifies the data types of the argument list for the method to
+be defined. Here we create two new methods. The name of the method is
+`resetActivity`, and there are two versions.
+
+The first version accepts two arguments whose types are `Agent` and logical. This
+version of the method will set the activity slot to a given value. The second
+version accepts two arguments whose types are Agent and numeric. This version
+will set the activity to TRUE and then set the energy level to the value passed
+to it. Note that the names of the variables in the argument list must be exactly
+the same.
+
+```{r}
+# create a method to reset the velocity and the activity
+setGeneric(name = "resetActivity", def = function(theObject,value) {
+                               standardGeneric("resetActivity")
+                       })
+
+setMethod(f = "resetActivity", 
+          signature = c("Agent","logical"), 
+          definition = function(theObject,value) { 
+              theObject <- setActive(theObject,value) 
+              theObject <- setVelocity(theObject,c(0.0,0.0)) 
+              return(theObject)
+              })
+
+setMethod(f="resetActivity", 
+          signature = c("Agent","numeric"), 
+          definition = function(theObject,value) { 
+              theObject <- setActive(theObject,TRUE)
+              theObject <- setVelocity(theObject,value) 
+              return(theObject)
+              })
+```
+
+This definition of the function yields two options for the resetActivity
+function. The decision to determine which function to call depends on two
+arguments and their type. For example, if the first argument is from the Agent
+class and the second is a value of TRUE or FALSE, then the first version of the
+function is called. Otherwise, if the second argument is a number the second
+version of the function is called.
+
+```{r}
+a <- Agent()
+a
+
+a <- resetActivity(a,FALSE)
+getActive(a)
+
+a <- resetActivity(a,c(1,3))
+getVelocity(a)
+```
+
+## 2.4. Inheritance
+A class’ inheritance hiearchy can be specified when the class is defined using
+the contains option. The contains option is a vector that lists the classes the
+new class inherits from. In the following example we build on the Agent class
+defined in the previous section. The idea is that we need agents that represent
+a predator and two prey. We will focus on two predators for this example.
+
+The hierarchy for the classes is shown in Figure 2.. In this example we have one
+Prey class that is derived from the Agent class. There are two predator classes,
+Bobcat and Lynx. The Bobcat class is derived from the Agent class, and the Lynx
+class is derived from the Bobcat class. We will keep this very simple, and the
+only methods associated with the new classes is a move method. For our purposes
+it will only print out a message and set the values of the position and velocity
+to demonstrate the order of execution of the methods associated with the
+classes.
+
+The first step is to create the three new classes.
+
+```{r}
+######################################################################
+# Create the Prey class
+#
+# This is used to represent a prey animal
+Prey <- setClass(
+        # Set the name for the class
+        "Prey",
+
+        # Define the slots - in this case it is empty...
+        slots = character(0),
+
+        # Set the default values for the slots. (optional)
+        prototype = list(),
+
+        # Make a function that can test to see if the data is consistent.
+        # This is not called if you have an initialize function defined!
+        validity = function(object) {
+                if(sum(object@velocity^2)>70.0) {
+                        return("The velocity level is out of bounds.")
+                }
+                return(TRUE)
+        },
+
+        # Set the inheritance for this class
+        contains = "Agent"
+        )
+
+
+
+######################################################################
+# Create the Bobcat class
+#
+# This is used to represent a smaller predator
+Bobcat <- setClass(
+        # Set the name for the class
+        "Bobcat",
+
+        # Define the slots - in this case it is empty...
+        slots = character(0),
+
+        # Set the default values for the slots. (optional)
+        prototype=list(),
+
+        # Make a function that can test to see if the data is consistent.
+        # This is not called if you have an initialize function defined!
+        validity=function(object) {
+                if(sum(object@velocity^2)>85.0) {
+                        return("The velocity level is out of bounds.")
+                }
+                return(TRUE)
+        },
+
+        # Set the inheritance for this class
+        contains = "Agent"
+        )
+
+######################################################################
+# Create the Lynx class
+#
+# This is used to represent a larger predator
+Lynx <- setClass(
+        # Set the name for the class
+        "Lynx",
+
+        # Define the slots - in this case it is empty...
+        slots = character(0),
+
+        # Set the default values for the slots. (optional)
+        prototype = list(),
+
+        # Make a function that can test to see if the data is consistent.
+        # This is not called if you have an initialize function defined!
+        validity = function(object) {
+                if(sum(object@velocity^2)>95.0) {
+                        return("The velocity level is out of bounds.")
+                }
+                return(TRUE)
+        },
+
+        # Set the inheritance for this class
+        contains = "Bobcat"
+        )
+```
+
+The inheritance is specified using the contains option in the setClass command.
+Note that this can be a vector allowing for multiple inheritance. We choose not
+to use that to keep things simpler. If you are feeling like you need more
+self-loathing in your life you should try it out and experiment.
+
+Next we define a method, move, for the new classes. We will include methods for
+the Agent, Prey, Bobcat, and Lynx classes. The methods do not really do anything
+but are used to demonstrate the idea of how methods are executed.
+
+```{r}
+# create a method to move the agent.
+setGeneric(name="move", def = function(theObject) {
+                               standardGeneric("move")
+                       })
+
+setMethod(f="move",
+                      signature="Agent",
+                      definition=function(theObject)
+                      {
+                              print("Move this Agent dude")
+                              theObject <- setVelocity(theObject,c(1,2))
+                              validObject(theObject)
+                              return(theObject)
+                      }
+                      )
+
+setMethod(f="move",
+                      signature="Prey",
+                      definition=function(theObject)
+                      {
+                              print("Check this Prey before moving this dude")
+                              theObject <- callNextMethod(theObject)
+                              print("Move this Prey dude")
+                              validObject(theObject)
+                              return(theObject)
+                      }
+                      )
+
+setMethod(f="move",
+                      signature="Bobcat",
+                      definition=function(theObject)
+                      {
+                              print("Check this Bobcat before moving this dude")
+                              theObject <- setLocation(theObject,c(2,3))
+                              theObject <- callNextMethod(theObject)
+                              print("Move this Bobcat dude")
+                              validObject(theObject)
+                              return(theObject)
+                      }
+                      )
+
+setMethod(f="move",
+                      signature="Lynx",
+                      definition=function(theObject)
+                      {
+                              print("Check this Lynx before moving this dude")
+                              theObject <- setActive(theObject,FALSE)
+                                theObject <- callNextMethod(theObject)
+                              print("Move this Lynx dude")
+                              validObject(theObject)
+                              return(theObject)
+                      }
+                      )
+```
+
+There are a number of things to note. First each method calls the `callNextMethod`
+command. This command will execute the next version of the same method for the
+previous class in the hierarchy. Note that I have included the arguments (in the
+same order) as those called by the original function. Also note that the
+function returns a copy of the object and is used to update the object passed to
+the original function.
+
+Another thing to note is that the methods associated with the Lync, Bobcat, and
+Agent classes arbitrarily change the values of the position, velocity, and
+activity for the given object. This is done to demonstrate the changes that take
+place and reinforce the necessity for using the callNextMethod function the way
+it is used here.
+
+Finally, it should be noted that the `validObject` command is called in every
+method. You should try adding a print statement in the validity function. You
+might find that the order is a bit odd. You should experiment with this and play
+with it. There are times you do not get the expected results so be careful!
+
+We now give a brief example to demonstrate the order that the functions are
+called. In the example we create a Bobcat object and then call the move method.
+We next create a Lynx object and do the same. We print out the slots for both
+agents just to demonstrate the values that are changed.
+
+```{r}
+robert <- Bobcat()
+robert
+
+robert <- move(robert)
+robert
+
+lionel <- Lynx()
+lionel
+
+lionel <- move(lionel)
+lionel
+```
+

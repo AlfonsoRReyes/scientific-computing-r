@@ -1,0 +1,102 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(rJava)
+
+.jinit()
+
+attach( javaImport( "java.util" ) )
+
+# # now we can just do something like this 
+# v <- new( Vector )
+# v$add( "foobar" )
+# ls( pos = 2 )
+# 
+# # or this
+# m <- new( HashMap )
+# m$put( "foo", "bar" )
+# ls( pos = 2 )
+```
+
+
+
+```{r}
+# from javaImport {rJava}
+library(rJava)
+
+.jinit()
+
+attach( javaImport( "java.util" ), pos = 2 , name = "java:java.util" )
+
+# now we can just do something like this 
+v <- new( Vector )
+v$add( "foobar" )
+ls( pos = 2 )
+
+# or this
+m <- new( HashMap )
+m$put( "foo", "bar" )
+ls( pos = 2 )
+
+# or even this :
+Collections$EMPTY_MAP
+
+```
+
+J creates a Java class reference or calls a Java method.
+J is the high-level access to Java.
+
+```{r}
+# if (!nzchar(Sys.getenv("NOAWT"))) {
+#   f <- new(J("java.awt.Frame"), "Hello")
+#   f$setVisible(TRUE)
+# }
+
+J("java.lang.Double")$parseDouble("10.2")
+J("java.lang.Double", "parseDouble", "10.2" )
+
+Double <- J("java.lang.Double")
+Double$parseDouble( "10.2")
+
+# String[] strings = new String[]{ "string", "array" } ;
+  strings <- .jarray( c("string", "array") )
+# this uses the JList( Object[] ) constructor 
+# even though the "strings" parameter is a String[] 
+  l <- new( J("javax.swing.JList"), strings)
+  
+Jdialog <- J("javax.swing.JDialog")
+print(Jdialog)
+myDialog <- new(Jdialog)
+myDialog$setVisible(TRUE)
+```
+
+```{r}
+f <- .jnew("java/awt/Frame","Hello")
+diag <- .jcall(f,,"setVisible", TRUE)
+
+```
+
+```{r}
+.jinit()
+attach(javaImport("org.opensourcephysics.numerics.*"), pos = 2, name = "org:org.opensourcephysics.numerics")
+```
+
+```{r}
+library(rJava)
+
+.jinit()
+attach(javaImport("org.opensourcephysics.ejs.EjsRes"))
+```
+
+
+```{r}
+x <- new(EjsRes)
+```
+
+```{r}
+
+```
+

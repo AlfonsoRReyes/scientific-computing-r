@@ -3,12 +3,15 @@ title: "Using the RNetCDF package"
 output: html_notebook
 ---
 
+
 ## RNetCDF
 Source: https://journal.r-project.org/archive/2013-2/michna-woods.pdf
 
 RNetCDF is an R interface to the NetCDF C-library. Most of the functions provided by version 3 of NetCDF are accessible through RNetCDF in a way that allows users to build functions easily for their specific needs. Some higher-level features for frequently used operations are provided by RNetCDF, such as automatic support for missing values and packed variables and the ability to read all variables into an R list. Calendar conversion functions from
 Unidata’s UDUNITS library are also included in this package to simplify the handling of time variables in NetCDF datasets.
 
+
+### Define the vaeriables
 As an example, assume we have a climatological dataset with daily temperature measurements at five imaginary weather stations. Three variables are defined: time (as date with year, month, day, hour, minute, second), temperature and station name:
 
 ```{r}
@@ -22,13 +25,14 @@ mytime_units <- "days since 1970-01-01 00:00:00"
 mytemperature <- matrix(c(1.1, 2.2, 3.3, 4.4, 5.5, 6.6, 7.7, NA, NA, 9.9), 
                         ncol=2, nrow=5)
 
+# write to dataset "name"
 myname <- c("Alfa", "Bravo", "Charlie", "Delta", "Echo")
 
 ```
 
 
-When creating the NetCDF dataset, the organisation of the data **should be known in advance**. While changes to the structure of the file are possible, they may involve significant reorganisation of
-data within the file. To allow for expansion of a file with new data, it is possible to declare a single dimension with “unlimited” size. As a first step in our example, the file has to be created and all dimensions and variables need to be defined:
+### Create the netcdf file
+When creating the NetCDF dataset, the organisation of the data **should be known in advance**. While changes to the structure of the file are possible, they may involve significant reorganisation of data within the file. To allow for expansion of a file with new data, it is possible to declare a single dimension with “unlimited” size. As a first step in our example, the file has to be created and all dimensions and variables need to be defined:
 
 ```{r}
 nc <- create.nc("./inst/extdata/foo.nc")
@@ -43,29 +47,40 @@ var.def.nc(nc, "name", "NC_CHAR", c("max_string_length", "station"))
 ```
 
 
+### set the attributes
 At this point, missing values (NA) cannot be written and the time axis is not yet defined. For this purpose, attributes have to be set and the time matrix needs to be converted into a vector with a reference time (as defined already above):
 
 ```{r}
+# write the attributes
 att.put.nc(nc, "temperature", "_FillValue", "NC_DOUBLE", -99999.9)
 att.put.nc(nc, "time", "units", "NC_CHAR", mytime_units)
+att.put.nc(nc, "name", "WhatsThis", "NC_CHAR", "this is an attribute")
+
 mytime_ut <- utinvcal.nc(mytime_units, mytime)
 ```
 
 
-
+### write the data and close the file
 Now the variable data can be written. To ensure that the data are written to the file and not buffered in memory, the file should be closed when all operations are complete:
 
 ```{r}
 var.put.nc(nc, "name", myname)
 var.put.nc(nc, "time", mytime_ut)
 var.put.nc(nc, "temperature", mytemperature)
+
 close.nc(nc)
 ```
 
 If more data is to be added to the file in the same R session, the file may be left open, but to avoid loss of data, it may be desirable to force the flushing of buffers to disk using the function sync.nc() at critical stages of a calculation.
 
-In our example, the NetCDF dataset is written to disk with the absolute minimum of required attributes. However, such a dataset is not really self-describing and would not conform with any conventions. Therefore, further attributes would need to be set. According to the CF-standard, a variable should have at least the attributes ‘long_name’ (e.g., ‘measured air temperature’), ‘units’ (e.g., ‘degrees_celsius’), and ‘standard_name’ (e.g., ‘air_temperature’) (the latter is not needed for the time coordinate variable). The possible values for ‘standard_name’ can be found in the CF conventions document. CF also requests the indication of six global attributes, namely ‘title’, ‘history’, ‘institution’, ‘source’, ‘comment’, and ‘references’. Although not mandatory, it is recommended that NetCDF datasets comply with the CF or any other standard, so that the contents of a file are described unambiguously. If these rules are followed, NetCDF datasets can be explored and processed using general-purpose software, and they can be distributed or archived without any risk that the data in a file could become separated from its description.
+In our example, the NetCDF dataset is written to disk with the absolute minimum of required attributes. However, such a dataset is not really self-describing and would not conform with any conventions. Therefore, further attributes would need to be set. 
 
+According to the CF-standard, a variable should have at least the attributes ‘long_name’ (e.g., ‘measured air temperature’), ‘units’ (e.g., ‘degrees_celsius’), and ‘standard_name’ (e.g., ‘air_temperature’) (the latter is not needed for the time coordinate variable). The possible values for ‘standard_name’ can be found in the CF conventions document. CF also requests the indication of six global attributes, namely ‘title’, ‘history’, ‘institution’, ‘source’, ‘comment’, and ‘references’. 
+
+Although not mandatory, it is recommended that NetCDF datasets comply with the CF or any other standard, so that the contents of a file are described unambiguously. If these rules are followed, NetCDF datasets can be explored and processed using general-purpose software, and they can be distributed or archived without any risk that the data in a file could become separated from its description.
+
+
+---------------------------------------
 
 ## Reading an existing NetCDF dataset
 To show the contents of a NetCDF dataset, it must first be opened with the open.nc() function. The print.nc() function displays an overview of the dataset on standard output, giving the dimension definitions, variable definitions including their attributes, and the contents of the global attributes. For the example dataset created earlier, an overview can be displayed as follows:
@@ -89,6 +104,7 @@ Although this function has no equivalent in the NetCDF C-interface, it has been 
 ```{r}
 nc_data <- read.nc(nc)
 mytemp <- nc_data$temperature
+mytemp
 ```
 
 Attributes can be read from variables that are identified by name or number, and global attributes can be read using the special variable name ‘NC_GLOBAL’. For example, conversion of relative times into calendar times requires the ‘units’ attribute from the ‘time’ variable, which may be read using the att.get.nc() function:

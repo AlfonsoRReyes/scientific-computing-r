@@ -364,6 +364,7 @@ z2 <- ncvar_get( ex.nc, "Elevation", start=c(11,1), count=c( 5,-1))
 z2
 ```
 
+
 ### Volcano: Creating a netCDF file from within R
 Large projects create netCDF files using the low-level Unidata library routines. However, there are also functions for creating netCDF files within R. The following code creates the example.nc file used above. The reader should also refer to the help on put.var.ncdf from the ncdf R package for a good set of examples of creating multiple arrays.
 
@@ -578,6 +579,7 @@ library(rasterVis)
 library(maptools)
 library(maps)
 ```
+
 ```{r}
 # read the netCDF file as a raster layer
 tmpin <- raster(ncfname)
@@ -613,7 +615,8 @@ writeRaster(tmpin, outfile, overwrite=TRUE, format="CDF", varname="tmp", varunit
   longname="test variable -- raster layer to netCDF", xname="lon", yname="lat")
 ```
 
-### PanoplyJ
+
+### PanoplyJ: a netCDF viewer
 Open the file `test_raster.nc` with PanoplyJ in Linux or other OS. 
 Create a plot of the georeferenced variable `tmp`
 
@@ -648,11 +651,6 @@ download.file(url, destfile=dfile)
 ### Read netCDF and get selection
 
 To open and read netCDF files the R package ncdf is used.
-
-
-
-
-
 
 
 ```{r}

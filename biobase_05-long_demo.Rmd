@@ -1,0 +1,949 @@
+---
+title: "R Notebook"
+output:
+  html_document: default
+  html_notebook: default
+---
+
+```{r setup, include=F, error=T, message=F, warning=F}
+knitr::opts_chunk$set(echo=T, comment=NA, error=T, warning=F, message = F, fig.align = 'center')
+```
+
+
+## Introduction
+The ExpressionSet class is designed to combine several diﬀerent sources of
+information into a single convenient structure. An ExpressionSet can be
+manipulated (e.g., subsetted, copied) conveniently, and is the input or output
+from many Bioconductor functions. 
+
+The data in an `ExpressionSet` is complicated, 
+
+* `assayData` consisting of expression data from microarray experiments. It is 
+used to hint at the methods used to access diﬀerent data  components, as we 
+will see below, 
+
+* `phenoData`, metadata describing samples in the experiment 
+
+* `featureData`, annotations and metadata about the features on the chip or technology used for the experiment 
+
+* `protocolData`, information related to the protocol used for processing each 
+sample (and usually extracted from manufacturer ﬁles,
+
+* `experimentData`: a ﬂexible structure to describe the experiment 
+
+The ExpressionSet class coordinates all of this data, so that you do not usually 
+have to worry about the details. However, an ExpressionSet needs to be created 
+in the ﬁrst place, and creation can be  complicated.
+
+
+**AssayData** class
+
+       setClassUnion("AssayData", c("list", "environment"))
+
+
+
+## Loading Packages
+The deﬁnition of the ExpressionSet class along with many methods for manipulating ExpressionSet objects are deﬁned in the `Biobase` package. In general, you need 
+to load class and method deﬁnitions before you use them. When using Bioconductor, this means loading R packages using library or require.
+
+```{r}
+library(Biobase)
+```
+
+
+```{r}
+# create an instance of ExpressionSet
+ExpressionSet()
+```
+
+### Load it with arbitrary data
+```{r}
+ExpressionSet(assayData=matrix(runif(1000), nrow=100, ncol=10))
+```
+
+```{r}
+library(Biobase)
+data(sample.ExpressionSet)
+print(sample.ExpressionSet)
+```
+
+```{r}
+dim(exprs(sample.ExpressionSet))
+```
+
+```{r}
+# the names of `assaySData`
+names(assayData(sample.ExpressionSet))
+```
+
+```{r}
+# since assayData is a list of matrices, let's look at the head of the 1st matrix
+head(assayData(sample.ExpressionSet)[["se.exprs"]])
+# there are 26 columns or samples
+```
+
+```{r}
+# since assayData is a list of matrices, let's look at the head of the 2nd matrix
+head(assayData(sample.ExpressionSet)[["exprs"]])
+# there are also 26 columns or samples
+```
+
+```{r}
+# the genes or row labels should be the same for both matrices
+all(rownames(assayData(sample.ExpressionSet)[["exprs"]]) == rownames(assayData(sample.ExpressionSet)[["se.exprs"]]))
+```
+
+```{r}
+# the dimensions for both matrices are:
+dim(assayData(sample.ExpressionSet)[["se.exprs"]])
+dim(assayData(sample.ExpressionSet)[["exprs"]])
+# [1] 500  26
+# [1] 500  26
+```
+
+
+### Update ExpressionSet
+
+```{r}
+# update an existing ExpressionSet
+data(sample.ExpressionSet)
+updateObject(sample.ExpressionSet)
+```
+
+```{r}
+# information about assay and sample data
+featureNames(sample.ExpressionSet)[1:10]
+sampleNames(sample.ExpressionSet)[1:5]
+experimentData(sample.ExpressionSet)
+```
+
+
+```{r}
+getClass("eSet")
+```
+
+* assayData: high-throughput data.
+* phenoData: sample covariates.
+* featureData: feature covariates.
+* experimentData: experimental description.
+* annotation: assay description.
+
+### assayData: high-throughput data
+* Structure: `list`, `environment`, or `lockEnvironment` class union.
+* Each element of list / environment / lockEnvironment is a `matrix`
+* Rows: features, e.g., gene names.
+* Columns: samples represented on each chip.
+* All matricies must have the same dimensions, row names, and column names.
+
+###  phenoData: sample covariates
+* Structure: `AnnotatedDataFrame`.
+* data: `data.frame`.
+    * Rows: sample identiﬁers.
+    * Columns: measured covariates.
+* varMetadata: `data.frame`.
+    * Rows: measured covariate labels.
+    * Columns: covariate descriptors.
+    
+### featureData: feature covariates
+Contain and document feature covariates speciﬁc to the experiment; use the 
+`annotation` slot in `AnnotatedDataFrame` for chip-level descriptions.
+
+* Structure: `AnnotatedDataFrame`.
+* data: `data.frame`.
+    * Rows: feature identiﬁers. These match row names of assayData.
+    * Columns: measured covariates.
+* varMetadata: `data.frame`.
+    * Rows: measured covariate labels.
+    * Columns: covariate descriptors.    
+
+###  experimentData: experiment description
+Summarize where and how the experiment was performed.
+* Structure: `MIAxE` virtual class. In Biobase version 2.11 the MIAxE virtual class was introduced as a general container for experiment meta-data. The `MIAME` class is now a subclass of `MIAxE`. 
+
+* The `MIAME` class structure is as follows
+    * title: experiment title. `character`
+    * name: experimenter name(s). `character`
+    * preprocessing: list of pre-processing steps. `list`
+    * Additional slots.
+
+### annotation: assay description
+Link experiment to annotation package.
+* Structure: `character`
+    * Label identifying annotation package.
+
+## Building an ExpressionSet From Scratch
+As mentioned in the introduction, the data from many high-throughput genomic
+experiments, such as microarray experiments, usually consist of several
+conceptually distinct parts: assay data, phenotypic meta-data, feature
+annotations and meta-data, and a description of the experiment. We’ll construct
+each of these components, and then assemble them into an `ExpressionSet`.
+
+
+## Assay data 
+One important part of the experiment is a matrix of ‘expression’
+values. The values are usually derived from microarrays of one sort or another,
+perhaps after initial processing by manufacturer software or Bioconductor
+packages. The matrix has $F$ rows and $S$ columns, where $F$ is the number of 
+features (genes) on the chip and $S$ is the number of samples. 
+
+A likely scenario is that your assay data is in a ’tab-delimited’ text ﬁle (as exported from a spreadsheet, for instance) with rows corresponding to features 
+and columns to samples. The strategy is to read this ﬁle into R using the 
+`read.table` command, converting the result to a matrix. A typical command to read 
+a tab-delimited ﬁle that includes column ‘headers’ is:
+
+```{r}
+dataDirectory <- system.file("extdata", package="Biobase")
+exprsFile <- file.path(dataDirectory, "exprsData.txt")
+exprs <- as.matrix(read.table(exprsFile, header=TRUE, 
+                              sep="\t", row.names=1, as.is=TRUE))
+```
+
+The ﬁrst two lines create a ﬁle path pointing to where the assay data is stored.
+
+It is always important to verify that the data you have read matches your expectations. At a minimum, check the class and dimensions of geneData and take
+a peak at the ﬁrst several rows
+
+```{r}
+class(exprs)
+dim(exprs)
+```
+
+```{r}
+# name of the columns or samples
+colnames(exprs)
+```
+
+```{r}
+# show first 5 samples
+head(exprs[,1:5])
+```
+
+At this point, we can create a minimal `ExpressionSet` object using the 
+ExpressionSet constructor:
+
+```{r}
+# load assay data into the ExpressionSet object `minimalSet`
+minimalSet <- ExpressionSet(assayData = exprs)
+```
+
+```{r}
+head(minimalSet@assayData$exprs)
+```
+
+We’ll get more beneﬁt from expression sets by creating a richer object that coordinates phenotypic and other data with our expression data, as outlined in 
+the following sections.
+
+
+**eSet** class
+```
+.eSet <- setClass("eSet",
+         representation(assayData = "AssayData",
+                        phenoData = "AnnotatedDataFrame",
+                        featureData = "AnnotatedDataFrame",
+                        experimentData = "MIAxE",
+                        annotation = "character",
+                        protocolData="AnnotatedDataFrame",
+                        "VIRTUAL"),
+         contains="VersionedBiobase",
+         prototype = prototype(
+           .VersionedBiobase(versions=c(eSet="1.3.0")),
+               assayData = list(), # use initialize to set as env, so
+                                   # different instances have
+                                   # different envs
+               phenoData = .AnnotatedDataFrame(
+                 dimLabels=c("sampleNames", "sampleColumns")),
+               featureData = .AnnotatedDataFrame(
+                 dimLabels=c("featureNames", "featureColumns")),
+               annotation = character(),
+               protocolData = .AnnotatedDataFrame(
+                 dimLabels=c("sampleNames", "sampleColumns"))))
+
+```
+
+## Phenotypic data
+Phenotypic data summarizes information about the samples (e.g., sex, age, and treatment status; referred to as ‘covariates’). The information describing the samples can be represented as a table with $S$ rows and $V$ columns, where V is the number of covariates. An example of phenotypic data can be input with
+
+```{r}
+pDataFile <- file.path(dataDirectory, "pData.txt")
+pData <- read.table(pDataFile,  row.names=1, header=TRUE, sep="\t")
+
+class(pData)
+dim(pData)
+```
+
+```{r}
+# the number of rows have to match the rows and names of exprs matrix
+rownames(pData)
+```
+
+```{r}
+# show the covariates
+colnames(pData)
+```
+
+
+```{r}
+summary(pData)
+```
+
+There are three columns of data, and 26 rows. Note that the number of rows of phenotypic data match the number of columns of expression data, and indeed that 
+the row and column names are identically ordered:
+
+```{r}
+# confirm that row names of pData are the same as the column names in `exprs` matrix
+all(rownames(pData) == colnames(exprs))
+```
+
+This is an essential feature of the relationship between the assay and phenotype data; ExpressionSet will complain if these names do not match.
+
+Phenotypic data can take on a number of diﬀerent forms. For instance, some
+covariates might reasonably be represented as numeric values. Other covariates
+(e.g., gender, tissue type, or cancer status) might better be represented as
+factor objects (see the help page for factor for more information). It is
+especially important that the phenotypic data are encoded correctly; the
+colClasses argument to read.table can be helpful in correctly inputing (and
+ignoring, if desired) columns from the ﬁle.
+
+```{r}
+names(pData)
+```
+
+```{r}
+sapply(pData, class)
+
+```
+
+
+```{r}
+pData[c(15, 20), c("gender", "type")]
+
+```
+
+```{r}
+pData[pData$score>0.8,]
+
+```
+
+Investigators often ﬁnd that the meaning of simple column names does not provide
+enough information about the covariate – What is the cryptic name supposed to
+represent? What units are the covariates measured in? We can create a data frame
+containing such meta-data (or read the information from a ﬁle using read.table)
+with
+
+```{r}
+metadata <- data.frame(labelDescription = c("Patient gender",
+                                            "Case/control status", 
+                                            "Tumor progress on XYZ scale"), 
+                       row.names=c("gender", "type", "score"))
+
+metadata
+```
+
+This creates a data.frame object with a single column called labelDescription,
+and with row names identical to the column names of the data.frame containing
+the phenotypic data.
+
+The column labelDescription must be present; other columns are optional. 
+
+**AnnotatedDataFrame** class
+```
+.AnnotatedDataFrame <- setClass("AnnotatedDataFrame",
+         representation(varMetadata = "data.frame",
+                        data = "data.frame",
+                        dimLabels = "character"),
+         contains=c("Versioned"),
+         prototype = prototype(
+           .Versioned(versions=list(AnnotatedDataFrame="1.1.0")),
+           varMetadata = new( "data.frame" ),
+           data = new( "data.frame" ),
+           dimLabels = c("rowNames", "columnNames")))
+```
+
+Bioconductor’s Biobase package provides a class called `AnnotatedDataFrame` that
+conveniently stores and manipulates the phenotypic data and its metadata in a
+coordinated fashion. Create and view an AnnotatedDataFrame instance with:
+
+```{r}
+phenoData <- new("AnnotatedDataFrame", data = pData, varMetadata = metadata)
+
+phenoData
+```
+
+> The varMetadata field in `AnnotatedDataFrame` is a dataframe of one column.
+
+
+Some useful operations on an AnnotatedDataFrame include sampleNames, pData (to
+extract the original pData data.frame), and varMetadata. In addition,
+AnnotatedDataFrame objects can be subset much like a data.frame:
+
+```{r}
+head(pData(phenoData))
+```
+
+```{r}
+phenoData[c("A","Z"), "gender"]
+```
+
+```{r}
+pData(phenoData[phenoData$score>0.8,])
+```
+
+## Experiment description
+Basic description about the experiment (e.g., the investigator or lab where the experiment was done, an overall title, and other notes) can be recorded by creating a MIAME object. One way to create a MIAME object is to use the new function:
+
+```{r}
+experimentData <- new("MIAME",
+                        name="Pierre Fermat",
+                        lab="Francis Galton Lab",
+                        contact="pfermat@lab.not.exist",
+                        title="Smoking-Cancer Experiment",
+                        abstract="An example ExpressionSet",
+                        url="www.lab.not.exist",
+                        other=list(
+                        notes="Created from text files"
+ ))
+```
+
+Usually, new takes as arguments the class name and pairs of names and values corresponding to diﬀerent slots in the class; consult the help page for MIAME for details of available slots.
+
+## Assembling an ExpressionSet
+An ExpressionSet object is created by assembling its component parts and calling 
+the `ExpressionSet` constructor:
+
+```{r}
+exampleSet <- ExpressionSet(assayData = exprs,              # a matrix
+                            phenoData = phenoData,          # AnnotatedDataFrame
+                            experimentData = experimentData, # bunch of labels
+                            annotation = "hgu95av2")         # one label
+```
+
+> Notice that at this time we are not entering `featureData`.
+
+Where the classes look like:
+
+**ExpressionSet** class
+```
+.ExpressionSet <- setClass("ExpressionSet",
+         representation(experimentData="MIAME"),
+         contains = "eSet",
+         prototype = prototype(
+           .VersionedBiobase(
+               versions=c(classVersion("eSet"), ExpressionSet="1.0.0")),
+               experimentData=.MIAME()))
+```
+
+and the class **eSet** has these types:
+
+````
+setClass("eSet",
+         representation(assayData = "AssayData",
+                        phenoData = "AnnotatedDataFrame",
+                        featureData = "AnnotatedDataFrame",
+                        experimentData = "MIAxE",
+                        annotation = "character",
+                        protocolData="AnnotatedDataFrame",
+                        "VIRTUAL"),
+                        ...
+                        ...
+```                      
+
+Note that the names on the right of each equal sign can refer to any object of appropriate class for the argument. See the help page for `ExpressionSet` for 
+more information.
+
+We created a rich data object to coordinate diverse sources of information. Less
+rich objects can be created by providing less information. As mentioned earlier, 
+a minimal expression set can be created with:
+
+```{r}
+minimalSet <- ExpressionSet(assayData = exprs)
+```
+
+Of course this object has no information about phenotypic or feature data, or 
+about the chip used for the assay.
+
+## ExpressionSet Basics
+Now that you have an ExpressionSet instance, let’s explore some of the basic operations. You can get an overview of the structure and available methods for ExpressionSet objects by reading the help page:
+
+```{r}
+# help("ExpressionSet-class")
+```
+
+When you print an ExpressionSet object, a brief summary of the contents of the object
+is displayed (displaying the entire object would ﬁll your screen with numbers):
+
+```{r}
+exampleSet
+```
+
+## Accessing Data Elements
+A number of accessor functions are available to extract data from an ExpressionSet instance. You can access the columns of the phenotype data (an AnnotatedDataFrame instance) using `$`:
+
+```{r}
+exampleSet$gender[1:5]
+```
+
+```{r}
+exampleSet$gender[1:5] == "Female"
+```
+
+You can retrieve the names of the features using featureNames. For many microarray
+datasets, the feature names are the probe set identiﬁers.
+
+```{r}
+featureNames(exampleSet)[1:5]
+```
+
+The unique identiﬁers of the samples in the data set are available via the sampleNames method. The varLabels method lists the column names of the phenotype data:
+
+```{r}
+sampleNames(exampleSet)[1:5]
+```
+
+```{r}
+varLabels(exampleSet)
+```
+
+Extract the expression matrix of sample information using exprs:
+
+```{r}
+mat <- exprs(exampleSet)
+dim(mat)
+```
+
+##  Subsetting
+Probably the most useful operation to perform on ExpressionSet objects is subsetting. Subsetting an ExpressionSet is very similar to subsetting the expression matrix that is contained within the ExpressionSet, the ﬁrst argument subsets the features and the second argument subsets the samples. Here are some examples: Create a new ExpressionSet consisting of the 5 features and the ﬁrst 3 samples:
+
+```{r}
+vv <- exampleSet[1:5, 1:3]
+dim(vv)
+```
+
+```{r}
+featureNames(vv)
+```
+
+```{r}
+ sampleNames(vv)
+```
+
+Create a subset consisting of only the male samples:
+
+```{r}
+ males <- exampleSet[ , exampleSet$gender == "Male"]
+ males
+```
+
+## Graphics
+Graphics and visualization are important issues when dealing with complex data
+such as the ones typically found in biological science. In this section we work
+through some examples that allow us to create general plots in R. Both R and
+Bioconductor oﬀer a range of functions that generate various graphical repre-
+sentations of our data. For each function there are usually numerous parameters
+that enable the user to tailor the output to the speciﬁc needs. We only touch
+on some of the issues and tools. Interested readers should look at Chapter 10 of
+Gentleman et al. (2005a) or for even more detail Murrell (2005).
+
+The function plot can be used to produce dot plots. Read through its docu-
+mentation (? plot) and also take a look into the documentation for par, which
+controls most of the parameters for R’s base graphics. We now want to use the plot function to compare the gene expression intensities of two samples from
+our dataset on a log–log scale.
+
+```{r}
+x = exprs(exampleSet[, 1])
+ y = exprs(exampleSet[, 3])
+ plot(x=x, y=y, log="xy")
+```
+
+From the plot in Figure 2.1 we can see that the measurements for each probe
+are highly correlated between the two samples. They form an almost perfect line
+along the 45 degree diagonal.
+
+
+Proper visualization can help to detect possible problems or inconsistencies in
+the data. In the simplest case one can spot such problems by looking at distribu-
+tion summaries. A good example for this is the dependency of the measurement
+intensity of a microarray probe on its GC-content. To demonstrate this, we need
+to load a more extended data set from the CLL package which includes the raw
+measurement values for each probe from an experiment using the Aﬀymetrix HG-U95Av2 GeneChip. The basecontent function from package matchprobes
+calculates the base frequencies for each probe based on a sequence vector.
+
+
+```{r}
+library("CLL")
+library("matchprobes")
+library("hgu95av2probe")
+library("hgu95av2cdf")
+library("RColorBrewer")
+data("CLLbatch")
+bases = basecontent(hgu95av2probe$sequence)
+```
+
+
+
+```{r}
+print(exampleSet)
+```
+
+```{r}
+print(exprs(exampleSet)[1,])
+```
+
+```{r}
+print(pData(exampleSet)[1:2,1:3])
+```
+
+```{r}
+print(rbind(exprs(exampleSet[1,]),
+ sex <- t(pData(exampleSet))[1,]))
+```
+
+
+```{r}
+medContr <- function( y, x ) {
+ ys <- split(y,x)
+ median(ys[[1]]) - median(ys[[2]])
+ }
+```
+
+
+```{r}
+print(apply(exprs(exampleSet[1,,drop=F]), 1,
+ medContr, pData(exampleSet)[["sex"]]))
+```
+
+```{r}
+medContr1 <- function(y) {
+ ys <- split(y,sex)
+ median(ys[[1]]) - median(ys[[2]])
+ }
+
+print(esApply( exampleSet, 1, medContr1)[1])
+```
+
+
+```{r}
+library(affy)
+data(MLL.B, package = "ALLMLL")
+MLL.B
+```
+
+```{r}
+dim(exprs(MLL.B))
+```
+
+The annotation can be extracted as follows.
+```{r}
+annotation(MLL.B)
+```
+To print the ﬁrst 10 names of the probes use
+
+```{r}
+probeNames(MLL.B)[1:10]
+```
+
+Note that the probe names are the same as those obtained by geneNames.
+The PM and MM values are collected by the functions pm and mm. To print
+the PM values of the ﬁrst four out of the sixteen rows of the probe with
+identiﬁer 200000_s_at we may use the following.
+
+```{r}
+pm(MLL.B,"200000_s_at")[1:4,1:3]
+```
+
+By function matplot a quick view on the variability of the data within and
+between probes can be obtained.
+
+```{r}
+matplot(pm(MLL.B,"200000_s_at"),type="l", xlab="Probe No.",
+ ylab="PM Probe intensity")
+```
+
+Density plots of the log of the probe values can be obtained by hist(MLL.B).
+From the density plot of the log of the intensity data in Figure 6.2 it can be
+seen that these are quite skew to the right. The script to program such plots
+
+```{r}
+MAplot(MLL.B,pairs=TRUE, plot.method= "smoothScatter")
+```
+
+
+```{r}
+image(MLL.B)
+```
+## Preprocessing methods
+From various visualization methods it is clear that preprocessing of probe
+intensities is necessary for making biologically relevant conclusions. Biocon-
+ductor gives facilities for various preprocessing methods. Here we will only
+sketch what the main methods are and how these can be implemented. It
+should be noted that the topic of optimal preprocessing currently is a ﬁeld
+of intense research (probably for the coming years), so that deﬁnitive recom-
+mendations are not mandatory. Preprocessing consists of three major steps:
+Background correction, normalization, and summarization. To obtain the
+available background and pm correction methods use the following.
+
+```{r}
+bgcorrect.methods
+```
+
+```{r}
+pmcorrect.methods
+```
+
+```{r}
+ normalize.methods(MLL.B)
+```
+
+```{r}
+express.summary.stat.methods
+```
+
+Example 1. The three pre-processing steps can be employed one after
+the other by the function expresso. To combine the background correction
+RMA with constant normalization and to use average diﬀerences for the
+computation of gene expression values, we may use the following.
+
+```{r}
+eset <- expresso(MLL.B,bgcorrect.method="rma",
+normalize.method="constant",pmcorrect.method="pmonly",
+summary.method="avgdiff")
+```
+
+Example 2. Another frequently applied preprocessing method is RMA.
+It combines convolution background correction, quantile normalization, and
+summarization based on multi-array model ﬁt in a robust manner by a so-
+called median polish algorithm.
+
+```{r}
+library(affy)
+ data(MLL.B, package = "ALLMLL")
+ eset3 <- rma(MLL.B)
+```
+
+```{r}
+boxplot(data.frame(exprs(eset3)))
+```
+
+The three stages of preprocessing by rma are part of the output. Before a
+box-and-whiskers plot can be constructed the expression values need to be
+extracted from the object eset3.
+
+## Example 3. In the sequel we shall frequently work with the ALL data
+from the ALLpackage of Bioconductor. Here the data set is brieﬂy introduced
+(see also Section 1.1) and further processing steps are illustrated. The raw
+data have been jointly normalized by RMA and are available in the form of an
+exprSet object. 12625 gene expression values are available from microarrays
+of 128 diﬀerent persons suﬀering from acute lymphoblastic leukemia (ALL).
+A number of interesting phenotypical co-variates are available. For instance,
+the ALL$mol variable has TRUE/FALSE values for each of the 128 patients
+depending on whether a reciprocal translocation occurred between the long
+arms of Chromosome 9 and 22. This is casually related to chronic and acute
+leukemia. One can also ask for table(ALL$BT) to obtain an overview of
+the numbers of patients which are in certain phases of a disease. See also
+the general help ?ALL for further information on the data or the article by
+Chiaretti et al. (2004).
+
+```{r}
+data(ALL, package = "ALL")
+slotNames(ALL)
+```
+
+```{r}
+row.names(exprs(ALL))[1:10]
+```
+
+```{r}
+ALL1pp <- ALL1 <- ALL[,ALL$mol == "ALL1/AF4"]
+mads <- apply(exprs(ALL1), 2, mad)
+meds <- apply(exprs(ALL1), 2, median)
+dat <- sweep(exprs(ALL1), 2, meds)
+exprs(ALL1pp) <- sweep(dat, 2, mads, FUN="/")
+```
+
+```{r}
+cvval <- apply(exprs(ALL1pp),1,function(x){sd(x)/abs(mean(x))})
+```
+
+
+
+## Slot oriented virtual class
+
+```{r}
+library(Biobase)
+
+isVirtualClass("eSet")
+```
+
+```{r}
+getSlots("eSet")
+```
+
+
+## Exploring Biobase
+
+```{r}
+library(Biobase)
+
+getClass("ExpressionSet")
+```
+
+```{r}
+data("sample.ExpressionSet")
+sample.ExpressionSet
+```
+
+```{r}
+head(exprs(sample.ExpressionSet))
+```
+
+```{r}
+head(pData(sample.ExpressionSet))
+```
+
+```{r}
+head(fData(sample.ExpressionSet))
+```
+
+## phenoData: an AnnotatedDataFrame
+
+```{r}
+getClass("AnnotatedDataFrame")
+```
+
+```{r}
+sample.phenoData <- phenoData(sample.ExpressionSet)
+sample.phenoData
+```
+
+```{r}
+pData(sample.phenoData)
+```
+
+```{r}
+varLabels(sample.phenoData)
+```
+
+```{r}
+sampleNames(sample.phenoData)
+```
+
+```{r}
+sample.phenoData$type
+```
+
+```{r}
+pData(sample.ExpressionSet)
+```
+
+```{r}
+varLabels(sample.ExpressionSet)
+```
+
+```{r}
+sampleNames(sample.ExpressionSet)
+```
+
+```{r}
+sample.ExpressionSet$type
+```
+
+```{r}
+head(featureNames(sample.ExpressionSet))
+```
+
+## eSet and ExpressionSet
+The ExpressionSet class is derived from eSet. The main diﬀerence
+between these two classes is that an ExpressionSet provides an exprs
+method which accesses the expression matrix.
+
+```{r}
+hasMethod("exprs", "eSet")
+hasMethod("exprs", "ExpressionSet")
+getMethod("exprs", "ExpressionSet")
+```
+
+`exprs` is an example of an accessor function.
+
+## Accessing the ExpressionSet
+
+```{r}
+head(featureNames(sample.ExpressionSet))
+tail(featureNames(sample.ExpressionSet))
+```
+
+```{r}
+sampleNames(sample.ExpressionSet)
+```
+
+```{r}
+head(exprs(sample.ExpressionSet))
+```
+
+```{r}
+slot(sample.ExpressionSet, "exprs")
+```
+
+```{r}
+names(assayData(sample.ExpressionSet))
+```
+
+## Subsetting ExpressionSets
+
+```{r}
+Type <- phenoData(sample.ExpressionSet)$type
+cases <- grep("Case", Type)
+controls <- grep("Control", Type)
+casesEx <- sample.ExpressionSet[, cases]
+controlsEx <- sample.ExpressionSet[, controls]
+```
+
+```{r}
+casesEx
+```
+
+```{r}
+controlsEx
+```
+
+```{r}
+class(controlsEx)
+```
+
+```{r}
+# take a sample of 10 rows and 6 columns from ExpressionSet
+sample.ExpressionSet[sample(nrow(sample.ExpressionSet), 
+                            size = 10, replace = FALSE), 5:10]
+```
+
+
+## Example: ExpressionSet
+
+```{r}
+library(ALL)
+data(ALL)
+
+slotNames(ALL)
+```
+
+```{r}
+ALL@phenoData
+```
+
+```{r}
+phenoData(ALL)
+```
+
+```{r}
+class(ALL) 
+```
+
+## Methods
+
+```{r}
+showMethods(class= "ExpressionSet") 
+```
+
+```{r}
+# look at the code of `write.expr`
+getMethod("write.exprs", "ExpressionSet") 
+```
+

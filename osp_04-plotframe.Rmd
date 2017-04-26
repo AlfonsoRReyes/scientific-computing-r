@@ -1,0 +1,125 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(rJava)
+
+ospJarFile <- paste("./inst/ospjar", "osp.jar", sep = "/")
+ospJarFile
+
+.jinit()          # initialize Java-VM
+.jaddClassPath(ospJarFile)
+.jclassPath()
+```
+
+
+```{r}
+library(rJava)
+ospClasses <- "./inst/osp" 
+.jinit()          # initialize Java-VM
+.jaddClassPath(ospClasses)
+.jclassPath()
+```
+
+
+
+```{r}
+j <- J("org.opensourcephysics.frames.PlotFrame")
+j
+```
+
+```{r}
+plot <- new(J("org.opensourcephysics.frames.PlotFrame"), "position", "amplitude", "First Plot")
+plot$setSize(as.integer(400), as.integer(400))
+for (x in seq(-10, 10, 0.1)) {
+    plot$append(as.integer(0), as.double(x), as.double(sin(x)))
+}
+plot$setVisible(TRUE)
+```
+
+
+
+
+```{r}
+.jconstructors("org/opensourcephysics/frames/PlotFrame")
+```
+
+
+```{r}
+v <- new(J("java.lang.String"), "Hello World!")
+v$length()
+v$indexOf("World")
+names(v)
+```
+
+
+```{r}
+head(.jmethods("org/opensourcephysics/frames/PlotFrame"), 40)
+```
+
+```{r}
+.jfields("org/opensourcephysics/frames/PlotFrame")
+```
+
+
+```{r}
+org.opensourcephysics.frames.PlotFrame("position", "amplitude", "First Plot")
+```
+
+```{r}
+.jnew("org/opensourcephysics/frames/PlotFrame", "PlotFrame")
+```
+
+
+```{r}
+# java.lang.NoSuchMethodError: <init>
+# fft <- .jnew("org.opensourcephysics.frames.PlotFrame")
+# fft <- .jnew("org/opensourcephysics/frames/PlotFrame")
+# fft <- .jnew("org.opensourcephysics.frames.PlotFrame", "PlotFrame")
+
+# java.lang.ClassNotFoundException
+fft <- .jnew("org.opensourcephysics.frames", "PlotFrame")
+
+# rJava::.jcall(fft, "V", "setN", as.integer(5))
+# rJava::.jcall(fft, "I", "getN")
+```
+
+
+
+```{r}
+pf <- .jnew("org.opensourcephysics.frames.PlotFrame", "PlotFrame", "position", "amplitude", "First Plot")
+```
+
+```{r}
+pf <- .jnew("org.opensourcephysics.frames.PlotFrame")
+```
+
+```{r}
+pf <- .jcall("org/opensourcephysics/frames/PlotFrame",, "PlotFrame", "position")
+```
+
+
+
+```{r}
+# Error in new(SimulationControl) : object 'SimulationControl' not found
+attach(javaImport("org/opensourcephysics/frames/PlotFrame"), 
+       pos = 2 , 
+       name = "java:org.opensourcephysics.frames.PlotFrame" )
+sim <- new(PlotFrame)
+```
+
+
+```{r}
+# Error in new(SimulationControl) : object 'SimulationControl' not found
+attach(javaImport("org/opensourcephysics/frames"), 
+       pos = 2 , 
+       name = "java:org.opensourcephysics.frames" )
+sim <- new(PlotFrame)
+```
+
+```{r}
+.jcall("org.opensourcephysics.frames.PlotFrame")
+```
+

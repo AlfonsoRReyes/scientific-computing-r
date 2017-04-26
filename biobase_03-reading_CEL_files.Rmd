@@ -1,0 +1,217 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+Source: http://rstudio-pubs-static.s3.amazonaws.com/14438_729bb8430be242fba106c8ae3968458f.html
+
+Reference: http://icahn.mssm.edu/research/labs/life-science-technology-laboratory/projects-and-grants/applications/affymetrix-genechip-technology
+
+
+
+
+```{r}
+files = list.files("D:Dropbox/git/extdata/Su_CELs", 
+    full.names = TRUE)
+files
+```
+
+```{r}
+library(affy)
+
+affy.data = ReadAffy(filenames = files)
+```
+
+
+## normalize data from these eight chips
+
+Summarize and normalize with MAS5
+
+```{r}
+eset.mas5 = mas5(affy.data)
+```
+
+## Expression Values
+
+The probe pair gets weighted based on the difference from the mean. We then take the mean of the weighted intensity values and that becomes the mean for our Kth set. We then correct for negative values, and the signals are scaled based on this mean, meaning that we have background adjusted values. Now we have normalized expression values, and we can look at the expression matrix! That was so darn easy.
+
+```{r}
+exprSet.nologs = exprs(eset.mas5)
+# List the column (chip) names
+colnames(exprSet.nologs)
+```
+
+```{r}
+# Rename the column names if we want
+colnames(exprSet.nologs) = c("brain.1", "brain.2", "fetal.brain.1", "fetal.brain.2", 
+    "fetal.liver.1", "fetal.liver.2", "liver.1", "liver.2")
+```
+
+
+```{r}
+heatmap(exprSet.nologs, main = "Normalized ME matrix for brain, liver, N=8")
+```
+
+
+```{r}
+# log transform the data so the distribution is more normal.
+exprSet = log(exprSet.nologs, 2)
+```
+
+
+```{r}
+# Run the Affy A/P call algorithm on the CEL files we processed above
+data.mas5calls = mas5calls(affy.data)
+```
+
+```{r}
+# Get the actual A/P calls
+data.mas5calls.calls = exprs(data.mas5calls)
+# This is a matrix of values “P” and “A” to indicate present and absent.
+```
+
+
+```{r}
+#  calculate expression ratios of genes between the two tissues. We start by calculating the mean of each pair of replicated experiments
+brain.mean = apply(exprSet[, c("brain.1", "brain.2")], 1, mean)
+fetal.brain.mean = apply(exprSet[, c("fetal.brain.1", "fetal.brain.2")], 1, 
+    mean)
+liver.mean = apply(exprSet[, c("liver.1", "liver.2")], 1, mean)
+fetal.liver.mean = apply(exprSet[, c("fetal.liver.1", "fetal.liver.2")], 1, 
+    mean)
+
+```
+
+
+```{r}
+# since these are log transformed, we can take advantage of that:
+brain.fetal.to.adult = fetal.brain.mean - brain.mean
+liver.fetal.to.adult = fetal.liver.mean - liver.mean
+```
+
+
+```{r}
+# ploop them into one big matrix:
+all.data = cbind(exprSet, brain.mean, fetal.brain.mean, liver.mean, fetal.liver.mean, 
+    brain.fetal.to.adult, liver.fetal.to.adult)
+# Check what data we have here
+colnames(all.data)
+```
+
+```{r}
+# We can now use a common statistical test to identify differentially expressed genes. There are multiple ways to do this - t-tests, fold change, and bootstrapping, and this document outlines the pros and cons of each. Let's use a t-test, specifically Welch's test (doesn't assume equal variance between samples) and two tailed, because we have up and down regulated genes. Here we specify dataset1, dataset2, and 2 tailed, but ONLY for the first gene:
+
+dataset.1 = exprSet[1, c("brain.1", "brain.2")]
+dataset.2 = exprSet[1, c("fetal.brain.1", "fetal.brain.2")]
+t.test.gene.1 = t.test(dataset.1, dataset.2, "two.sided")
+dataset.1
+```
+
+```{r}
+dataset.2
+```
+
+```{r}
+cat("PValues")
+t.test.gene.1$p.value
+```
+
+```{r}
+# Now let's look at… ALL genes (evil laugh)
+brain.p.value.all.genes = apply(exprSet, 1, function(x) {
+    t.test(x[1:2], x[3:4])$p.value
+})
+liver.p.value.all.genes = apply(exprSet, 1, function(x) {
+    t.test(x[5:6], x[7:8])$p.value
+})
+# Sanity check - do we get the same for the first gene?
+brain.p.value.all.genes[1:5]
+```
+
+
+```{r}
+# We want to “flag” the genes with “Absent” calls. We can do this in one fell swoop (is that the right expression?) by doing the following:
+# Concatenate all A/P calls for brain and liver
+AP = apply(data.mas5calls.calls, 1, paste, collapse = "")
+```
+
+```{r}
+# Get the probsets where the 4 calls are not 'AAAA'
+genes.present = names(AP[AP != "AAAAAAAA"])
+# How many probetset/genes are present?
+length(genes.present)
+```
+
+```{r}
+# Get all data for probesets that are present on at least on chip.
+exprSet.present = exprSet[genes.present, ]
+```
+
+
+```{r}
+# Now we have to correct for multiple hypotheses, the False Discovery Rate (FDR) Here are our raw p-values (uncorrected):
+
+brain.raw.pvals.present = brain.p.value.all.genes[genes.present]
+liver.raw.pvals.present = liver.p.value.all.genes[genes.present]
+```
+
+
+```{r}
+# Generate FDR corrected values with p.adjust, sort them to get the lowest (most significant), and check out the lowest 10:
+
+brain.fdr.pvals.present = p.adjust(brain.raw.pvals.present, method = "fdr")
+liver.fdr.pvals.present = p.adjust(liver.raw.pvals.present, method = "fdr")
+brain.fdr.pvals.present.sorted = brain.fdr.pvals.present[order(brain.fdr.pvals.present)]
+liver.fdr.pvals.present.sorted = liver.fdr.pvals.present[order(liver.fdr.pvals.present)]
+brain.fdr.pvals.present.sorted[1:10]
+```
+
+```{r}
+liver.fdr.pvals.present.sorted[1:10]
+```
+
+
+```{r}
+#  Since we want to move forward with clustering, let's use the uncorrected values, and set a significance threshold of p < 0.01 for genes expressed in both samples. First, let's get a list (one for each tissue) of gene IDs with pvalues < 0.01.
+
+brain.DE.probesets = names(brain.raw.pvals.present[brain.raw.pvals.present < 
+    0.01])
+liver.DE.probesets = names(liver.raw.pvals.present[liver.raw.pvals.present < 
+    0.01])
+
+```
+
+
+```{r}
+# Get the expression data (log2 ratios) for these probesets (separate datasets for brain and liver).
+
+brain.DE.log2.ratios = all.data[brain.DE.probesets, c("brain.fetal.to.adult", 
+    "liver.fetal.to.adult")]
+liver.DE.log2.ratios = all.data[liver.DE.probesets, c("brain.fetal.to.adult", 
+    "liver.fetal.to.adult")]
+
+```
+
+
+```{r}
+# To cluster, I'm just going to use the heatmap function again, since that will automatically bicluster the data.
+
+heatmap(liver.DE.log2.ratios, main = "Clustering of liver log2 ratios")
+
+```
+
+```{r}
+#  Before we cluster, let's also change the gene groups to entrez IDs, for later.
+
+entrez_id = read.csv("entrezlist.txt", sep = " ")
+# 5th column is affy ID, 4th is entrez_gene
+tmp = rownames(liver.DE.log2.ratios)
+eid = entrez_id[which(entrez_id[, 3] %in% tmp), 1]
+
+# Filter data to include subset we have lookups for
+tmp = liver.DE.log2.ratios[which(rownames(liver.DE.log2.ratios) %in% entrez_id[, 
+    3]), ]
+rownames(tmp) = eid
+
+```
+

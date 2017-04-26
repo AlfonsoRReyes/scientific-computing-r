@@ -1,0 +1,149 @@
+---
+title: "OSP, Using the JAR"
+output: html_notebook
+---
+
+
+```{r}
+library(rJava)
+
+ospClasses <- "./inst/osp" #<- paste("./inst/osp", "osp.jar", sep = "/")
+
+.jinit()          # initialize Java-VM
+.jaddClassPath(ospClasses)
+.jclassPath()
+```
+
+```{r}
+fft <- rJava::.jnew("org/opensourcephysics/numerics/FFT")
+rJava::.jcall(fft, "V", "setN", as.integer(5))
+rJava::.jcall(fft, "I", "getN")
+```
+
+
+```{r}
+ rJava::.jnew("org/opensourcephysics/numerics/FFTReal")
+```
+
+```{r}
+ rJava::.jnew("org/opensourcephysics/numerics/Integral")
+```
+
+```{r}
+Interpolation <- rJava::.jnew("org/opensourcephysics/numerics/Interpolation")
+Interpolation$linear(1, 20, 3, 4,5)
+```
+
+
+```{r}
+CurveFitting <- rJava::.jnew("org/opensourcephysics/numerics/CurveFitting")
+CurveFitting$linearRegression(runif(5), runif(5))
+```
+
+```{r}
+Derivative <- rJava::.jnew("org/opensourcephysics/numerics/Derivative")
+```
+
+
+
+```{r}
+Legendre <- rJava::.jnew("org/opensourcephysics/numerics/Legendre")
+```
+
+
+
+```{r}
+PBC <- rJava::.jnew("org/opensourcephysics/numerics/PBC")
+```
+
+
+```{r}
+Quaternion <- rJava::.jnew("org/opensourcephysics/numerics/Quaternion")
+```
+
+
+```{r}
+Util <- rJava::.jnew("org/opensourcephysics/numerics/Util")
+.jmethods(Util)
+```
+
+
+```{r}
+Vec3D <- rJava::.jnew("org/opensourcephysics/numerics/Vec3D")
+.jmethods(Vec3D)
+```
+
+
+
+```{r}
+VectorMath <- rJava::.jnew("org/opensourcephysics/numerics/VectorMath")
+.jmethods(VectorMath, as.obj = FALSE)
+```
+
+```{r}
+PlotFrame <- rJava::.jnew("org/opensourcephysics/frames", "PlotFrame")
+```
+
+```{r}
+PlotFrame <- rJava::.jnew("org/opensourcephysics/frames/PlotFrame", "PlotFrame")
+```
+
+```{r}
+PlotFrame <- rJava::.jnew("org/opensourcephysics/frames/PlotFrame")
+```
+
+
+```{r}
+PlotFrame <- rJava::.jnew("org/opensourcephysics/frames/DrawingFrame")
+```
+
+
+```{r}
+pfc <- .jconstructors("org/opensourcephysics/frames/PlotFrame")
+pfc
+# v <- .jnew("org/opensourcephysics/frames/PlotFrame")
+# .jmethods(v, "add")
+```
+
+```{r}
+org.opensourcephysics.frames.PlotFrame()
+```
+
+
+
+```{r}
+# ODE
+# ComparisonApp.java
+
+cmd <- paste("cd ./inst/osp",                      # change to Java folder
+             "javac org/opensourcephysics/manual/ch09/ComparisonApp.java",
+             "java org.opensourcephysics.manual.ch09.ComparisonApp",
+             sep = "&& ")
+
+command(cmd)
+```
+
+
+
+
+
+```{r}
+ji1 <- javaImport("org.opensourcephysics.numerics.*")
+ji2 <- javaImport("import org.opensourcephysics.ode.*")
+```
+
+
+```{r}
+ji1
+```
+
+```{r}
+# import org.opensourcephysics.frames.PlotFrame
+javaImport("org.opensourcephysics.frames.PlotFrame")
+```
+
+
+```{r}
+new(PlotFrame)
+```
+

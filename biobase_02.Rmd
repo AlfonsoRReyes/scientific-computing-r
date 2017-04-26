@@ -1,0 +1,322 @@
+---
+title: "biobase_02 - R lab 2 - breast, ovarian cancer"
+output: html_notebook
+---
+
+## R Lab 2
+Download the source code for the lab: rlab-de.R 
+
+This .R file can be used to explore the chang03 data set available from http://pierotti.group.ifom-ieo-campus.it/biocdb/data/experiment/ . 
+
+You can download a .rda file which can be used to run the code here: chang03.rda 
+
+Return to the course webpage .
+
+Source: http://biostat.jhsph.edu/~jleek/teaching/2011/genomics/lab2/
+        http://biostat.jhsph.edu/~jleek/teaching/2011/genomics/lab2/rlab-de.R
+Course: http://www.biostat.jhsph.edu/~jleek/teaching/2011/genomics/
+
+
+```{r}
+## Load the appropriate libraries
+
+library(Biobase)
+library(genefilter)
+library(affy)
+```
+
+
+```{r}
+## Load in the data
+## The data for this experiment were obtained from:
+## http://pierotti.group.ifom-ieo-campus.it/biocdb/data/experiment/
+## where you can find a large collection of free microarray data sets
+## for breast and ovarian cancer. The data for this experiment
+## have already been normalized for us. 
+
+load("./data/chang03.rda")
+```
+
+
+```{r}
+# what is the class of the dataset
+class(chang03)
+```
+
+```{r}
+chang03
+```
+
+
+```{r}
+## Find the dimensions of the data
+
+dim(exprs(chang03))
+
+```
+
+```{r}
+## Find the dimensions of the measured covariates
+
+dim(pData(chang03))
+```
+
+```{r}
+## Look at the names of the measured covariates
+
+names(pData(chang03))
+```
+
+```{r}
+
+## Make a table of the disease.state variable
+
+table(pData(chang03)$disease.state)
+```
+
+```{r}
+## Look at disease state by progesterone receptor status
+
+table(pData(chang03)$disease.state,pData(chang03)$Progesterone..receptor.status)
+```
+
+```{r}
+## Make boxplots of the expression data
+
+boxplot(exprs(chang03))
+```
+
+```{r}
+## Looks like we need to log-transform! Make boxplots of the logged expression data
+y=log2(exprs(chang03))
+boxplot(y~col(y))
+
+```
+
+```{r}
+## Hierarchically cluster the *arrays* based on the expression data
+
+# Step 1 - calculate the distances between the arrays see ? dist for
+# other possible distances
+
+dd <- dist(t(log2(exprs(chang03))), method = "euclidean")
+
+# Step 2 - apply heirarchical clustering to these distances
+
+hh <- hclust(dd)
+hh
+
+# Step 3 - plot the clustering, label by disease status
+
+plot(hh,lab=pData(chang03)$disease.state)
+```
+
+```{r}
+## K-means cluster the *genes* into 3 clusters, do
+## it two times to see the results are different
+
+# First we center the matrix by subtracting the
+# row means (the gene specific means)
+
+cdat <- log2(exprs(chang03))
+gmeans <- rowMeans(cdat)
+cdat <- sweep(cdat,1,gmeans)
+
+kk1 <- kmeans(cdat,centers=3)
+
+## Find out how many genes are in each cluster
+
+table(kk1$cluster)
+
+## Look at the centroids for each of the 3
+## clusters. Each line represents a pattern across genes
+matplot(t(kk1$center), type="b", xlab="Array",ylab="Centroid Value")
+```
+
+```{r fig.asp=1}
+## Make a heatmap of the data (have to transpose to get genes in rows in the plot)
+
+image(t(cdat))
+```
+
+```{r fig.asp=1}
+## Make a heatmap of the data after arranging genes into clusters and compare with kmean results
+clustdat <- cdat[order(kk1$cluster),]
+par(mar=c(2.5,2.5,1.6,1.1), mgp=c(1.5,.5,0))
+layout(c(1,2), heights=c(2,1))
+image(t(clustdat), xaxt="n", yaxt="n", xlab="samples", ylab="genes")
+matplot(t(kk1$center), type="b", xlab="Array",ylab="Centroid Value")
+```
+
+```{r}
+## Now do SVD on data. Before doing SVD we need to subtract off row-means
+## so that the patterns we identify aren't just the differences in the overall
+## mean level.
+
+svd1 <- svd(cdat)
+
+## Look at a plot of the percent of variation explained by each right singular vector/
+## principal component
+
+plot(svd1$d^2/sum(svd1$d^2),pch=19)
+```
+
+```{r}
+## Plot the first singular vector/principal component
+## and compare with kmean centroids
+plot(svd1$v[,1],pch=19)
+x11();par(mar=c(2.5,2.5,3.6,1.1),mfrow=c(2,1))
+matplot(svd1$v[,1:3], type="b", main="First 3 singular vector")
+matplot(t(kk1$center), type="b", xlab="Array",ylab="Centroid Value", main="Centroids")
+
+```
+
+```{r}
+## Plot the singular vector against the 3 centroids from kmeans
+
+par(mfrow=c(1,3))
+plot(svd1$v[,1],kk1$centers[1,],pch=19,xlab="Singular Vector",ylab="K-means Center 1")
+plot(svd1$v[,1],kk1$centers[2,],pch=19,xlab="Singular Vector",ylab="K-means Center 2",col="red")
+plot(svd1$v[,1],kk1$centers[3,],pch=19,xlab="Singular Vector",ylab="K-means Center 3",col="blue")
+
+```
+
+```{r}
+## Look at correlation between singular vector and cluster centroids
+
+cor(svd1$v[,1],kk1$centers[1,])
+cor(svd1$v[,1],kk1$centers[2,])
+cor(svd1$v[,1],kk1$centers[3,])
+```
+
+```{r}
+## Time for differential expression, lets find genes differentially
+## expressed with respect to disease state.
+
+## First just calculate a p-value for the first gene
+t.test(log2(exprs(chang03))[1,] ~ pData(chang03)$disease.state)
+```
+
+```{r}
+## Get just the p-value
+
+data <- log2(exprs(chang03))
+t.test(data[1,] ~ pData(chang03)$disease.state)$p.value
+
+
+## Now calculate one p-value for the first 1,000 genes using a for loop
+p <- rep(0,1000)
+
+for(i in 1:1000){
+  p[i] <- t.test(data[i,] ~ pData(chang03)$disease.state)$p.value
+}
+```
+
+```{r}
+## Error! Looks like some of the genes are essentially constant. Lets find them
+## and throw them out
+
+## Calculate the standard deviations
+sds <-  rowSds(data)
+
+## Find which ones are equal to zero
+constantgenes <- which(sds  < 1e-6)
+## look at expression values for these genes
+data[constantgenes,] ## all constant, saturated.
+
+
+## Throw them out
+chang03new <- chang03[-constantgenes,]
+
+## Calculate new data
+newdata <- log2(exprs(chang03new))
+
+## Now calculate one p-value for the first 1,000 genes using a for loop
+p <- rep(0,1000)
+for(i in 1:1000){
+  p[i] <- t.test(newdata[i,] ~ pData(chang03new)$disease.state)$p.value
+}
+
+```
+
+```{r}
+## But calculating p-values with a loop is slow, lets use rowttests instead
+## to get p-values for all the genes
+
+p <- rep(0,dim(chang03new)[1])
+row.t <- rowttests(newdata,pData(chang03new)$disease.state)
+names(row.t)
+
+## Make p-value histogram
+
+hist(row.t$p.value)
+```
+
+```{r}
+## Find number of p-values less than 0.05
+
+sum(row.t$p.value < 0.05)
+
+## How many false positives are expected?
+nrow(newdata) * 0.05
+
+```
+
+```{r}
+## Now lets do a Bonferroni correction and see how many
+## are significant
+
+p.bonf<- p.adjust(row.t$p.value,"bonferroni")
+sum(p.bonf < 0.05)
+
+## Now lets to a Benjamini-Hochberg correcton and
+## see how many are significant
+
+p.bh <- p.adjust(row.t$p.value,method="BH")
+sum(p.bh < 0.05)
+
+## Find out which genes are significant at an FDR of 5%
+
+sig05 <- which(p.bh < 0.05)
+sig05
+
+## Get the feature names for the significant genes
+
+sig05fn <- featureNames(chang03)[sig05]
+sig05fn[1:10]
+
+```
+
+```{r}
+## These are affy probe ids. To get gene names figure
+## in this case hgu95av2
+
+chang03
+```
+
+
+```{r}
+## Install the annotation package
+
+# Use this code if necessary but the package
+# hgu95av2.db should already be installed.
+source("http://bioconductor.org/biocLite.R")
+biocLite("hgu95av2.db")
+
+library(hgu95av2.db)
+genenames <- as.list(hgu95av2GENENAME)
+
+featureNames(chang03)[1:10]
+genenames[1:10]
+
+## See http://www.bioconductor.org/packages/2.5/data/annotation/manuals/hgu95av2.db/man/hgu95av2.db.pdf
+## for a list of all the information you can get on the probes, here are some examples:
+
+chr <- as.list(hgu95av2CHRLOC)
+chr[1]
+
+ensemblids <- as.list(hgu95av2ENSEMBL)
+ensemblids[1]
+
+```
+
