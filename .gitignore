@@ -55,3 +55,21 @@ src/h5_rdwt
 *.o
 
 \.RDataTmp
+
+*.class
+
+*.gif
+
+*.properties
+
+*.xml
+
+*.MF
+
+*.dtd
+
+*.xset
+
+inst/osp_ode/opensourcephysics/ode/
+
+inst/osp_ode/opensourcephysics/manual/ch09/
