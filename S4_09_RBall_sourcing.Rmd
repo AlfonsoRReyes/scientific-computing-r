@@ -1,0 +1,48 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+source("./R/RBall.R")
+```
+
+
+```{r}
+# test one player
+p <- Player(0.5, "A")
+result <- ""
+
+for (i in 1:10) {
+    if (winsServe(p)) {
+        result <- "WIN"
+        p <- incScore(p)
+    } else {
+        result <-  "LOSE"
+    }
+    cat(sprintf("%5d %3s %3d %8s \n", i, whois(p), getScore(p), result))
+}
+```
+
+
+
+
+```{r}
+game <- RBallGame(0.49, 0.51)
+game <- play(game)
+```
+
+
+```{r}
+# The whole program using classes
+n <-  50
+
+stats <- SimStats()
+for (i in 1:n) {
+    theGame <- RBallGame(0.5, 0.5)
+    theGame <- play(theGame)
+    stats <- Update(stats, theGame)
+}
+printReport(stats)
+```
+

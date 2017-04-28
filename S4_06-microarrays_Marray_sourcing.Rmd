@@ -1,0 +1,115 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+Source: https://github.com/lgatto/S4-tutorial
+
+Using the script at `./R/Marray.R`.
+
+
+```{r}
+# Create a matrix and two dataframes
+
+n <- 10
+m <- 6
+
+marray <- matrix(rnorm(n * m, 10, 5), ncol = m)
+rownames(marray) <- paste0("probe", 1:n)
+colnames(marray) <- LETTERS[1:m]
+
+# build the annotations dataframe for the probes
+fmeta <- data.frame(geneId = 1:n, pathway = sample(LETTERS, n, replace = TRUE))
+rownames(fmeta) <- rownames(marray)
+
+pmeta <- data.frame(sampleId = 1:m, condition = rep(c("WT", "MUT"), each = 3))
+rownames(pmeta) <- colnames(marray)
+
+maexp <- list(marray = marray, 
+              fmeta = fmeta, 
+              pmeta = pmeta)
+
+```
+
+
+```{r}
+source("./R/Marray.R")        # load the class
+
+# we use the previous list
+ma <- MArray(marray = maexp[[1]],       # load the data
+             pmeta = maexp[["pmeta"]],
+             fmeta = maexp[["fmeta"]]
+             )
+ma
+```
+
+
+```{r}
+# show the array
+marray(ma)
+```
+
+```{r}
+# show the dataframes
+fmeta(ma)
+```
+
+```{r}
+pmeta(ma)
+```
+
+
+
+
+
+```{r}
+# subsetting
+ma[1:5, 1:3]
+```
+
+
+```{r}
+# a summary for sample "D"
+summary(ma, "D")
+```
+
+
+```{r}
+# for the condition "WT" in the sample annotations, 
+# get the array values for probe8
+wt <- maexp$pmeta[, "condition"] == "WT"
+maexp$marray["probe8", wt]
+```
+
+```{r}
+# same but shorter
+getValuesAtProbeForCondition(ma, "probe3", "WT")
+```
+
+```{r}
+# getValuesAtSampleForPathway
+getValuesAtSampleForPathway(ma, "C", "A")    # one case
+getValuesAtSampleForPathway(ma, "C", "X")    # two cases
+```
+
+```{r}
+getSampleConditions(ma)
+```
+
+```{r}
+getProbePathways(ma)
+```
+
+## Introspection
+
+```{r}
+slotNames(ma)
+```
+
+```{r}
+getClass("MArray")
+```
+
+```{r}
+showMethods(classes = "MArray")
+```

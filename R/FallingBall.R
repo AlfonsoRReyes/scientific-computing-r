@@ -1,10 +1,5 @@
----
-title: "FallingBall class"
-output: html_notebook
----
 
 
-```{r}
 setClass("FallingBall", slots = c(
     y = "numeric",
     v = "numeric",
@@ -28,12 +23,12 @@ setGeneric("getObservation", function(object, ...)
 
 setMethod("initialize", "FallingBall",
           function(.Object, y, v, t, dt){
-            .Object@y  <- y
-            .Object@v  <- v
-            .Object@t  <- t
-            .Object@dt <- dt
-            .Object@G  <- 9.8      # this is aconstant in the class
-            return(.Object)
+              .Object@y  <- y
+              .Object@v  <- v
+              .Object@t  <- t
+              .Object@dt <- dt
+              .Object@G  <- 9.8      # this is aconstant in the class
+              return(.Object)
           })
 
 setMethod("step", "FallingBall", function(object, ...) {
@@ -68,64 +63,4 @@ setMethod("getObservation", "FallingBall", function(object) {
 FallingBall <- function(y, v, t, dt) {
     new("FallingBall", y = y, v = v, t = t, dt = dt)
 }
-
-```
-
-
-```{r}
-library(data.table)
-
-y0 <- 10
-v0 <- 0
-t  <- 0
-dt <- 0.01
-
-ball <- FallingBall(y = y0, v = v0, t = t, dt = dt)
-
-v = vector("list")
-i <-  1
-while (getY(ball) > 0) {           # Y position for the ball
-    ball <- step(ball)             # update the position
-    v[[i]] <- getObservation(ball) # get a row of data or observation
-    i <-  i + 1
-}
-dT <- data.table::rbindlist(v)     # convert observation to data table
-dT
-```
-
-
-
-
-
-
-
-
-
-
-```{r}
-library(data.table)
-
-y0 <- 10
-v0 <- 0
-t  <- 0
-dt <- 0.01
-
-ball <- FallingBall(y = y0, v = v0, t = t, dt = dt)
-
-v = vector("list")
-i <-  1
-while (ball@y > 0) {
-    ball <- step(ball)
-    v[[i]] <- list(velocity = ball@v, ycoord = getY(ball), t = ball@t, dt = ball@dt)
-    # cat(ball@v, ball@y, ball@t, "\n")
-    i <-  i + 1
-}
-dT <- data.table::rbindlist(v)
-dT
-
-cat("Final time", ball@t)
-cat("\tFinal y: ", ball@y, "\tFinal v:", ball@v, "\n")
-cat("Analytic y:", analyticalPosition(ball, y0, v0), "\n")
-cat("Analytic v:", analyticalVelocity(ball, v0))
-```
 

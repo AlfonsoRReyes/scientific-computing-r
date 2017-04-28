@@ -1,0 +1,43 @@
+---
+title: "Bank, CashPoints, ATM, Branch"
+output: html_notebook
+---
+
+```{r}
+source("./R/Bank.R")
+```
+
+
+
+```{r}
+# this starts the prediction process
+print(givePrediction(new("Bank"))) 
+```
+
+
+## Introspection
+
+```{r}
+isGeneric("initialize")
+```
+
+```{r}
+hasMethod("initialize")
+```
+
+```{r}
+getClass("Bank")
+```
+
+```{r}
+showMethods("Bank")
+```
+
+```{r}
+slotNames("Bank")
+```
+
+
+```{r}
+slotNames("CashPoint")
+```
