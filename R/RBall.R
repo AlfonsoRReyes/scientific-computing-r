@@ -101,15 +101,17 @@ setMethod("initialize", "RBallGame",
 
 
 setMethod("play", "RBallGame", function(object) {
+    # This implementation is different in Python. In R, values between methods
+    # are passed by value not reference as in Python.
     i <- 1
     while (!isOver(object)) {
         if (winsServe(object@server)) {
             if (whois(object@server) == "A") 
-                object@PlayerA <- incScore(object@PlayerA) 
+                object@PlayerA <- incScore(object@PlayerA) # explicit assignment
             else
-                object@PlayerB <- incScore(object@PlayerB)
+                object@PlayerB <- incScore(object@PlayerB) # explicit assignment
         } else {
-            object <- changeServer(object)
+            object <- changeServer(object)                 # explicit assignment
         }
     # cat(i, whois(object@server), isOver(object), 
     #     getScore(object@PlayerA), getScore(object@PlayerB), "\n")
