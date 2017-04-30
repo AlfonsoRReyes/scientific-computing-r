@@ -13,7 +13,6 @@ contains = c("ODE")
 
 setMethod("initialize", "FallingParticleODE", function(.Object, y, v, ...) {
     .Object@state <- vector("numeric", 3)
-    .Object@g <- 9.8
     .Object@state[1]  <- y
     .Object@state[2]  <- v
     .Object@state[3]  <- 0
