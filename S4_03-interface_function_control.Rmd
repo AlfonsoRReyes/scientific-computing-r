@@ -1,0 +1,235 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+Source: http://stackoverflow.com/questions/22249892/ensure-interface-compliance-in-r-s4
+
+
+I am currently developing an R package grouping all the functionality I am using in my lab projects. I am doing it, not only for the sake of it, but also for learning S4. I am experiencing now a conceptual problem. Imagine I have the following classes and methods:
+
+```{r}
+# this is long not efficient way to have two functions for class B and C
+
+setClass('A', representation(a='numeric'))
+
+setGeneric('exec', function(x, y) standardGeneric('exec'))
+
+setClass('B', representation(b='numeric'))
+
+setGeneric('f', function(x) standardGeneric('f'))
+
+setMethod('f', 'B',
+      function(x) {
+        return(42)
+      })
+
+setClass('C', representation(c='numeric'))
+
+setMethod('f', 'C',
+      function(x) {
+        return(24)
+      })
+
+b <- new("B")
+f(b)
+# 42
+
+c <- new("C")
+f(c)
+# 24
+```
+
+
+```{r}
+# 2nd way to do this
+setClass('A', representation(a='numeric'))
+setClass('B', representation(b='numeric'))
+setClass('C', representation(c='numeric'))
+
+setGeneric('exec', function(object, y) standardGeneric('exec'))
+
+setGeneric('f', function(object) standardGeneric('f'))
+
+
+
+setMethod('exec', c('A', 'B'),
+      function(object, y) {
+        return(f(y))
+      })
+
+setMethod('exec', c('A', 'C'),
+      function(object, y) {
+        return(f(y))
+      })
+```
+
+```{r}
+f <- function(x) return(42)
+b <- new("B")
+exec(b, 1)
+```
+
+```{r}
+g <- function(x) return(24)
+b <- new("C")
+g(b)
+```
+
+
+
+```{r}
+# the most efficent way to do the interface
+
+setGeneric('exec', function(object, y) standardGeneric('exec'))
+
+setGeneric('f', function(object) standardGeneric('f'))
+
+setClass('A', representation(a='numeric'))
+
+setMethod('exec', c('A', 'ANY'),
+      function(object, y) {
+        if (!hasMethod('f', class(y))) {
+          stop('Y must implement method f!')
+        } else {
+          return(f(y))
+        }
+      })
+
+
+setClass('B', representation(b='numeric'), contains = c("A"))
+setClass('C', representation(c='numeric'), contains = c("A"))
+
+```
+
+```{r}
+# this yields error because the function "f" is not implemented for B
+b <- new("B")
+exec(b, 1)
+```
+
+```{r}
+# this yields error because the function "f" is not implemented for C
+c <- new("C")
+exec(c, 2)
+```
+
+## This is the implementation READY !!!
+
+```{r}
+# this is the same code as above but runs fine because the functions 
+#   "f" have been implemented
+# This has the advantage of warning the user if the function has not
+# been implemented for a class B or C
+setGeneric('exec', function(object, y) standardGeneric('exec'))
+
+setGeneric('f', function(object) standardGeneric('f'))
+
+setClass('A', representation(a='numeric'))
+
+setMethod('exec', c('A', 'ANY'),
+      function(object, y) {
+        if (!hasMethod('f', class(y))) {
+          stop('Y must implement method f!')
+        } else {
+          return(f(y))
+        }
+      })
+
+
+setClass('B', representation(b='numeric'), contains = c("A"))
+setClass('C', representation(c='numeric'), contains = c("A"))
+
+setMethod("exec", "B", function(object) {
+    return(42)
+})
+
+setMethod("exec", "C", function(object) {
+    return(24)
+})
+
+```
+
+```{r}
+b <- new("B")
+exec(b, 1)
+```
+
+```{r}
+c <- new("C")
+exec(c, 2)
+```
+
+
+```{r}
+# this is another way of creating a function that gives a response
+#given its class
+
+setGeneric('exec', function(object, y) standardGeneric('exec'))
+
+setClass('A')
+setClass('B', representation(b='numeric'), contains = c("A"))
+setClass('C', representation(c='numeric'), contains = c("A"))
+
+f <- function(x) return(24)
+
+setMethod("exec", c("A"), function(object, y) {
+    if (class(object) == "B") f <- function(x) return(24)
+    if (class(object) == "C") f <- function(x) return(42)
+    return(f(y))
+})
+
+
+b <- new("B")
+exec(b, 1)
+
+c <- new("C")
+exec(c, 1)
+
+```
+
+
+```{r}
+# this is the same code as bopve but runs fine because the functions 
+#   "f" have been implemented
+# This implementation has a problem: it doesn alert the user that the method
+# has not been implemented
+
+setGeneric('exec', function(object, y) standardGeneric('exec'))
+
+setClass('A', representation(a='numeric'))
+setClass('B', representation(b='numeric'))
+setClass('C', representation(c='numeric'))
+
+setClassUnion("BorC", c("B", "C"))
+
+setMethod("exec", c("A", "BorC"), function(object, y) {
+    cat(class(object))
+        if (!hasMethod('exec', class(object))) {
+            stop('Y must implement method f!')
+        } else {
+            return(f(y))
+        }
+    })
+
+setMethod("exec", "B", function(object) {
+    return(42)
+})
+
+setMethod("exec", "C", function(object) {
+    return(24)
+})
+```
+
+
+```{r}
+b <- new("B")
+exec(b, 1)
+# If the method "exec" is disabled for "B", this is the error:
+# Error in (function (classes, fdef, mtable) : unable to find an inherited method for function ‘exec’ for signature ‘"B", "numeric"’
+```
+
+```{r}
+c <- new("C")
+exec(c, 2)
+```

@@ -1,0 +1,11 @@
+
+# setGeneric("init", function(object, initState, ...) standardGeneric("init"))
+setGeneric("step", function(object, ...) standardGeneric("step"))
+setGeneric("getState", function(object, time, ...) standardGeneric("getState"))
+setGeneric("getRate", function(object, state, rate, ...) standardGeneric("getRate"))
+setGeneric("setStepSize", function(object, stepSize, ...) standardGeneric("setStepSize"))
+setGeneric("getStepSize", function(object, time, ...) standardGeneric("getStepSize"))
+setGeneric("doStep", function(object, ...) standardGeneric("doStep"))
+setGeneric("getState", function(object, ...) standardGeneric("getState"))
+setGeneric("initSolver", function(object, stepSize, ...) standardGeneric("initSolver"))
+setGeneric("init", function(object, stepSize, ...) standardGeneric("init"))

@@ -12,10 +12,8 @@ contains = c("ODE")
 
 
 setMethod("initialize", "FallingParticleODE", function(.Object, ...) {
+    # .Object <- callNextMethod()
     .Object@state <- vector("numeric", 3)
-    # .Object@state[1]  <- y
-    # .Object@state[2]  <- v
-    # .Object@state[3]  <- 0
     return(.Object)
 })
 
@@ -32,7 +30,17 @@ setMethod("getRate", "ODE", function(object, state, rate, ...) {
     object@rate[1] <- state[2]
     object@rate[2] <- - object@g
     object@rate[3] <- 1
-    object
+    object@rate   # last change
+    
+    # rate[1] <-   state[2]
+    # rate[2] <- - object@g
+    # rate[3] <-   1
+    # 
+    # # object@rate <- rate
+    # object@state <- state
+    # 
+    # return(rate)   # last change
+    
 })
 
 
@@ -40,7 +48,7 @@ setMethod("getRate", "ODE", function(object, state, rate, ...) {
 # constructor
 FallingParticleODE <- function(y, v) {
     .FallingParticleODE <- new("FallingParticleODE", y, v)
-    .FallingParticleODE@state <- vector("numeric", 3)
+    # .FallingParticleODE@state <- vector("numeric", 3)
     .FallingParticleODE@state[1] <- y
     .FallingParticleODE@state[2] <- v
     .FallingParticleODE@state[3] <- 0

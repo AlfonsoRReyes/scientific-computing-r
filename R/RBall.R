@@ -51,8 +51,8 @@ setGeneric("Update", function(object, aGame) standardGeneric("Update"))
 setGeneric("printReport", function(object, ...) standardGeneric("printReport"))
 setGeneric("printLine", function(object, ...) standardGeneric("printLine"))
 
-
-# methods for Player
+###############################################################################
+# methods for Player class
 setMethod("show",
           signature = "Player",
           definition = function(object) {
@@ -64,7 +64,6 @@ setMethod("show",
 
 setMethod("initialize", "Player",
           function(.Object, prob, ID){
-              # callNextMethod(.Object, ...)
               .Object@score <- 0
               .Object@prob  <- prob
               .Object@ID    <-  ID
@@ -90,7 +89,7 @@ setMethod("whois", "Player", function(object) {
 
 
 ###############################################################################
-# set methods for RBAllGame
+# set methods for RBAllGame class
 setMethod("initialize", "RBallGame",
           function(.Object, ..., probA = 0.5, probB = 0.5){
               .Object@PlayerA <- Player(prob = probA, ID = "A")
@@ -103,6 +102,9 @@ setMethod("initialize", "RBallGame",
 setMethod("play", "RBallGame", function(object) {
     # This implementation is different in Python. In R, values between methods
     # are passed by value not reference as in Python.
+    if (RBall.env[["verbose"]]) cat(sprintf("%35s %7s %7s %8s %8s \n", 
+                                            "#", "Player", "Done", "Score A", 
+                                            "Score B"))
     i <- 1
     while (!isOver(object)) {
         if (winsServe(object@server)) {
@@ -113,9 +115,10 @@ setMethod("play", "RBallGame", function(object) {
         } else {
             object <- changeServer(object)                 # explicit assignment
         }
-    # cat(i, whois(object@server), isOver(object), 
-    #     getScore(object@PlayerA), getScore(object@PlayerB), "\n")
-    i <- i +1
+        if (RBall.env[["verbose"]]) cat(sprintf("%35d %7s %7s %8d %8d \n", 
+                            i, whois(object@server), isOver(object), 
+                            getScore(object@PlayerA), getScore(object@PlayerB)))
+        i <- i +1
     }
     object
 })
@@ -143,8 +146,7 @@ setMethod("getScores", "RBallGame", function(object) {
 })
 
 ###############################################################################
-
-# set method for SimStats
+# set method for SimStats class
 setMethod("initialize", "SimStats",
           function(.Object, ...) {
               .Object@winsA  <- 0
@@ -152,6 +154,7 @@ setMethod("initialize", "SimStats",
               .Object@shutsA <- 0
               .Object@shutsB <- 0
               .Object@games  <- 0
+              # header for report
               cat("-------- Scores -------- \n")
               cat(sprintf("%7s %7s %7s \n", "Game", "A", "B"))
               return(.Object)
@@ -180,13 +183,19 @@ setMethod("printReport", "SimStats", function(object) {
     cat(sprintf("%7s %5s %5s \n", "Player", "Wins", "Shuts"))
     cat(sprintf("%7s %5d %5d \n", "A", object@winsA, object@shutsA))
     cat(sprintf("%7s %5d %5d \n", "B", object@winsB, object@shutsB))
-    # cat("B", object@winsB, object@shutsB, "\n")
 })
 
 setMethod("printLine", "SimStats", function(object, aGame) {
 })
 
+# create a project environment
+RBall.env <- new.env(parent = emptyenv()) # create new environment
+
 # constructors
 Player <- function(prob, ID) new("Player", prob = prob, ID = ID)
-RBallGame <- function(probA, probB) new("RBallGame", probA = probA, probB = probB)
+RBallGame <- function(probA, probB, verbose = FALSE) {
+    # use an environment to pass the verbose flag for printing
+    RBall.env[["verbose"]] <- verbose
+    new("RBallGame", probA = probA, probB = probB)
+}    
 SimStats <- function() new("SimStats")
