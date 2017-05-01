@@ -32,7 +32,7 @@ setMethod("getX", "Projectile", function(object) {
 
 
 setMethod("initialize", "CannonBall",
-      function(.Object, xpos = xpos, ypos = ypos, xvel = xvel, yvel = yvel){
+      function(.Object, xpos, ypos, xvel, yvel){
           .Object@xpos <- xpos
           .Object@ypos <- ypos
           .Object@xvel <- xvel
