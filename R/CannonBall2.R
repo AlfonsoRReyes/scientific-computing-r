@@ -1,6 +1,8 @@
 setGeneric("update", function(object, time) standardGeneric("update"))
 setGeneric("getY", function(object) standardGeneric("getY"))
 setGeneric("getX", function(object) standardGeneric("getX"))
+setGeneric("setInterval", function(object) standardGeneric("setInterval"))
+
 
 
 setClass("Projectile", slots = c(
@@ -10,8 +12,10 @@ setClass("Projectile", slots = c(
     yvel = "numeric"
 ))
 
-
-setClass("CannonBall", contains = c("Projectile"))
+setClass("CannonBall", slots = c(
+    time = "numeric"
+),
+         contains = c("Projectile"))
 
 setMethod("getY", "Projectile", function(object) {
     return(object@ypos)
@@ -23,14 +27,15 @@ setMethod("getX", "Projectile", function(object) {
 
 
 
+
 setMethod("initialize", "CannonBall",
-          function(.Object, xpos = xpos, ypos = ypos, xvel = xvel, yvel = yvel){
-              .Object@xpos <- xpos
-              .Object@ypos <- ypos
-              .Object@xvel <- xvel
-              .Object@yvel <- yvel
-              return(.Object)
-          })
+      function(.Object, xpos = xpos, ypos = ypos, xvel = xvel, yvel = yvel){
+          .Object@xpos <- xpos
+          .Object@ypos <- ypos
+          .Object@xvel <- xvel
+          .Object@yvel <- yvel
+          return(.Object)
+      })
 
 setMethod("update", "CannonBall", function(object, time) {
     object@xpos <-  object@xpos + time * object@xvel
@@ -40,7 +45,17 @@ setMethod("update", "CannonBall", function(object, time) {
     return(object)
 })
 
+setMethod("getY", "CannonBall", function(object) {
+    return(object@ypos)
+})
 
+setMethod("getX", "CannonBall", function(object) {
+    return(object@xpos)
+})
+
+setMethod("setInterval", "CannonBall", function(object) {
+    object
+})
 
 # constructor
 CannonBall <- function(angle, velocity, height) {
@@ -51,3 +66,4 @@ CannonBall <- function(angle, velocity, height) {
     yvel <- velocity * sin(theta)
     new("CannonBall", xpos, ypos, xvel, yvel)
 }
+
