@@ -10,9 +10,11 @@ source("./R/CannonBall2.R")
 ```{r}
 interval <-  0.25
 cball <- CannonBall(angle = 45, velocity = 50, height = 0)
-cball
+
+caball <- setInterval(cball, 0.25)
+
 while (getY(cball) >= 0) {
-    cball <- update(cball, interval)    
+    cball <- update(cball)    
     cat(getX(cball), getY(cball), "\n")
 }
 ```

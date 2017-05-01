@@ -1,7 +1,7 @@
-setGeneric("update", function(object, time) standardGeneric("update"))
+setGeneric("update", function(object) standardGeneric("update"))
 setGeneric("getY", function(object) standardGeneric("getY"))
 setGeneric("getX", function(object) standardGeneric("getX"))
-setGeneric("setInterval", function(object) standardGeneric("setInterval"))
+setGeneric("setInterval", function(object, time) standardGeneric("setInterval"))
 
 
 
@@ -37,10 +37,10 @@ setMethod("initialize", "CannonBall",
           return(.Object)
       })
 
-setMethod("update", "CannonBall", function(object, time) {
-    object@xpos <-  object@xpos + time * object@xvel
-    yvel1 <- object@yvel - 9.8 * time
-    object@ypos <-  object@ypos + time * (object@yvel +  yvel1) / 2.0
+setMethod("update", "CannonBall", function(object) {
+    object@xpos <-  object@xpos + object@time * object@xvel
+    yvel1 <- object@yvel - 9.8 * object@time
+    object@ypos <-  object@ypos + object@time * (object@yvel +  yvel1) / 2.0
     object@yvel <-  yvel1
     return(object)
 })
@@ -53,7 +53,8 @@ setMethod("getX", "CannonBall", function(object) {
     return(object@xpos)
 })
 
-setMethod("setInterval", "CannonBall", function(object) {
+setMethod("setInterval", "CannonBall", function(object, time) {
+    object@time <- time
     object
 })
 
