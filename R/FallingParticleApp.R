@@ -133,15 +133,8 @@ setMethod("initialize", "Euler", function(.Object, ode, ...) {
 
 
 setMethod("init", "Euler", function(object, stepSize, ...) {
-    object@stepSize <- stepSize
-    state <- getState(object@ode)
-    object@ode@state <- state
-    
-    if (is.null(state)) {
-        object@numEqn <-  0
-    } else {
-        object@numEqn = length(state)
-    }
+    # init(ODESolver, stepSize)
+    object <- .Object <- callNextMethod(object, stepSize)
     object@ode@rate <- vector("numeric", object@numEqn)
     object
 })
@@ -150,9 +143,6 @@ setMethod("init", "Euler", function(object, stepSize, ...) {
 setMethod("step", "Euler", function(object, ...) {
     state <- getState(object@ode)
     rate  <- getRate(object@ode, state, object@rate)
-    
-    # cat("Euler:step:state:", state, "\n")
-    # cat("Euler:step:rate:", object@ode@rate, "\n")
     
     for (i in 1:object@numEqn) {
         state[i] <- state[i] + object@stepSize * rate[i]
