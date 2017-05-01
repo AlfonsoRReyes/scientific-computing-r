@@ -44,20 +44,20 @@ setMethod("step", "Euler", function(object, ...) {
     # who calls `step()`? : it is called from the main application, from a loop
     state <- getState(object@ode)
     # cat("Euler:step:rate:", object@rate, "\n")
-    # cat("Euler:step:state:", state, "\n")
+    cat("Euler:step:state:", state, "\n")
     # cat("object@stepSize:", object@stepSize, "\n")
     # rate  <- getRate(object@ode, object@ode@state, object@rate)
     
     rate  <- getRate(object@ode, state, object@rate)
-    cat("after:rate:", object@ode@rate, "\n")
+    cat("Euler:step:rate:", object@ode@rate, "\n")
     
     for (i in 1:object@numEqn) {
         state[i] <- state[i] + object@stepSize * rate[i]
-        cat(i, state[i], rate[i], "\n")
+        # cat(i, state[i], rate[i], "\n")
     }
-    # # return(object@stepSize)
-    # object@ode@state <- state
-    # object@rate  <- rate  # does rate has to return?
+    cat("Euler:step:state:", state, "\n")
+    object@ode@state <- state
+    object@ode@rate  <- rate  # does rate has to return?
     object
 }) 
 

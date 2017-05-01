@@ -15,14 +15,14 @@ setClass("ODE", slots = c(
 #     # callNextMethod(.Object)
 # })
 
-setMethod("getState", "ODE", function(object, ...) {
-    # Gets the state variables.
-    # cat("getState() called with ", class(object), "\n")
-    return(object@state)
-})
-
-setMethod("getRate", "ODE", function(object, state, rate, ...) {
-    # Gets the rate of change using the argument's state variables.
-    # cat("getRate()  called with ", class(object), "\n")
-    return(object@rate)
-})
+# setMethod("getState", "ODE", function(object, ...) {
+#     # Gets the state variables.
+#     # cat("getState() called with ", class(object), "\n")
+#     return(object@state)
+# })
+# 
+# setMethod("getRate", "ODE", function(object, state, rate, ...) {
+#     # Gets the rate of change using the argument's state variables.
+#     # cat("getRate()  called with ", class(object), "\n")
+#     return(object@rate)
+# })

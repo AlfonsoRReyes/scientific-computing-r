@@ -3,39 +3,111 @@ title: "R Notebook"
 output: html_notebook
 ---
 
+## New R file `FallingParticleApp.R`
+
 ```{r}
-source("./R/FallingParticleODE.R")
-source("./R/Euler.R")
+# testing FallinParticleODE by creating a loop doing the stepping.
+# The stepping is usually controllled by the ODE solver which could
+# be Euler, Euler-Richardson
+
+source("./R/FallingParticleApp.R")
+
+
+# state <- c(1, 0, 0)
+rate <- c(0, 0, 0)
+
+ball <- FallingParticleODE(10, 0)
+# Slot "state":
+# [1] 10  0  0             # with return(.Object)
+
+ball@g
+state <- getState(ball)
+state
+
+rate <- getRate(ball, state, rate)
+rate
+
+stepSize <- 0.1
+numEqn <- length(state)
+
+# this loop will stop when ball@state[1] is zero or lower
+while (ball@state[1] > 0) {
+    # start the step()
+    state <- getState(ball)
+    rate  <- getRate(ball, state, rate)
+
+    for (i in 1:numEqn) {
+        state[i] <- state[i] + stepSize * rate[i]
+        cat(sprintf("%3d %10f %10f \n", i, state[i], rate[i]))
+
+    }
+    ball@state <- state
+    ball@rate <-  rate
+}
+
+```
+
+
+```{r}
+
+source("./R/FallingParticleApp.R")
+# source("./R/Euler.R")
+
+initial_y <- 10
+initial_v <- 0
+dt <- 0.01
+rate <- c(0,0,0)
+
+ball <- FallingParticleODE(initial_y, initial_v)
+
+eusolver <- Euler(ball)
+eusolver <- setStepSize(eusolver, dt)
+
+# getState(ball)
+eusolver@ode@state
+eusolver@ode@rate
+eusolver <- step(eusolver)
+eusolver@ode@state
+eusolver@ode@rate
+# state <- getState(ball)
+# rate <- getRate(ball, state, rate)
+# # getRate(ball, state, rate)
+# rate
+```
+
+
+
+```{r}
+source("./R/FallingParticleApp.R")
+# source("./R/Euler.R")
 
 initial_y <- 10
 initial_v <- 0
 dt <- 0.01
 
 ball <- FallingParticleODE(initial_y, initial_v)
-ball@g
-ball@state
+ball@g == 9.8
+ball@state == c(10, 0, 0)
 ball@rate
 
 eusolver <- Euler(ball)
 eusolver <- setStepSize(eusolver, dt)
 
-eusolver <- step(eusolver)
+eusolver@stepSize == getStepSize(eusolver)
 
+eusolver@ode@rate == c(0, 0, 0)
+eusolver <- step(eusolver)
+# 
 eusolver@ode@state
-eusolver@ode@rate
+rate <- eusolver@ode@rate
 
 # for (i in 1:10) {
-#     solver <- step(solver)
-#     state <- solver@ode@state
-#     cat(state[1])
-#     # ball <- solver@ode
-#     # step(solver)
-#     # ball <- getRate(ball, solver@ode@state, solver@ode@rate)
-#     # cat(class(ball))
-#     # cat(sprintf("%25f %12f \n", solver@ode@state[1], ball@state[1] ))
-#     # cat("\t", ball@state[1], "\n")
-#     # cat(ball@state[1], "\n")
-# }
+while (ball@state[1] > 0) {
+    eusolver <- step(eusolver)
+    ball <- eusolver@ode
+    cat(sprintf("%12f %12f \n", ball@state[1], ball@rate[1] ))
+    # cat(ball@state[1], "\n")
+}
 ```
 
 
@@ -43,19 +115,13 @@ eusolver@ode@rate
 source("./R/Euler.R")
 
 eusolver <- Euler(ball)
-eusolver@rate
+# eusolver@rate
 eusolver@stepSize
 eusolver@numEqn
 
 step(eusolver)
 ```
 
-```{r}
-source("./R/FallingParticleODE.R")
-
-ball <- FallingParticleODE(10, 0)
-ball
-```
 
 
 
@@ -137,6 +203,7 @@ ball <- FallingParticleODE(10, 0)
 
 solver <- Euler(ball)
 ```
+
 
 
 
@@ -224,3 +291,37 @@ getRate(ball, state, rate)
 # rate
 ```
 
+
+```{r}
+source("./R/FallingParticleODE.R")
+
+ball <- FallingParticleODE(10, 0)
+ball
+```
+
+
+```{r}
+source("./R/ODESolver.R")
+source("./R/FallingParticleODE.R")
+source("./R/Euler.R")
+
+initial_y <- 10
+initial_v <- 0
+dt <- 0.01
+rate <- c(0,0,0)
+
+ball <- FallingParticleODE(initial_y, initial_v)
+
+odesolver <- ODESolver(ball)
+
+odesolver@stepSize
+odesolver <- setStepSize(odesolver, 0.01)
+odesolver@stepSize
+
+odesolver@numEqn
+odesolver@ode
+
+initSolver(odesolver, 0.02)
+
+ball@rate
+```

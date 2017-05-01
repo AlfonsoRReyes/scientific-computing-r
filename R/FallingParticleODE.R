@@ -18,13 +18,13 @@ setMethod("initialize", "FallingParticleODE", function(.Object, ...) {
 })
 
 
-setMethod("getState", "ODE", function(object, ...) {
+setMethod("getState", "FallingParticleODE", function(object, ...) {
     # Gets the state variables.
     # cat("getState() called with ", class(object), "\n")
     return(object@state)
 })
 
-setMethod("getRate", "ODE", function(object, state, rate, ...) {
+setMethod("getRate", "FallingParticleODE", function(object, state, rate, ...) {
     # Gets the rate of change using the argument's state variables.
     # cat("getRate()  called with ", class(object), "\n")
     object@rate[1] <- state[2]
@@ -37,7 +37,7 @@ setMethod("getRate", "ODE", function(object, state, rate, ...) {
     # rate[3] <-   1
     # 
     # # object@rate <- rate
-    # object@state <- state
+    # # object@state <- state
     # 
     # return(rate)   # last change
     
