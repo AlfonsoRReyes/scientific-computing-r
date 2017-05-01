@@ -1,19 +1,22 @@
 source("./R/ode_generics.R")
-source("./R/ODESolver.R")
+# source("./R/ODESolver.R")
 
 
 setClass("Euler", slots = c(
-    rate = "numeric"
-     ), 
-contains = c("ODESolver")
+    stepSize = "numeric",
+    numEqn   = "numeric",
+    ode      = "ODE"
+), prototype = prototype(
+    stepSize = 0.1,
+    numEqn = 0
+)
 )
 
 setMethod("initialize", "Euler", function(.Object, ode, ...) {
     # .Object <- callNextMethod(.Object, ode)
     # .Object@ode <- ode
-    .Object@rate <- vector("numeric")
-    # return(.Object)
-    callNextMethod(.Object, .Object@ode)    # this calls the parent class
+    .Object@ode@rate <- vector("numeric")
+    return(.Object)
 })
 
 
