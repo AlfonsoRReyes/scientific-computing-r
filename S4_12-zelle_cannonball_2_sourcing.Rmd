@@ -11,7 +11,7 @@ source("./R/CannonBall2.R")
 interval <-  0.25
 cball <- CannonBall(angle = 45, velocity = 50, height = 0)
 
-caball <- setInterval(cball, 0.25)
+cball <- setInterval(cball, 0.25)
 
 while (getY(cball) >= 0) {
     cball <- update(cball)    

@@ -13,7 +13,10 @@ setClass("Projectile", slots = c(
 ))
 
 setClass("CannonBall", slots = c(
-    time = "numeric"
+    time = "numeric",
+    g    = "numeric"
+), prototype = prototype(
+    g = 9.8
 ),
          contains = c("Projectile"))
 
@@ -39,7 +42,7 @@ setMethod("initialize", "CannonBall",
 
 setMethod("update", "CannonBall", function(object) {
     object@xpos <-  object@xpos + object@time * object@xvel
-    yvel1 <- object@yvel - 9.8 * object@time
+    yvel1 <- object@yvel - object@g * object@time
     object@ypos <-  object@ypos + object@time * (object@yvel +  yvel1) / 2.0
     object@yvel <-  yvel1
     return(object)
