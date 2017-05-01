@@ -90,7 +90,7 @@ setMethod("setStepSize", "ODESolver", function(object, stepSize, ...) {
 setMethod("init", "ODESolver", function(object, stepSize, ...) {
     object@stepSize <- stepSize
     state <- getState(object@ode)
-    object@ode@state <- state
+    # object@ode@state <- state      # removing this does not have effect
     
     if (is.null(state)) {
         object@numEqn <-  0

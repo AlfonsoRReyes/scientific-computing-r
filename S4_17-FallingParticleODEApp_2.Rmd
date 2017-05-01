@@ -35,7 +35,6 @@ while (ball@state[1] > 0) {
     cat(sprintf("%12f %12f ",  ball@state[1], ball@rate[1] ))
     cat(sprintf("%12f %12f ",  ball@state[2], ball@rate[2] ))
     cat(sprintf("%12f %12f\n", ball@state[3], ball@rate[3] ))
-    # cat(ball@state[1], "\n")
 }
 getStepSize(eusolver) == 0.01
 ```
