@@ -81,8 +81,6 @@ setMethod("initialize", "Euler", function(.Object, ode, ...) {
 
 
 setMethod("init", "Euler", function(object, stepSize, ...) {
-    # cat("Euler:init \n")
-    # object <- initSolver(object, stepSize)
     object@stepSize <- stepSize
     state <- getState(object@ode)
     object@ode@state <- state
@@ -90,9 +88,7 @@ setMethod("init", "Euler", function(object, stepSize, ...) {
     if (is.null(state)) {
         object@numEqn <-  0
     } else {
-        # cat("assigning a value > 0 \n")
         object@numEqn = length(state)
-        # cat("ODESOlver:object@numEqn =", object@numEqn, "\n")
     }
     object@ode@rate <- vector("numeric", object@numEqn)
     object
@@ -100,7 +96,6 @@ setMethod("init", "Euler", function(object, stepSize, ...) {
 
 
 setMethod("step", "Euler", function(object, ...) {
-    # who calls `step()`? : it is called from the main application, from a loop
     state <- getState(object@ode)
     rate  <- getRate(object@ode, state, object@rate)
     
@@ -110,7 +105,6 @@ setMethod("step", "Euler", function(object, ...) {
     for (i in 1:object@numEqn) {
         state[i] <- state[i] + object@stepSize * rate[i]
     }
-    # cat("Euler:step:state:", state, "\n")
     object@ode@state <- state
     object@ode@rate  <- rate  # does rate has to return?
     object
@@ -118,7 +112,6 @@ setMethod("step", "Euler", function(object, ...) {
 
 setMethod("setStepSize", "Euler", function(object, stepSize, ...) {
     object@stepSize = stepSize
-    # cat("step size is ", object@stepSize, "\n")
     object
 })
 
@@ -133,7 +126,6 @@ setMethod("getStepSize", "Euler", function(object, ...) {
 # constructor
 Euler <- function(.ode) {
     euler <- new("Euler", .ode)
-    # cat("euler@stepSize:", euler@stepSize, "\n")
     euler <- init(euler, euler@stepSize)
     return(euler)
 }
