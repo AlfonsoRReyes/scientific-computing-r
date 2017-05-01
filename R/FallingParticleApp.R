@@ -69,8 +69,7 @@ setClass("Euler", slots = c(
 ), prototype = prototype(
     stepSize = 0.1,
     numEqn = 0
-)
-)
+))
 
 setMethod("initialize", "Euler", function(.Object, ode, ...) {
     # .Object <- callNextMethod(.Object, ode)
@@ -105,8 +104,8 @@ setMethod("step", "Euler", function(object, ...) {
     for (i in 1:object@numEqn) {
         state[i] <- state[i] + object@stepSize * rate[i]
     }
-    object@ode@state <- state
-    object@ode@rate  <- rate  # does rate has to return?
+    object@ode@state <- state       # return state and rate for new iter
+    object@ode@rate  <- rate  
     object
 }) 
 
