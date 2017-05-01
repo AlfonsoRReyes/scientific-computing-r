@@ -1,5 +1,6 @@
-source("./R/ode_generics.R")
+# source("./R/ode_generics.R")
 # source("./R/ODESolver.R")
+source("./R/ODE.R")
 
 
 setClass("Euler", slots = c(
@@ -14,7 +15,7 @@ setClass("Euler", slots = c(
 
 setMethod("initialize", "Euler", function(.Object, ode, ...) {
     # .Object <- callNextMethod(.Object, ode)
-    # .Object@ode <- ode
+    .Object@ode <- ode
     .Object@ode@rate <- vector("numeric")
     return(.Object)
 })
@@ -48,7 +49,7 @@ setMethod("step", "Euler", function(object, ...) {
     # rate  <- getRate(object@ode, object@ode@state, object@rate)
     
     rate  <- getRate(object@ode, state, object@rate)
-    cat("after:rate:", object@rate, "\n")
+    cat("after:rate:", object@ode@rate, "\n")
     
     for (i in 1:object@numEqn) {
         state[i] <- state[i] + object@stepSize * rate[i]
@@ -68,6 +69,7 @@ setMethod("setStepSize", "Euler", function(object, stepSize, ...) {
 
 
 setMethod("getStepSize", "Euler", function(object, ...) {
+    object <- object
     return(object@stepSize)
 })
 
