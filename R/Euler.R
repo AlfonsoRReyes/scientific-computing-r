@@ -1,6 +1,4 @@
-source("./R/ode_generics.R")
 source("./R/ODESolver.R")
-# source("./R/ODE.R")
 
 
 setClass("Euler", slots = c( 

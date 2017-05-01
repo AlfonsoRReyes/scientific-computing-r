@@ -1,5 +1,3 @@
-source("./R/ode_generics.R")
-
 
 setClass("ODE", slots = c(
     state = "numeric",

@@ -1,14 +1,15 @@
 # FallingParticleODE
+
 source("./R/ODE.R")
 
 setClass("FallingParticleODE", slots = c(
     g = "numeric"
 ), 
-prototype = prototype(
-    g = 9.8
-),
-contains = c("ODE")
-)
+    prototype = prototype(
+        g = 9.8
+    ),
+    contains = c("ODE")
+    )
 
 
 setMethod("initialize", "FallingParticleODE", function(.Object, ...) {
