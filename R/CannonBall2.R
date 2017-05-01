@@ -12,13 +12,7 @@ setClass("Projectile", slots = c(
     yvel = "numeric"
 ))
 
-setClass("CannonBall", slots = c(
-    time = "numeric",
-    g    = "numeric"
-), prototype = prototype(
-    g = 9.8
-),
-         contains = c("Projectile"))
+
 
 setMethod("getY", "Projectile", function(object) {
     return(object@ypos)
@@ -29,7 +23,13 @@ setMethod("getX", "Projectile", function(object) {
 })
 
 
-
+setClass("CannonBall", slots = c(
+    time = "numeric",
+    g    = "numeric"
+    ), prototype = prototype(
+    g = 9.8
+    ), 
+    contains = c("Projectile"))
 
 setMethod("initialize", "CannonBall",
       function(.Object, xpos, ypos, xvel, yvel){
