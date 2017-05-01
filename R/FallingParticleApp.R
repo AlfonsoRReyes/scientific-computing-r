@@ -88,7 +88,6 @@ setMethod("setStepSize", "ODESolver", function(object, stepSize, ...) {
 })
 
 setMethod("init", "ODESolver", function(object, stepSize, ...) {
-    # this method is not in the original Java
     object@stepSize <- stepSize
     state <- getState(object@ode)
     object@ode@state <- state
@@ -125,7 +124,6 @@ setClass("Euler", slots = c(
     )
 
 setMethod("initialize", "Euler", function(.Object, ode, ...) {
-    # .Object <- callNextMethod(.Object, ode)
     .Object@ode <- ode
     .Object@ode@rate <- vector("numeric")
     return(.Object)
@@ -133,9 +131,8 @@ setMethod("initialize", "Euler", function(.Object, ode, ...) {
 
 
 setMethod("init", "Euler", function(object, stepSize, ...) {
-    # init(ODESolver, stepSize)
-    object <- .Object <- callNextMethod(object, stepSize)
-    object@ode@rate <- vector("numeric", object@numEqn)
+    object <- callNextMethod(object, stepSize)         # call superclass init()
+    object@ode@rate <- vector("numeric", object@numEqn)  # make the rate vector
     object
 })
 
