@@ -61,15 +61,76 @@ FallingParticleODE <- function(y, v) {
     .FallingParticleODE
 }
 
-# ----------------------------------------- Euler --------------------
-setClass("Euler", slots = c(
+
+# ---------------------------------------- ODE Solver ----
+
+setClass("ODESolver", slots = c(
     stepSize = "numeric",
     numEqn   = "numeric",
     ode      = "ODE"
 ), prototype = prototype(
     stepSize = 0.1,
     numEqn = 0
-))
+)
+)
+
+setMethod("initialize", "ODESolver", function(.Object, .ode, ...) {
+    return(.Object)
+})
+
+setMethod("step", "ODESolver", function(object, ...) {
+    object
+})
+
+setMethod("setStepSize", "ODESolver", function(object, stepSize, ...) {
+    object@stepSize = stepSize
+    object
+})
+
+setMethod("init", "ODESolver", function(object, stepSize, ...) {
+    # this method is not in the original Java
+    object@stepSize <- stepSize
+    state <- getState(object@ode)
+    object@ode@state <- state
+    
+    if (is.null(state)) {
+        object@numEqn <-  0
+    } else {
+        object@numEqn = length(state)
+    }
+    object
+})
+
+setMethod("getStepSize", "ODESolver", function(object, ...) {
+    return(object@stepSize)
+})
+
+
+# constructor
+ODESolver <- function(.ode) {
+    odesolver <- new("ODESolver", .ode)
+    odesolver@ode <- .ode
+    odesolver <- init(odesolver, 0.1)
+    odesolver
+}
+
+
+
+# ----------------------------------------- Euler --------------------
+# setClass("Euler", slots = c(
+#     stepSize = "numeric",
+#     numEqn   = "numeric",
+#     ode      = "ODE"
+# ), prototype = prototype(
+#     stepSize = 0.1,
+#     numEqn = 0
+# ))
+
+setClass("Euler", slots = c( 
+    rate = "numeric" 
+    ),  
+    contains = c("ODESolver") 
+    )
 
 setMethod("initialize", "Euler", function(.Object, ode, ...) {
     # .Object <- callNextMethod(.Object, ode)
