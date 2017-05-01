@@ -117,14 +117,6 @@ ODESolver <- function(.ode) {
 
 
 # ----------------------------------------- Euler --------------------
-# setClass("Euler", slots = c(
-#     stepSize = "numeric",
-#     numEqn   = "numeric",
-#     ode      = "ODE"
-# ), prototype = prototype(
-#     stepSize = 0.1,
-#     numEqn = 0
-# ))
 
 setClass("Euler", slots = c( 
     rate = "numeric" 
