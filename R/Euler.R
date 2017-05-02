@@ -11,20 +11,22 @@ setMethod("initialize", "Euler", function(.Object, ode, ...) {
     .Object@ode <- ode
     .Object@ode@rate <- vector("numeric")
     return(.Object)
+    # callNextMethod(.Object, ode)
 })
 
 
 setMethod("init", "Euler", function(object, stepSize, ...) {
-    object <- callNextMethod(object, stepSize)         # call superclass init()
+    object <- callNextMethod(object, stepSize = stepSize)         # call superclass init()
     object@ode@rate <- vector("numeric", object@numEqn)  # make the rate vector
     object
 })
 
 
 setMethod("step", "Euler", function(object, ...) {
+    # cat("Euler just called \n")
     state <- getState(object@ode)
     rate  <- getRate(object@ode, state, object@rate)
-    
+    cat("Euler:step:object@numEqn=", object@numEqn, "\n")
     for (i in 1:object@numEqn) {
         state[i] <- state[i] + object@stepSize * rate[i]
     }
