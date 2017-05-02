@@ -14,6 +14,10 @@ setMethod("initialize", "Planet", function(.Object, ...) {
     .Object@GM <- 4 * sqrt(pi * pi)
     .Object@state <- vector("numeric", 5)
     ode <- new("ODE")
+    ode@state <- .Object@state
+    # .Object <- callNextMethod()
+    # cat(class(.Object))
+    # .Object@odeSolver <- new("Euler", .Object)
     .Object@odeSolver <- new("Euler", ode)
         # cat(class(.Object@odeSolver), "\n")       ## class is Euler()
         # cat(".Object@odeSolver:numEqn", .Object@odeSolver@numEqn, "\n")  ## 0
@@ -27,6 +31,7 @@ setMethod("doStep", "Planet", function(object, ...) {
     # cat("doStep() called with ", class(object), "\n")
     # object@odeSolver@stepSize <- step(object@odeSolver)
     object@odeSolver <- step(object@odeSolver)
+    # step(object@odeSolver)
     # cat(object@state[1], object@state[2])
     object
 })
