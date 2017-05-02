@@ -6,3 +6,4 @@ setGeneric("setStepSize", function(object, stepSize, ...) standardGeneric("setSt
 setGeneric("getStepSize", function(object, ...) standardGeneric("getStepSize"))
 
 setGeneric("doStep", function(object, ...) standardGeneric("doStep"))
+setGeneric("setState", function(object, x, vx, y, vy, ...) standardGeneric("setState"))
