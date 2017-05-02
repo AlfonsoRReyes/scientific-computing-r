@@ -1,4 +1,3 @@
-source("./R/ode_generics_planet.R")
 
 setClass("ODE", slots = c(
     state = "numeric",
