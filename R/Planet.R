@@ -4,7 +4,8 @@ source("./R/Euler.R")
 
 setClass("Planet", slots = c(
     odeSolver = "Euler",
-    GM = "numeric"
+    GM = "numeric",
+    test_1 = "ANY"
     ), 
     contains = c("ODE")
 )
@@ -14,7 +15,8 @@ setMethod("initialize", "Planet", function(.Object, ...) {
     .Object@state <- vector("numeric", 5)
     ode <- new("ODE")
     .Object@odeSolver <- new("Euler", ode)
-    cat(".Object@odeSolver:numEqn", .Object@odeSolver@numEqn, "\n")
+        # cat(class(.Object@odeSolver), "\n")       ## class is Euler()
+        # cat(".Object@odeSolver:numEqn", .Object@odeSolver@numEqn, "\n")  ## 0
     return(.Object)
     # callNextMethod(.Object, .Object@ode)
     # callNextMethod(.Object)
@@ -30,12 +32,18 @@ setMethod("doStep", "Planet", function(object, ...) {
 })
 
 setMethod("init", "Planet", function(object, initState, ...) {
-    cat("Planet:init:initState", initState, "\n")
-    object@state <- initState
-    cat("Planet:init:state =", object@state, "\n")
-    cat("Planet:init:len:state =", length(object@state), "\n")
-    # object <- callNextMethod(object, stepSize)        # call superclass init()
-    object@odeSolver <- init(object@odeSolver, getStepSize(object@odeSolver))
+    # callNextMethod(object@odeSolver, stepSize = 0.11)
+        # cat("Planet:init:initState", initState, "\n")
+    # object@state <- initState
+    object@state <- object@odeSolver@ode@state <- initState
+        # cat("Planet:init:state =", object@state, "\n")
+    # cat("Planet:init:len:state =", length(object@state), "\n")
+    # object@odeSolver <- 
+    # callNextMethod(object@odeSolver, getStepSize(object@odeSolver))        # call superclass init()
+
+# initialize providing the step size
+    object@test_1 <- object@odeSolver <- init(object@odeSolver, getStepSize(object@odeSolver))
+    # cat(object@odeSolver@numEqn, object@odeSolver@stepSize, "\n")
     object
 })
 

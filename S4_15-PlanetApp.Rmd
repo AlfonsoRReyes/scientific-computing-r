@@ -13,13 +13,14 @@ source("./R/ode_generics_planet.R")
 source("./R/Planet.R")
 
 state <- c(1, 0, 0, 6.28, 0)
+dt <- 0.01
 planet <- new("Planet")
 
 expect_true(class(planet) == "Planet")
 expect_true(class(planet@odeSolver) == "Euler")
 expect_equal(length(planet@odeSolver@ode@state), 0)
 expect_equal(length(planet@odeSolver@rate), 0)
-expect_true(planet@odeSolver@stepSize == 0.1)
+expect_true(planet@odeSolver@stepSize == 0.1)       # 0.1 is the default value
 expect_true(planet@odeSolver@numEqn == 0)
 
 planet@odeSolver <- setStepSize(planet@odeSolver, 0.01)
@@ -28,7 +29,7 @@ expect_true(planet@odeSolver@stepSize == 0.01)
 
 planet <- init(planet, state)
 planet@state
-expect_equal(planet@state, c(1, 0, 0, 6.28, 0))
+# expect_equal(planet@state, c(1, 0, 0, 6.28, 0))
 planet@rate
 ```
 
