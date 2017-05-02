@@ -3,6 +3,57 @@ title: "R Notebook"
 output: html_notebook
 ---
 
+## unit test
+
+```{r}
+
+library(testthat)
+
+source("./R/ode_generics_planet.R")
+source("./R/Planet.R")
+
+state <- c(1, 0, 0, 6.28, 0)
+planet <- new("Planet")
+
+expect_true(class(planet) == "Planet")
+expect_true(class(planet@odeSolver) == "Euler")
+expect_equal(length(planet@odeSolver@ode@state), 0)
+expect_equal(length(planet@odeSolver@rate), 0)
+expect_true(planet@odeSolver@stepSize == 0.1)
+expect_true(planet@odeSolver@numEqn == 0)
+
+planet@odeSolver <- setStepSize(planet@odeSolver, 0.01)
+
+expect_true(planet@odeSolver@stepSize == 0.01)
+
+planet <- init(planet, state)
+planet@state
+expect_equal(planet@state, c(1, 0, 0, 6.28, 0))
+planet@rate
+```
+
+
+```{r}
+
+planet@state == c(0,0,0,0,0)
+
+planet@odeSolver@ode@state
+planet@odeSolver@rate 
+
+
+
+
+planet@odeSolver@rate 
+
+planet@odeSolver@numEqn == 0
+
+
+planet@odeSolver@stepSize == 0.01
+planet@odeSolver@numEqn == 0
+planet@odeSolver@ode@state
+```
+
+
 
 ```{r}
 source("./R/ode_generics.R")
@@ -10,6 +61,15 @@ source("./R/Planet.R")
 
 state <- c(1, 0, 0, 6.28, 0)
 planet <- new("Planet")
+
+planet@odeSolver <- setStepSize(planet@odeSolver, 0.01)
+planet <- init(planet, initState = state)
+
+for (i in 1:6) {
+    planet <- doStep(planet)
+    cat("s[5]: ", planet@state[1], planet@state[2], planet@state[3], planet@state[4],"\n")
+}
+
 ```
 
 
@@ -21,7 +81,7 @@ state <- c(1, 0, 0, 6.28, 0)
 planet <- new("Planet")
 
 # class(planet)
-planet@GM == 12.56637
+round(planet@GM, 5) == 12.56637
 # 12.56637
 planet@state
 # 0 0 0 0 0
@@ -36,11 +96,14 @@ res <- setStepSize(planet@odeSolver, 0.001)
 getStepSize(res)  == 0.001# res is of class Euler
 # [1] 0.001
 cat("+++++++++++++++++++++++\n")
+
 planet <- init(planet, state)
-getState(planet)
+getState(planet) == c(1.00, 0.00, 0.00, 6.28, 0.00)
 # [1] 1.00 0.00 0.00 6.28 0.00
 
-for (i in 1:5) {
+planet@odeSolver@numEqn
+
+for (i in 1:6) {
     planet <- doStep(planet)
     # doStep(planet)
     cat("s[5]: ", planet@state[5], "\n")
