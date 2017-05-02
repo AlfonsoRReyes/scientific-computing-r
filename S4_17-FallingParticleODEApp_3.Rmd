@@ -1,12 +1,20 @@
 ---
-title: "FallingParticleApp #3 running"
-output: html_notebook
+title: 'FallingParticleApp #3 running'
+output:
+  html_document: default
+  html_notebook: default
 ---
 
 ## Running Euler ODE
-> Note: generic functions should be ONLY called from the main application and
+> Lessons learned: 
+
+* generic functions should be ONLY called from the main application and
 should not be called from each of the scripts because they start overwriting
 each other.
+
+* Do not repeat generic functions
+
+* Use boolean comparisons to unit test parts of a script
 
 ```{r}
 source("./R/ode_generics.R")
