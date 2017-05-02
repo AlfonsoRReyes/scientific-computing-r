@@ -11,8 +11,8 @@ contains = c("ODESolver")
 setMethod("initialize", "Euler", function(.Object, ode, ...) {
     cat("Euler:initialize:.Object=", class(.Object), "\n")
     .Object@ode <- ode
-    .Object@ode@rate <- vector("numeric", 5)
-    cat(".Object@ode@rate=", .Object@ode@rate, "\n")
+    .Object@ode@rate <- vector("numeric")
+    # cat(".Object@ode@rate=", .Object@ode@rate, "\n")
     return(.Object)
     # callNextMethod(.Object, ode)
 })
@@ -27,11 +27,12 @@ setMethod("init", "Euler", function(object, stepSize, ...) {
 
 
 setMethod("step", "Euler", function(object, ...) {
-    # cat("Euler:step called \n")
+    cat("Euler:step called! \t")
     # object@numEqn <- 4           # debugging why numEqn remains zero
     state <- getState(object@ode)
+    cat("Euler:step:state=", state, "\t")
     rate  <- getRate(object@ode, state, object@rate)
-    # cat("Euler:step:object@numEqn=", object@numEqn, "\n")
+    cat("Euler:step:object@numEqn=", object@numEqn, "\n")
     for (i in 1:object@numEqn) {
         state[i] <- state[i] + object@stepSize * rate[i]
     }
@@ -47,7 +48,7 @@ setMethod("setStepSize", "Euler", function(object, stepSize, ...) {
 
 
 setMethod("getStepSize", "Euler", function(object, ...) {
-    object <- object
+    # object <- object
     return(object@stepSize)
 })
 
