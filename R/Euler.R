@@ -11,7 +11,8 @@ contains = c("ODESolver")
 setMethod("initialize", "Euler", function(.Object, ode, ...) {
     cat("Euler:initialize:.Object=", class(.Object), "\n")
     .Object@ode <- ode
-    .Object@ode@rate <- vector("numeric")
+    .Object@ode@rate <- vector("numeric", 5)
+    cat(".Object@ode@rate=", .Object@ode@rate, "\n")
     return(.Object)
     # callNextMethod(.Object, ode)
 })
