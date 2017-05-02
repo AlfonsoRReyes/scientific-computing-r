@@ -16,17 +16,18 @@ setMethod("initialize", "Euler", function(.Object, ode, ...) {
 
 
 setMethod("init", "Euler", function(object, stepSize, ...) {
-    object <- callNextMethod(object, stepSize = stepSize)         # call superclass init()
-    object@ode@rate <- vector("numeric", object@numEqn)  # make the rate vector
+    object <- callNextMethod(object, stepSize = stepSize)  # call superclass init()
+    object@rate <- object@ode@rate <- vector("numeric", object@numEqn)  # make the rate vector
     object
 })
 
 
 setMethod("step", "Euler", function(object, ...) {
     # cat("Euler just called \n")
+    # object@numEqn <- 4           # debugging why numEqn remains zero
     state <- getState(object@ode)
     rate  <- getRate(object@ode, state, object@rate)
-    cat("Euler:step:object@numEqn=", object@numEqn, "\n")
+    # cat("Euler:step:object@numEqn=", object@numEqn, "\n")
     for (i in 1:object@numEqn) {
         state[i] <- state[i] + object@stepSize * rate[i]
     }
