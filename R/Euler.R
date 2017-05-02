@@ -32,8 +32,6 @@ setMethod("step", "Euler", function(object, ...) {
     state <- getState(object@ode)
     rate  <- getRate(object@ode, state, object@rate)
 
-    cat("Euler:step:state=", state, "rate:", rate, "\t")
-    cat("Euler:step:object@numEqn=", object@numEqn, "\n")
     
     for (i in 1:object@numEqn) {
         state[i] <- state[i] + object@stepSize * rate[i]
