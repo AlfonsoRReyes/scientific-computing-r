@@ -27,12 +27,14 @@ setMethod("init", "Euler", function(object, stepSize, ...) {
 
 
 setMethod("step", "Euler", function(object, ...) {
-    cat("Euler:step called! \t")
+    # cat("Euler:step called! \t")
     # object@numEqn <- 4           # debugging why numEqn remains zero
     state <- getState(object@ode)
-    cat("Euler:step:state=", state, "\t")
     rate  <- getRate(object@ode, state, object@rate)
+
+    cat("Euler:step:state=", state, "rate:", rate, "\t")
     cat("Euler:step:object@numEqn=", object@numEqn, "\n")
+    
     for (i in 1:object@numEqn) {
         state[i] <- state[i] + object@stepSize * rate[i]
     }
