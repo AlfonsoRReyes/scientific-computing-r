@@ -1,13 +1,15 @@
 source("./R/ODESolver.R")
 
 
-setClass("Euler", slots = c( 
-    rate = "numeric" 
-),  
+setClass("Euler", 
+#          slots = c( 
+#     rate = "numeric" 
+# ),  
 contains = c("ODESolver") 
 )
 
 setMethod("initialize", "Euler", function(.Object, ode, ...) {
+    cat("Euler:initialize:.Object=", class(.Object), "\n")
     .Object@ode <- ode
     .Object@ode@rate <- vector("numeric")
     return(.Object)
@@ -23,7 +25,7 @@ setMethod("init", "Euler", function(object, stepSize, ...) {
 
 
 setMethod("step", "Euler", function(object, ...) {
-    # cat("Euler just called \n")
+    cat("Euler:step called \n")
     # object@numEqn <- 4           # debugging why numEqn remains zero
     state <- getState(object@ode)
     rate  <- getRate(object@ode, state, object@rate)
