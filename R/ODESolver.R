@@ -25,10 +25,11 @@ setMethod("setStepSize", "ODESolver", function(object, stepSize, ...) {
 })
 
 setMethod("init", "ODESolver", function(object, stepSize, ...) {
+    # cat("ODESolver:init\n")
     object@stepSize <- stepSize
     state <- getState(object@ode)
     # object@ode@state <- state      # removing this does not have effect
-    
+    # cat("ODESolver:init:state", state, "\n")
     if (is.null(state)) {
         object@numEqn <-  0
     } else {
