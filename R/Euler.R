@@ -32,7 +32,7 @@ setMethod("step", "Euler", function(object, ...) {
 }) 
 
 setMethod("setStepSize", "Euler", function(object, stepSize, ...) {
-    object@stepSize = stepSize
+    object@stepSize <-  stepSize
     object
 })
 
