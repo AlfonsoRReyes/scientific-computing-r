@@ -4,8 +4,7 @@ source("./R/Euler.R")
 
 setClass("Planet", slots = c(
     odeSolver = "Euler",
-    GM = "numeric",
-    test_1 = "ANY"
+    GM = "numeric"
     ), 
     contains = c("ODE")
 )
