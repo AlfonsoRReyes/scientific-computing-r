@@ -3,23 +3,23 @@
 source("./R/ODE.R")
 source("./R/Euler.R")
 
+
+setGeneric("setState", function(object, x, vx, y, vy, ...) standardGeneric("setState"))
+
 setClass("Pendulum", slots = c(
-    g = "numeric",
+    omega0Squared = "numeric",
+    state = "numeric",
     odeSolver = "Euler"
     ),
     prototype = prototype(
-        g = 9.8
+        omega0Squared = 3,
+        state = c(0, 0, 0)
     ),
     contains = c("ODE")
     )
 
 setMethod("initialize", "Pendulum", function(.Object) {
-    # .Object@odeSolver <- new("Euler", .Object)
-    # .Object@odeSolver <- Euler(.Object) <- gives error
-    # .Object@odeSolver <- init(.Object@odeSolver, .Object)
-    # .Object@odeSolver <- init(.Object@odeSolver, 0.1)   # no effect
-    # cat("| 0 |")
-    .Object@odeSolver <- Euler(.Object)                               # diff 6
+    .Object@odeSolver <- Euler(.Object)                               
     return(.Object)
 })
 
@@ -30,38 +30,28 @@ setMethod("setStepSize", "Pendulum", function(object, stepSize, ...) {
 
 
 setMethod("step", "Pendulum", function(object) {
-    # cat("Projectile:step:state:rate(1)", object@state, object@rate, "\n")
     object@odeSolver <- step(object@odeSolver)
-    
-    object@rate  <- object@odeSolver@ode@rate                           # diff 7
-    object@state <- object@odeSolver@ode@state                          # diff 8
-    
-    # cat("Projectile:step:state:rate(2)", object@state, object@rate, "\n")
+    object@rate  <- object@odeSolver@ode@rate                           
+    object@state <- object@odeSolver@ode@state                          
     object
 })
 
-setMethod("setState", "Pendulum", function(object, x, vx, y, vy) {
-    object@state[1] <- x
-    object@state[2] <- vx
-    object@state[3] <- y
-    object@state[4] <- vy
-    object@state[5] <- 0     # t + dt
-    
+setMethod("setState", "Pendulum", function(object, theta, thetaDot) {
+    object@state[1] <- theta
+    object@state[2] <- thetaDot
     object@odeSolver@ode@state <- object@state
     object
 })
 
-setMethod("getState", "Pendulum", function(object) {                 # diff 9
+setMethod("getState", "Pendulum", function(object) {                
     object@state
 })
 
 
-setMethod("getRate", "Pendulum", function(object, state, rate) {    # diff 10
-    rate[1] <- state[2]     # rate of change of x                                          # diff 11
-    rate[2] <- 0            # rate of change of vx                    # diff 12
-    rate[3] <- state[4]     # rate of change of y
-    rate[4] <- - object@g   # rate of change of vy
-    rate[5] <- 1            # dt/dt = 1
+setMethod("getRate", "Pendulum", function(object, state, rate) {    
+    rate[1] <- state[2]     # rate of change of angle                                      # diff 11
+    rate[2] <- -object@omega0Squared * sin(state[1])  # rate of change of dtheta                 
+    rate[3] <- 1            # rate of change of time, dt/dt
     
     object@state <- object@odeSolver@ode@state <- state
     object@rate  <- object@odeSolver@ode@rate  <- rate
