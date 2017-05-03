@@ -181,11 +181,10 @@ setMethod("setStepSize", "Projectile", function(object, stepSize, ...) {
 
 setMethod("step", "Projectile", function(object) {
     # cat("Projectile:step:state:rate(1)", object@state, object@rate, "\n")
-    # cat("| 3 |")
     object@odeSolver <- step(object@odeSolver)
     
-    object@rate  <- object@odeSolver@ode@rate
-    object@state <- object@odeSolver@ode@state
+    object@rate  <- object@odeSolver@ode@rate                           # diff 7
+    object@state <- object@odeSolver@ode@state                          # diff 8
     
     # cat("Projectile:step:state:rate(2)", object@state, object@rate, "\n")
     object
@@ -202,21 +201,21 @@ setMethod("setState", "Projectile", function(object, x, vx, y, vy) {
     object
 })
 
-setMethod("getState", "Projectile", function(object) {
+setMethod("getState", "Projectile", function(object) {                 # diff 9
     object@state
 })
 
 
-setMethod("getRate", "Projectile", function(object, state, rate) {
-    rate[1] <- state[2]
-    rate[2] <- 0
+setMethod("getRate", "Projectile", function(object, state, rate) {    # diff 10
+    rate[1] <- state[2]                                               # diff 11
+    rate[2] <- 0                                                      # diff 12
     rate[3] <- state[4]
     rate[4] <- - object@g
     rate[5] <- 1
     
     object@state <- object@odeSolver@ode@state <- state
     object@rate  <- object@odeSolver@ode@rate  <- rate
-    object@rate
+    object@rate                                                       # diff 18
 })
 
 
