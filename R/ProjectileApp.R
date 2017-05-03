@@ -44,12 +44,12 @@ setClass("ODESolver", slots = c(
 )
 
 setMethod("initialize", "ODESolver", function(.Object, .ode) {
-    .Object <- init(.Object, 0.1)                                 # diference #1
+    .Object <- init(.Object, 0.1)                                 
     return(.Object)
 })
 
 setMethod("step", "ODESolver", function(object, ...) {
-    # object                                          # change    # diff #2  
+    # object                                                         
 })
 
 setMethod("setStepSize", "ODESolver", function(object, stepSize, ...) {
@@ -79,7 +79,7 @@ setMethod("getStepSize", "ODESolver", function(object, ...) {
 ODESolver <- function(.ode) {
     odesolver <- new("ODESolver", .ode)
     odesolver@ode <- .ode
-    # odesolver <- init(odesolver, 0.1)                            # diff #3
+    # odesolver <- init(odesolver, 0.1)                            
     odesolver
 }
 
@@ -100,7 +100,7 @@ setMethod("initialize", "Euler", function(.Object, ode, ...) {
 
 
 setMethod("init", "Euler", function(object, stepSize, ...) {
-    object <- callNextMethod(object, stepSize)         # call superclass init()
+    object <- callNextMethod(object, stepSize)          # call superclass init()
     object@ode@rate <- vector("numeric", object@numEqn)  # make the rate vector
     object
 })
@@ -126,7 +126,6 @@ setMethod("setStepSize", "Euler", function(object, stepSize, ...) {
 
 
 setMethod("getStepSize", "Euler", function(object, ...) {
-    # object <- object
     return(object@stepSize)
 })
 

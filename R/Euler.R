@@ -38,7 +38,6 @@ setMethod("setStepSize", "Euler", function(object, stepSize, ...) {
 
 
 setMethod("getStepSize", "Euler", function(object, ...) {
-    # object <- object
     return(object@stepSize)
 })
 
