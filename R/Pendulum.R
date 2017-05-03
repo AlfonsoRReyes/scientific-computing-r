@@ -6,7 +6,8 @@ source("./R/Euler.R")
 
 setGeneric("setState", function(object, theta, thetaDot, ...) 
     standardGeneric("setState"))
-
+setGeneric("setStepSize", function(object, dt, ...) 
+    standardGeneric("setStepSize"))
 
 
 setClass("Pendulum", slots = c(
@@ -26,8 +27,8 @@ setMethod("initialize", "Pendulum", function(.Object) {
     return(.Object)
 })
 
-setMethod("setStepSize", "Pendulum", function(object, stepSize, ...) {
-    object@odeSolver <- setStepSize(object@odeSolver, stepSize)
+setMethod("setStepSize", "Pendulum", function(object, dt, ...) {
+    object@odeSolver <- setStepSize(object@odeSolver, dt)
     object
 })
 
