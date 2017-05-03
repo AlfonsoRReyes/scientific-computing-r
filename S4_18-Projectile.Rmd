@@ -1,5 +1,5 @@
 ---
-title: "R Notebook"
+title: "ProjectileApp - Euler ODE"
 output: html_notebook
 ---
 
@@ -11,38 +11,6 @@ parameters are not passed.
 * start developing in a unique file to avoid collisions and get clearer generics
 on sight.
 
-```{r}
-# a more elegant version of the chunk below. But it doesn't work because R
-# works differently than Java or Python because of its functional programming
-# approach. The reference to the reference to `oòdesolver` will not work.
-
-# run ProjectileApp using the R scripts only
-
-source("./R/ode_generics.R")
-source("./R/Euler.R")
-source("./R/Projectile.R")
-
-
-x <- 0; vx <- 10; y <- 0; vy <- 10
-state <- c(x, vx, y, vy, 0)
-dt <- 0.01
-
-projectile <- Projectile()
-
-projectile <- setState(projectile, x, vx, y, vy)
-odesolver <- projectile@odeSolver 
-
-odesolver <- init(odesolver, 0.123)
-odesolver <- setStepSize(odesolver, dt) 
-
-while (projectile@state[1] <= 100)    {                 
-    projectile <- step(projectile)
-    # state[5]:           state[1]: x    # state[3]: y
-    cat(sprintf("%12f %12f %12f \n", projectile@state[5], 
-                projectile@state[1], projectile@state[3]))
-}
-
-```
 
 ```{r}
 # run ProjectileApp using the R scripts only
@@ -323,3 +291,38 @@ for (i in 1:10) {
 
 ```
 
+
+
+
+```{r}
+# a more elegant version of the chunk below. But it doesn't work because R
+# works differently than Java or Python because of its functional programming
+# approach. The reference to the reference to `oòdesolver` will not work.
+
+# run ProjectileApp using the R scripts only
+
+source("./R/ode_generics.R")
+source("./R/Euler.R")
+source("./R/Projectile.R")
+
+
+x <- 0; vx <- 10; y <- 0; vy <- 10
+state <- c(x, vx, y, vy, 0)
+dt <- 0.01
+
+projectile <- Projectile()
+
+projectile <- setState(projectile, x, vx, y, vy)
+odesolver <- projectile@odeSolver 
+
+odesolver <- init(odesolver, 0.123)
+odesolver <- setStepSize(odesolver, dt) 
+
+while (projectile@state[1] <= 100)    { # change condition due to infinite loop              
+    projectile <- step(projectile)
+    # state[5]:           state[1]: x    # state[3]: y
+    cat(sprintf("%12f %12f %12f \n", projectile@state[5], 
+                projectile@state[1], projectile@state[3]))
+}
+
+```
