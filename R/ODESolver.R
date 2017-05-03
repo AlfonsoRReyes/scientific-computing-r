@@ -12,12 +12,12 @@ setClass("ODESolver", slots = c(
 )
 
 setMethod("initialize", "ODESolver", function(.Object, .ode, ...) {
-    .Object <- init(.Object, 0.1)                                 # diference #1
+    .Object <- init(.Object, 0.1)                                 
     return(.Object)
 })
 
 setMethod("step", "ODESolver", function(object, ...) {
-    # object                                                       # diff 2
+    # object                                                       
 })
 
 setMethod("setStepSize", "ODESolver", function(object, stepSize, ...) {
@@ -26,11 +26,8 @@ setMethod("setStepSize", "ODESolver", function(object, stepSize, ...) {
 })
 
 setMethod("init", "ODESolver", function(object, stepSize, ...) {
-    # cat("ODESolver:init\n")
     object@stepSize <- stepSize
     state <- getState(object@ode)
-    # object@ode@state <- state      # removing this does not have effect
-    # cat("ODESolver:init:state", state, "\n")
     if (is.null(state)) {
         object@numEqn <-  0
     } else {
@@ -48,6 +45,5 @@ setMethod("getStepSize", "ODESolver", function(object, ...) {
 ODESolver <- function(.ode) {
     odesolver <- new("ODESolver", .ode)
     odesolver@ode <- .ode
-    # odesolver <- init(odesolver, 0.1)                                 # diff 3
     odesolver
 }
