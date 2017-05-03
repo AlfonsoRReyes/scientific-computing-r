@@ -20,11 +20,8 @@ setMethod("init", "Euler", function(object, stepSize, ...) {
 
 
 setMethod("step", "Euler", function(object, ...) {
-    # cat("Euler:step called! \t")
-    # object@numEqn <- 4           # debugging why numEqn remains zero
     state <- getState(object@ode)
-    rate  <- getRate(object@ode, state, object@ode@rate)         # diff 4
-
+    rate  <- getRate(object@ode, state, object@ode@rate)             # diff 4
     
     for (i in 1:object@numEqn) {
         state[i] <- state[i] + object@stepSize * rate[i]
