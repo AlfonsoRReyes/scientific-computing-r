@@ -12,6 +12,8 @@ parameters are not passed.
 on sight.
 
 ```{r}
+# these test performed on ProjectileApp.R which contains all classes
+#
 # ############################################################  Test Projectile
 library(testthat)
 source("./R/ProjectileApp.R")
