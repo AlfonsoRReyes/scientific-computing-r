@@ -11,6 +11,35 @@ parameters are not passed.
 * start developing in a unique file to avoid collisions and get clearer generics
 on sight.
 
+
+```{r}
+# run ProjectileApp using the R scripts only
+
+source("./R/ode_generics.R")
+source("./R/Euler.R")
+source("./R/Projectile.R")
+
+
+
+x <- 0; vx <- 10; y <- 0; vy <- 10
+state <- c(x, vx, y, vy, 0)
+dt <- 0.01
+
+projectile <- Projectile()
+
+projectile <- setState(projectile, x, vx, y, vy)
+projectile@odeSolver <- init(projectile@odeSolver, 0.123)
+projectile@odeSolver <- setStepSize(projectile@odeSolver, dt) 
+
+while (TRUE)    {
+    projectile <- step(projectile)
+    cat(projectile@state[5], projectile@state[1], projectile@state[3],"\n")
+}
+
+```
+
+
+
 ```{r}
 # these test performed on ProjectileApp.R which contains all classes
 #
