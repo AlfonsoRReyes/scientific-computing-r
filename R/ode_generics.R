@@ -2,7 +2,12 @@ setGeneric("getRate", function(object, state, rate, ...) standardGeneric("getRat
 setGeneric("getState", function(object, ...) standardGeneric("getState"))
 
 setGeneric("step", function(object, ...) standardGeneric("step"))
+
+# setGeneric("setStepSize", function(object, stepSize, dt, ...) standardGeneric("setStepSize"),
+#            signature = c("stepSize", "dt"))
+
 setGeneric("setStepSize", function(object, stepSize, ...) standardGeneric("setStepSize"))
+
 setGeneric("getStepSize", function(object, ...) standardGeneric("getStepSize"))
 
 setGeneric("doStep", function(object, ...) standardGeneric("doStep"))
