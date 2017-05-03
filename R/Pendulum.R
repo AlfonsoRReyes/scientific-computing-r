@@ -1,7 +1,7 @@
 # Pendulum.R
 
 source("./R/ODE.R")
-source("./R/Euler.R")
+source("./R/EulerRichardson.R")
 
 
 setGeneric("setState", function(object, theta, thetaDot, ...) 
@@ -13,7 +13,7 @@ setGeneric("setState", function(object, theta, thetaDot, ...)
 setClass("Pendulum", slots = c(
     omega0Squared = "numeric",
     state = "numeric",
-    odeSolver = "Euler"
+    odeSolver = "EulerRichardson"
     ),
     prototype = prototype(
         omega0Squared = 3,
@@ -23,7 +23,7 @@ setClass("Pendulum", slots = c(
     )
 
 setMethod("initialize", "Pendulum", function(.Object) {
-    .Object@odeSolver <- Euler(.Object)                               
+    .Object@odeSolver <- EulerRichardson(.Object)                               
     return(.Object)
 })
 
@@ -62,9 +62,6 @@ setMethod("getRate", "Pendulum", function(object, state, rate) {
     object@rate  <- object@odeSolver@ode@rate  <- rate
     object@rate                                                       #
 })
-
-
-
 
 
 # constructor
