@@ -11,35 +11,37 @@ setClass("Planet", slots = c(
 
 setMethod("initialize", "Planet", function(.Object, ...) {
     .Object@GM <- 4 * sqrt(pi * pi)
+    .Object@state <- vector("numeric", 5)
     .Object@odeSolver <- Euler(.Object)
     return(.Object)
 })
 
 setMethod("doStep", "Planet", function(object, ...) {
     # Gets the state variables.
-    object@odeSolver <- setStepSize(object@odeSolver, stepSize)
+    object@odeSolver <- step(object@odeSolver)
+    # object@odeSolver <- setStepSize(object@odeSolver, stepSize)
+    object@state <- object@odeSolver@ode@state
+    object@rate  <- object@odeSolver@ode@rate
     object
 })
 
 setMethod("init", "Planet", function(object, initState, ...) {
-    # callNextMethod(object@odeSolver, stepSize = 0.11)
-        # cat("Planet:init:initState", initState, "\n")
-    # object@state <- initState
     object@state <- object@odeSolver@ode@state <- initState
-        # cat("Planet:init:state =", object@state, "\n")
-    # cat("Planet:init:len:state =", length(object@state), "\n")
-    # object@odeSolver <- 
-    # callNextMethod(object@odeSolver, getStepSize(object@odeSolver))        # call superclass init()
-
-# initialize providing the step size
-    object@test_1 <- object@odeSolver <- init(object@odeSolver, getStepSize(object@odeSolver))
-    # cat(object@odeSolver@numEqn, object@odeSolver@stepSize, "\n")
+    # callNextMethod(object@odeSolver, getStepSize(object@odeSolver))       
+    # initialize providing the step size
+    object@odeSolver <- init(object@odeSolver, getStepSize(object@odeSolver))
+    # object@odeSolver <- callNextMethod(object, object@odeSolver@stepSize)   
+    # object@odeSolver <- callNextMethod(object@odeSolver, getStepSize(object@odeSolver))  
+    
+    object@rate <- object@odeSolver@ode@rate
+    object@state <- object@odeSolver@ode@state
+    
     object
+    
 })
 
 setMethod("getRate", "Planet", function(object, state, rate, ...) {
     # Gets the rate of change using the argument's state variables.
-    # cat("getRate()  called with ", class(object), "\n")
     r2 <- state[1] * state[1] + state[3] * state[3]
     r3 <- r2 * sqrt(r2)
     object@rate[1] <- state[2]
@@ -48,11 +50,18 @@ setMethod("getRate", "Planet", function(object, state, rate, ...) {
     object@rate[4] <- (- object@GM * state[3]) / r3
     object@rate[5] <- 1
     
-    object@state <- state
-    object
+    object@state <- object@odeSolver@ode@state <- state
+    object@odeSolver@ode@rate <- object@rate
+    object@rate  
+    
 })
 
 setMethod("getState", "Planet", function(object, ...) {
     # Gets the state variables.
     return(object@state)
 })
+
+# constructor
+Planet <- function() {
+    new("Planet")
+}
