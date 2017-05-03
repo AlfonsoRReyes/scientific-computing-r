@@ -109,7 +109,7 @@ setMethod("init", "Euler", function(object, stepSize, ...) {
 setMethod("step", "Euler", function(object, ...) {
     # cat("| 4 |")
     state <- getState(object@ode) # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-    rate  <- getRate(object@ode, state, object@ode@rate)  # <<<<<<<<<<<<<<<<<<<<<<
+    rate  <- getRate(object@ode, state, object@ode@rate)  # <<<<<<<<<<<<  diff 4
     
     # cat("Euler:step:state=", state, "rate:", rate, "numEqn", object@numEqn, "\n")
     
