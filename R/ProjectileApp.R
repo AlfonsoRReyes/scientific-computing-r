@@ -135,14 +135,8 @@ setMethod("getStepSize", "Euler", function(object, ...) {
 Euler <- function(.ode) {
     # cat("| 1 |")
     euler <- new("Euler", .ode)
-    # euler <- new("ODESolver", .ode)
-    
-    # euler <- init(euler, euler@stepSize)                           # diff 5
+    euler <- init(euler, euler@stepSize)                           # diff 5
     # euler <- init(ODESolver, euler@stepSize)                       # changed
-    
-    # euler <- ODESolver(.ode)
-
-    # cat("euler@numEqn=", euler@numEqn, "\n")
     return(euler)
 }
 
