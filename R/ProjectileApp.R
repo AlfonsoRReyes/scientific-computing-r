@@ -44,7 +44,6 @@ setClass("ODESolver", slots = c(
 )
 
 setMethod("initialize", "ODESolver", function(.Object, .ode) {
-    # cat("| 6 |")
     .Object <- init(.Object, 0.1)      # diference #1
     return(.Object)
 })
@@ -90,9 +89,6 @@ ODESolver <- function(.ode) {
 # ----------------------------------------------------------------- Euler ------
 
 setClass("Euler", 
-    #      slots = c( 
-    # rate = "numeric" 
-    # ),  
     contains = c("ODESolver") 
     )
 
