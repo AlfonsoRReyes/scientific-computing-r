@@ -55,26 +55,6 @@ rate <- vector("numeric")
     expect_equal(getRate(projectile@odeSolver@ode, state, rate), 
                  c(10.0,  0.0, 10.0, -9.8,  1.0))
 
-# projectile <- step(projectile)
-# slotNames(projectile)
-# slot(projectile, "state")
-# slot(projectile, "rate")
-# 
-# projectile@odeSolver@ode@state
-# projectile@odeSolver@ode@rate
-# 
-# projectile <- step(projectile)
-# projectile@state
-# projectile@rate
-# 
-# projectile <- step(projectile)
-# projectile@state
-# projectile@rate
-# 
-# projectile <- step(projectile)
-# projectile@state
-# projectile@rate
-
     expect_equal(getStepSize(projectile@odeSolver), dt)
 
 while (TRUE)    {
