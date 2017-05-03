@@ -44,7 +44,7 @@ setClass("ODESolver", slots = c(
 )
 
 setMethod("initialize", "ODESolver", function(.Object, .ode) {
-    .Object <- init(.Object, 0.1)      # diference #1
+    .Object <- init(.Object, 0.1)                                 # diference #1
     return(.Object)
 })
 
