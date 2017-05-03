@@ -10,57 +10,60 @@ source("./R/ODESolver.R")
 #     * t(midpoint) = t(n) + dt/2
 #     *
 #     * The midpoint state is then used to calculate the final state.
-#     * @author       Wolfgang Christian
+#     * @author             Wolfgang Christian
+#     * converted to R by   Alfonso R. Reyes
 
 
 setClass("EulerRichardson", slots = c(
-  midstate = "numeric"                         # this is the midpoint
+  midstate = "numeric"                              # this is the midpoint slot
 ),
     contains = c("ODESolver") 
 )
 
 setMethod("initialize", "EulerRichardson", function(.Object, ode, ...) {
+    # initialize the class
     .Object@ode <- ode
-    .Object@ode@rate <- vector("numeric")
+    .Object@ode@rate <- vector("numeric")        # create vector with no length
     return(.Object)
 })
 
 
 setMethod("init", "EulerRichardson", function(object, stepSize, ...) {
-    object <- callNextMethod(object, stepSize) # call superclass init
+    # inititalize the solver
+    object <- callNextMethod(object, stepSize)           # call superclass init
     object@ode@rate <- vector("numeric", object@numEqn)  # make the rate vector
-    object@midstate <- vector("numeric", object@numEqn)
+    object@midstate <- vector("numeric", object@numEqn)  #    same size as state
     object
 })
 
 
 setMethod("step", "EulerRichardson", function(object, ...) {
-    state <- getState(object@ode)
-    rate  <- getRate(object@ode, state, object@ode@rate)            
+    # step through the diffrential equation
+    state <- getState(object@ode)                         # get the state vector
+    rate  <- getRate(object@ode, state, object@ode@rate)  # get the rate vector
     
-    dt2 <- object@stepSize / 2
+    dt2 <- object@stepSize / 2                            # divide stepSize
     
     for (i in 1:object@numEqn) {
-        # estimate the state a the midpoint
+        # estimate the state at the midpoint
         object@midstate[i] <- state[i] + rate[i] * dt2
     }
     
-    rate  <- getRate(object@ode, object@midstate, rate)
+    rate  <- getRate(object@ode, object@midstate, rate) # rate based on midpoint
     
     for (i in 1:object@numEqn) {
-        state[i] <- state[i] + object@stepSize * rate[i]
+        state[i] <- state[i] + object@stepSize * rate[i] # calc new state
     }
     
     object@ode@state <- state       # return state and rate for new iter
     object@ode@rate  <- rate  
-    object
+    object                          # use this object to reassign in R
 }) 
-
-
 
 
 # constructor
 EulerRichardson <- function(.ode) {
+    # constructor for Euler-Richardson ODE solver
     eulerRichardson <- new("EulerRichardson", .ode)
     eulerRichardson <- init(eulerRichardson, eulerRichardson@stepSize)                         # diff 5
     return(eulerRichardson)
