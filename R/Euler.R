@@ -13,8 +13,7 @@ setMethod("initialize", "Euler", function(.Object, ode, ...) {
 
 
 setMethod("init", "Euler", function(object, stepSize, ...) {
-    object <- callNextMethod(object, stepSize)             # diff 21
-    # call superclass init()
+    object <- callNextMethod(object, stepSize) # call superclass init  # diff 21
     object@ode@rate <- vector("numeric", object@numEqn)  # make the rate vector
     object
 })
