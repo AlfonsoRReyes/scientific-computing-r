@@ -4,7 +4,10 @@ source("./R/ODE.R")
 source("./R/Euler.R")
 
 
-setGeneric("setState", function(object, x, vx, y, vy, ...) standardGeneric("setState"))
+setGeneric("setState", function(object, theta, thetaDot, ...) 
+    standardGeneric("setState"))
+
+
 
 setClass("Pendulum", slots = c(
     omega0Squared = "numeric",
