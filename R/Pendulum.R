@@ -6,8 +6,8 @@ source("./R/Euler.R")
 
 setGeneric("setState", function(object, theta, thetaDot, ...) 
     standardGeneric("setState"))
-setGeneric("setStepSize", function(object, dt, ...) 
-    standardGeneric("setStepSize"))
+# setGeneric("setStepSize", function(object, dt, ...)
+#     standardGeneric("setStepSize"))
 
 
 setClass("Pendulum", slots = c(
@@ -27,8 +27,8 @@ setMethod("initialize", "Pendulum", function(.Object) {
     return(.Object)
 })
 
-setMethod("setStepSize", "Pendulum", function(object, dt, ...) {
-    object@odeSolver <- setStepSize(object@odeSolver, dt)
+setMethod("setStepSize", "Pendulum", function(object, stepSize, ...) {
+    object@odeSolver <- setStepSize(object@odeSolver, stepSize)
     object
 })
 
@@ -41,8 +41,9 @@ setMethod("step", "Pendulum", function(object) {
 })
 
 setMethod("setState", "Pendulum", function(object, theta, thetaDot) {
-    object@state[1] <- theta
-    object@state[2] <- thetaDot
+    object@state[1] <- theta     # angle
+    object@state[2] <- thetaDot  # derivative of angle
+    #                              state[3] is time
     object@odeSolver@ode@state <- object@state
     object
 })
@@ -59,7 +60,7 @@ setMethod("getRate", "Pendulum", function(object, state, rate) {
     
     object@state <- object@odeSolver@ode@state <- state
     object@rate  <- object@odeSolver@ode@rate  <- rate
-    object@rate                                                       # diff 18
+    object@rate                                                       #
 })
 
 
