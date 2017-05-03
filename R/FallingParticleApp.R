@@ -21,6 +21,7 @@ setMethod("getRate", "ODE", function(object, state, rate, ...) {
     return(object@rate)
 })
 
+# ----------------------------------------------------------- FallingParticleODE
 
 setClass("FallingParticleODE", slots = c(
     g = "numeric"
