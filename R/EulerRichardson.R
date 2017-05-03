@@ -56,15 +56,6 @@ setMethod("step", "EulerRichardson", function(object, ...) {
     object
 }) 
 
-setMethod("setStepSize", "EulerRichardson", function(object, stepSize, ...) {
-    object@stepSize = stepSize
-    object
-})
-
-
-setMethod("getStepSize", "EulerRichardson", function(object, ...) {
-    return(object@stepSize)
-})
 
 
 
