@@ -6,6 +6,47 @@ output: html_notebook
 ## unit test
 
 ```{r}
+library(testthat)
+
+source("./R/ode_generics_planet.R")
+source("./R/Planet.R")
+
+state <- c(1, 0, 0, 6.28, 0)
+rate <- c(0,0,0,0,0)
+dt <- 0.01
+planet <- new("Planet")
+
+    expect_true(class(planet) == "Planet")
+    expect_true(class(planet@odeSolver) == "Euler")
+                                    expect_equal(length(planet@odeSolver@ode@state), 5)
+    expect_equal(length(planet@odeSolver@rate), 0)
+    expect_true(planet@odeSolver@stepSize == 0.1)       # 0.1 is the default value
+    expect_true(planet@odeSolver@numEqn == 0)
+    
+planet@odeSolver <- setStepSize(planet@odeSolver, dt)
+
+    expect_true(planet@odeSolver@stepSize == dt)    
+    
+    
+planet <- init(planet, state)
+    expect_equal(planet@odeSolver@ode@state, state)  
+    
+    expect_equal(planet@odeSolver@ode@rate, rate)  # [1] 0 0 0 0 0
+    expect_equal(planet@test_1@rate, rate)
+    
+    expect_equal(planet@test_1@numEqn, 5)
+    expect_equal(planet@test_1@stepSize, dt)
+    
+    expect_true(class(planet@test_1) == "Euler")   
+    
+    
+planet <- doStep(planet)
+planet@state
+planet@rate
+```
+
+
+```{r}
 
 library(testthat)
 
@@ -13,24 +54,37 @@ source("./R/ode_generics_planet.R")
 source("./R/Planet.R")
 
 state <- c(1, 0, 0, 6.28, 0)
+rate <- c(0,0,0,0,0)
 dt <- 0.01
 planet <- new("Planet")
 
-expect_true(class(planet) == "Planet")
-expect_true(class(planet@odeSolver) == "Euler")
-expect_equal(length(planet@odeSolver@ode@state), 0)
-expect_equal(length(planet@odeSolver@rate), 0)
-expect_true(planet@odeSolver@stepSize == 0.1)       # 0.1 is the default value
-expect_true(planet@odeSolver@numEqn == 0)
+    expect_true(class(planet) == "Planet")
+    expect_true(class(planet@odeSolver) == "Euler")
+    expect_equal(length(planet@odeSolver@ode@state), 0)
+    expect_equal(length(planet@odeSolver@rate), 0)
+    expect_true(planet@odeSolver@stepSize == 0.1)       # 0.1 is the default value
+    expect_true(planet@odeSolver@numEqn == 0)
 
-planet@odeSolver <- setStepSize(planet@odeSolver, 0.01)
+planet@odeSolver <- setStepSize(planet@odeSolver, dt)
 
-expect_true(planet@odeSolver@stepSize == 0.01)
+    expect_true(planet@odeSolver@stepSize == dt)
+
 
 planet <- init(planet, state)
+    expect_equal(planet@odeSolver@ode@state, state)
+    # object@ode@rate
+    expect_equal(planet@odeSolver@ode@rate, rate)
+    planet@odeSolver@ode@rate
+    planet@test_1@rate
+    expect_equal(planet@test_1@numEqn, 5)
+    expect_equal(planet@test_1@stepSize, dt)
+    expect_true(class(planet@test_1) == "Euler")
+    # expect_true(class(planet@odeSolver) == "Euler")
+
+planet <- doStep(planet)
 planet@state
-# expect_equal(planet@state, c(1, 0, 0, 6.28, 0))
 planet@rate
+    
 ```
 
 
@@ -57,7 +111,7 @@ planet@odeSolver@ode@state
 
 
 ```{r}
-source("./R/ode_generics.R")
+source("./R/ode_generics_planet.R")
 source("./R/Planet.R")
 
 state <- c(1, 0, 0, 6.28, 0)

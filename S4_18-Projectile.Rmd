@@ -1,0 +1,281 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+## Lessons learned
+
+* when a class is mentioned in a slot, it will automatically initialize but 
+parameters are not passed.
+
+* start developing in a unique file to avoid collisions and get clearer generics
+on sight.
+
+```{r}
+# ############################################################  Test Projectile
+library(testthat)
+source("./R/ProjectileApp.R")
+
+ode <- new("ODE")
+
+projectile <- Projectile()
+
+x <- 0; vx <- 10; y <- 0; vy <- 10
+state <- c(x, vx, y, vy, 0)
+dt <- 0.01
+
+
+projectile@odeSolver@ode@state <- state
+
+    expect_equal(getStepSize(projectile@odeSolver), 0.1) # get default step size
+    
+    # ----------------------------------------- these two vars hold no values
+    expect_true(length(projectile@state) == 0)
+    expect_true(length(projectile@rate)  == 0)
+    
+    # +++++++++++++++++++++++++++++++++++++++++ values stored here
+    expect_true(all(projectile@odeSolver@ode@state == state))
+    expect_true(length(projectile@odeSolver@ode@rate) == 0)
+
+projectile@odeSolver <- init(projectile@odeSolver, 0.123)
+
+    expect_equal(projectile@odeSolver@ode@state, state)
+    expect_equal(projectile@odeSolver@numEqn, 5)
+
+projectile@odeSolver <- setStepSize(projectile@odeSolver, dt) # set new step size
+    expect_equal(getStepSize(projectile@odeSolver), dt)
+
+    expect_true(!is.null(step(projectile@odeSolver))) # step Euler returns a value
+    expect_true(length(ode@rate)  == 0)
+
+rate <- c(0, 0, 0, 0, 0)
+rate <- vector("numeric")
+    expect_equal(getRate(projectile@odeSolver@ode, state, rate), 
+                 c(10.0,  0.0, 10.0, -9.8,  1.0))
+
+# projectile <- step(projectile)
+# slotNames(projectile)
+# slot(projectile, "state")
+# slot(projectile, "rate")
+# 
+# projectile@odeSolver@ode@state
+# projectile@odeSolver@ode@rate
+# 
+# projectile <- step(projectile)
+# projectile@state
+# projectile@rate
+# 
+# projectile <- step(projectile)
+# projectile@state
+# projectile@rate
+# 
+# projectile <- step(projectile)
+# projectile@state
+# projectile@rate
+
+    expect_equal(getStepSize(projectile@odeSolver), dt)
+
+while (TRUE)    {
+    projectile <- step(projectile)
+    cat(projectile@state[5], projectile@state[1],
+        # projectile@state[5], projectile@state[3],
+        projectile@state[3],"\n")
+}
+```
+
+
+
+```{r}
+# #################################################################  Test Euler
+library(testthat)
+source("./R/ProjectileApp.R")
+
+ode <- new("ODE")
+
+expect_error(Euler(), 'argument ".ode" is missing, with no default')
+
+euler <- Euler(ode)
+
+state <- c(0, 1, 3)
+
+euler@ode@state <-  c(0, 1, 3)             # set a vector for state
+
+expect_equal(getStepSize(euler), 0.1)        # get default step size
+
+# ----------------------------------------- these two vars hold no values
+expect_true(length(ode@state) == 0)
+expect_true(length(ode@rate)  == 0)
+
+# +++++++++++++++++++++++++++++++++++++++++ values stored here
+expect_true(all(euler@ode@state == state))
+expect_true(length(euler@ode@rate) == 0)
+
+euler <- init(euler, 0.123)
+
+expect_equal(euler@ode@state, state)
+expect_equal(euler@numEqn, 3)
+
+euler <- setStepSize(euler, 0.1010)     # set a new step size
+expect_equal(getStepSize(euler), 0.1010)
+
+expect_true(!is.null(step(euler)))           # step from Euler returns a value
+expect_true(length(ode@rate)  == 0)
+expect_equal(getRate(euler@ode), c(0, 0, 0))
+
+euler <- step(euler)
+euler@ode@state
+euler@ode@rate
+
+euler <- step(euler)
+euler@ode@state
+euler@ode@rate
+
+euler <- step(euler)
+euler@ode@state
+euler@ode@rate                  # rate is zero until we do setState and getRate
+
+
+```
+
+
+```{r}
+# ************************************************************* Test ODESolver
+library(testthat)
+source("./R/ProjectileApp.R")
+
+expect_error(ode <- ODE(), 'could not find function "ODE"')
+
+expect_error(ODESolver(), 'argument ".ode" is missing, with no default')
+
+ode <- new("ODE")
+
+odesolver <- ODESolver(ode)
+
+state <- c(0, 1, 3)
+
+odesolver@ode@state <-  c(0, 1, 3)             # set a vector for state
+
+expect_equal(getStepSize(odesolver), 0.1)        # get default step size
+
+# ----------------------------------------- these two vars hold no values
+expect_true(length(ode@state) == 0)
+expect_true(length(ode@rate)  == 0)
+
+# +++++++++++++++++++++++++++++++++++++++++ values stored here
+expect_true(all(odesolver@ode@state == state))
+expect_true(length(odesolver@ode@rate) == 0)
+
+odesolver <- init(odesolver, 0.123)
+
+expect_equal(odesolver@ode@state, state)
+expect_equal(odesolver@numEqn, 3)
+
+odesolver <- setStepSize(odesolver, 0.1010)     # set a new step size
+expect_equal(getStepSize(odesolver), 0.1010)
+
+expect_true(is.null(step(odesolver)))           # step from odesolver NULL
+
+
+```
+
+
+
+
+```{r}
+library(testthat)
+source("./R/ProjectileApp.R")
+
+odeObj <- new("ODE")
+class(odeObj)
+
+odesolver <- ODESolver()
+class(odesolver)
+
+# Euler()
+```
+
+
+
+```{r}
+# putting all classes together in script ProjectileApp
+library(testthat)
+source("./R/ProjectileApp.R")
+
+
+
+############################################################################ ProjectileApp
+projectile <- Projectile()
+    expect_true(class(projectile) == "Projectile")
+    expect_equal(length(projectile@state), 0)
+    expect_equal(length(projectile@rate), 0)
+    
+    expect_true(projectile@odeSolver@stepSize == 0.1)
+    expect_true(projectile@odeSolver@numEqn == 0)
+    
+
+############################################################################# initialize()
+x <- 0; vx <- 10; y <- 0; vy <- 10
+state <- c(x, vx, y, vy, 0)
+dt <- 0.0123
+
+    expect_equal(state, c(0, 10, 0, 10, 0))    
+projectile <- setState(projectile, x, vx, y, vy)    
+    expect_equal(projectile@state, state)    
+
+projectile <- setStepSize(projectile, dt)
+    expect_equal(projectile@odeSolver@stepSize, dt)
+    
+####################################################################### doStep()
+for (i in 1:10) {
+    projectile <- step(projectile)   
+    # cat(projectile@state[5], projectile@state[1], projectile@state[3], "\n")
+}      
+
+```
+
+
+
+
+```{r}
+library(testthat)
+
+# source("./R/ode_generics.R")
+source("./R/ProjectileApp.R")
+
+
+############################################################################ ProjectileApp
+projectile <- Projectile()
+    expect_true(class(projectile) == "Projectile")
+    expect_equal(length(projectile@state), 0)
+    expect_equal(length(projectile@rate), 0)
+    
+    expect_true(projectile@odeSolver@stepSize == 0.1)
+    expect_true(projectile@odeSolver@numEqn == 0)
+    
+
+############################################################################# initialize()
+x <- 0; vx <- 10; y <- 0; vy <- 10
+state <- c(x, vx, y, vy, 0)
+dt <- 0.0123
+
+    expect_equal(state, c(0, 10, 0, 10, 0))    
+projectile <- setState(projectile, x, vx, y, vy)    
+    expect_equal(projectile@state, state)    
+
+projectile <- setStepSize(projectile, dt)
+    expect_equal(projectile@odeSolver@stepSize, dt)
+    
+############################################################################# doStep()
+for (i in 1:10) {
+    projectile <- step(projectile)   
+    cat(projectile@state[5], projectile@state[1], projectile@state[3], "\n")
+}    
+# # 
+# projectile <- step(projectile)
+
+# projectile@rate
+# projectile@state
+
+
+```
+
