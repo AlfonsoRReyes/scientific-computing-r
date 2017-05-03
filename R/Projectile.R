@@ -4,6 +4,7 @@
 # Projectile class to be solved with Euler method
 #
 ######################
+
 source("./R/ODE.R")
 source("./R/Euler.R")
 
