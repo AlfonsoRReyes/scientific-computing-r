@@ -2,10 +2,7 @@ source("./R/ODESolver.R")
 
 
 setClass("Euler", 
-#          slots = c( 
-#     rate = "numeric" 
-# ),  
-contains = c("ODESolver") 
+    contains = c("ODESolver") 
 )
 
 setMethod("initialize", "Euler", function(.Object, ode, ...) {
