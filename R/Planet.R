@@ -11,18 +11,8 @@ setClass("Planet", slots = c(
 
 setMethod("initialize", "Planet", function(.Object, ...) {
     .Object@GM <- 4 * sqrt(pi * pi)
-    .Object@state <- vector("numeric", 5)
-    ode <- new("ODE")
-    ode@state <- .Object@state
-    # .Object <- callNextMethod()
-    # cat(class(.Object))
-    # .Object@odeSolver <- new("Euler", .Object)
-    .Object@odeSolver <- new("Euler", ode)
-        # cat(class(.Object@odeSolver), "\n")       ## class is Euler()
-        # cat(".Object@odeSolver:numEqn", .Object@odeSolver@numEqn, "\n")  ## 0
+    .Object@odeSolver <- Euler(.Object)
     return(.Object)
-    # callNextMethod(.Object, .Object@ode)
-    # callNextMethod(.Object)
 })
 
 setMethod("doStep", "Planet", function(object, ...) {
