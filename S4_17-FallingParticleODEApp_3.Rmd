@@ -135,10 +135,3 @@ while (ball@state[1] > 0) {
 ```
 
 
-```{r}
-source("./R/ode_generics.R")
-source("./R/ODESolver.R")
-
-ODESolver()
-```
-
