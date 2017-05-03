@@ -17,11 +17,7 @@ setMethod("initialize", "Planet", function(.Object, ...) {
 
 setMethod("doStep", "Planet", function(object, ...) {
     # Gets the state variables.
-    # cat("doStep() called with ", class(object), "\n")
-    # object@odeSolver@stepSize <- step(object@odeSolver)
-    object@odeSolver <- step(object@odeSolver)
-    # step(object@odeSolver)
-    # cat(object@state[1], object@state[2])
+    object@odeSolver <- setStepSize(object@odeSolver, stepSize)
     object
 })
 
