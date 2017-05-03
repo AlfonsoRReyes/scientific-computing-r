@@ -80,7 +80,7 @@ setMethod("getStepSize", "ODESolver", function(object, ...) {
 ODESolver <- function(.ode) {
     odesolver <- new("ODESolver", .ode)
     odesolver@ode <- .ode
-    # odesolver <- init(odesolver, 0.1)
+    # odesolver <- init(odesolver, 0.1)                            # diff #3
     odesolver
 }
 
