@@ -1,19 +1,16 @@
 ---
-title: "EulerRichardson"
+title: "Pendulum with EulerRichardson"
 output: html_notebook
 ---
 
-
 ```{r}
-# these test performed on ProjectileApp.R which contains all classes
 #
-# ############################################################  Test Projectile
+# ############################################################  Test Pendulum
 library(testthat)
 
 source("./R/ode_generics.R")
-# source("./R/ODE.R")
-source("./R/Euler.R")
-source("./R/Pendulum.R")
+source("./R/EulerRichardson.R")
+source("./R/Pendulum.R")                   # this script uses Euler-Richardson
 
 ode <- new("ODE")
 pendulum <- Pendulum()
@@ -22,7 +19,7 @@ dt <- 0.1
 theta <- 0.2
 thetaDot <- 0
 
-pendulum@state[3] <- 0     # set time to zero, t = 0
+pendulum@state[3] <- 0      # set time to zero, t = 0
 
 pendulum <- setState(pendulum, theta, thetaDot)
 stepSize <- dt
@@ -63,7 +60,73 @@ rate <- vector("numeric")
 
     expect_equal(getStepSize(pendulum@odeSolver), dt)
 
-while (TRUE)    {
+while (pendulum@state[3] <= 100)    {
+    pendulum <- step(pendulum)
+    cat(sprintf("%12f %12f %12f \n", pendulum@state[1], 
+                pendulum@state[2], pendulum@state[3]))
+}
+```
+
+```{r}
+# Using Euler
+# 
+#
+# ####################################################  Test Pendulum with Euler
+library(testthat)
+
+source("./R/ode_generics.R")
+source("./R/Euler.R")
+source("./R/PendulumE.R")       # Pendulum script with ODE EUler
+
+ode <- new("ODE")
+pendulum <- Pendulum()
+
+dt <- 0.1
+theta <- 0.2
+thetaDot <- 0
+
+pendulum@state[3] <- 0      # set time to zero, t = 0
+
+pendulum <- setState(pendulum, theta, thetaDot)
+stepSize <- dt
+pendulum <- setStepSize(pendulum, stepSize)
+
+state <- c(0.2, 0.0, 0.0)
+
+# 
+# 
+expect_equal(pendulum@odeSolver@ode@state, c(0.2, 0.0, 0.0))
+
+    expect_equal(getStepSize(pendulum@odeSolver), 0.1) # get default step size
+
+    # ----------------------------------------- these two vars hold no values
+    # expect_true(length(pendulum@state) == 0)
+    expect_true(length(pendulum@rate)  == 0)
+
+    # +++++++++++++++++++++++++++++++++++++++++ values stored here
+    expect_true(all(pendulum@odeSolver@ode@state == state))
+    expect_true(length(pendulum@odeSolver@ode@rate) == 3)
+
+pendulum@odeSolver <- init(pendulum@odeSolver, 0.123)
+    expect_equal(getStepSize(pendulum@odeSolver), 0.123)
+
+    expect_equal(pendulum@odeSolver@ode@state, state)
+    expect_equal(pendulum@odeSolver@numEqn, 3)
+
+pendulum@odeSolver <- setStepSize(pendulum@odeSolver, dt) # set new step size
+    expect_equal(getStepSize(pendulum@odeSolver), dt)
+
+    expect_true(!is.null(step(pendulum@odeSolver))) # step Euler returns a value
+    expect_true(length(ode@rate)  == 0)
+
+rate <- c(0, 0, 0)
+rate <- vector("numeric")
+    expect_equal(getRate(pendulum@odeSolver@ode, state, rate),
+                 c(0, -0.596008, 1))
+
+    expect_equal(getStepSize(pendulum@odeSolver), dt)
+
+while (pendulum@state[3] <= 100)    {
     pendulum <- step(pendulum)
     cat(sprintf("%12f %12f %12f \n", pendulum@state[1], 
                 pendulum@state[2], pendulum@state[3]))
