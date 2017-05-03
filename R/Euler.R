@@ -16,32 +16,35 @@ setClass("Euler",
 )
 
 setMethod("initialize", "Euler", function(.Object, ode, ...) {
-    .Object@ode <- ode
-    .Object@ode@rate <- vector("numeric")
+    # initialized the Euler ODE solver
+    .Object@ode <- ode                          # set the ode to ODESolver slot
+    .Object@ode@rate <- vector("numeric")       # create vector for the rate
     return(.Object)
 })
 
 
 setMethod("init", "Euler", function(object, stepSize, ...) {
-    object <- callNextMethod(object, stepSize) # call superclass init  #
+    object <- callNextMethod(object, stepSize)           # call superclass init
     object@ode@rate <- vector("numeric", object@numEqn)  # make the rate vector
-    object
+    object                                               #   right dimensions
 })
 
 
 setMethod("step", "Euler", function(object, ...) {
-    state <- getState(object@ode)
-    rate  <- getRate(object@ode, state, object@ode@rate)             
+    # step through the differential equation
+    state <- getState(object@ode)                         # get the state
+    rate  <- getRate(object@ode, state, object@ode@rate)  # get the rate             
     
     for (i in 1:object@numEqn) {
-        state[i] <- state[i] + object@stepSize * rate[i]
+        state[i] <- state[i] + object@stepSize * rate[i]  # calc the new state
     }
-    object@ode@state <- state       # return state and rate for new iter
+    object@ode@state <- state              # return state and rate for new iter
     object@ode@rate  <- rate  
-    object
+    object                                 # use this object to ressign in R
 }) 
 
 setMethod("setStepSize", "Euler", function(object, stepSize, ...) {
+    # set the time step
     object@stepSize <-  stepSize
     object
 })
@@ -52,11 +55,11 @@ setMethod("getStepSize", "Euler", function(object, ...) {
 })
 
 
-
-# constructor
+# constructor ODE solver using Euler method
 Euler <- function(.ode) {
-    euler <- new("Euler", .ode)
-    euler <- init(euler, euler@stepSize)                         
+    # Euler constructor
+    euler <- new("Euler", .ode)                     # create the Euler object
+    euler <- init(euler, euler@stepSize)            # iniialize Euler
     return(euler)
 }
 
