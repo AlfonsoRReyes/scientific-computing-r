@@ -12,11 +12,12 @@ setClass("ODESolver", slots = c(
 )
 
 setMethod("initialize", "ODESolver", function(.Object, .ode, ...) {
+    .Object <- init(.Object, 0.1)                                 # diference #1
     return(.Object)
 })
 
 setMethod("step", "ODESolver", function(object, ...) {
-    object
+    # object
 })
 
 setMethod("setStepSize", "ODESolver", function(object, stepSize, ...) {
@@ -47,6 +48,6 @@ setMethod("getStepSize", "ODESolver", function(object, ...) {
 ODESolver <- function(.ode) {
     odesolver <- new("ODESolver", .ode)
     odesolver@ode <- .ode
-    odesolver <- init(odesolver, 0.1)
+    # odesolver <- init(odesolver, 0.1)
     odesolver
 }
