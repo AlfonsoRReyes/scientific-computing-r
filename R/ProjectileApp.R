@@ -169,7 +169,7 @@ setMethod("initialize", "Projectile", function(.Object) {
     # .Object@odeSolver <- init(.Object@odeSolver, .Object)
     # .Object@odeSolver <- init(.Object@odeSolver, 0.1)   # no effect
     # cat("| 0 |")
-    .Object@odeSolver <- Euler(.Object)
+    .Object@odeSolver <- Euler(.Object)                               # diff 6
     return(.Object)
 })
 
