@@ -111,8 +111,6 @@ setMethod("step", "Euler", function(object, ...) {
     state <- getState(object@ode) # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     rate  <- getRate(object@ode, state, object@ode@rate)  # <<<<<<<<<<<<  diff 4
     
-    # cat("Euler:step:state=", state, "rate:", rate, "numEqn", object@numEqn, "\n")
-    
     for (i in 1:object@numEqn) {                         # numEqn not refreshing
         state[i] <- state[i] + object@stepSize * rate[i]
     }
@@ -140,7 +138,7 @@ Euler <- function(.ode) {
     euler <- new("Euler", .ode)
     # euler <- new("ODESolver", .ode)
     
-    # euler <- init(euler, euler@stepSize)
+    # euler <- init(euler, euler@stepSize)                           # diff 5
     # euler <- init(ODESolver, euler@stepSize)                       # changed
     
     # euler <- ODESolver(.ode)
