@@ -1,5 +1,17 @@
 source("./R/ODESolver.R")
 
+# * An Euler-Richardson (midpoint) method ODE solver.
+# *
+# * The Euler-Richardson method uses the state at the beginning of the interval
+# * to estimate the state at the midpoint.
+# *
+#     * x(midpoint) = x(n) + v(n)*dt/2
+#     * v(midpoint) = v(n) + a(n)*dt/2
+#     * t(midpoint) = t(n) + dt/2
+#     *
+#     * The midpoint state is then used to calculate the final state.
+#     * @author       Wolfgang Christian
+
 
 setClass("EulerRichardson", 
     contains = c("ODESolver") 
