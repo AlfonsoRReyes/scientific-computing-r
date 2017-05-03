@@ -330,3 +330,62 @@ efun = Rmlfun(1:10)
 efun(3)
 ```
 
+
+
+
+
+## Optional arguments in S4 generics
+
+Source: http://stackoverflow.com/questions/22395772/optional-arguments-in-s4-generics?rq=1
+
+```{r}
+setGeneric("fancy",
+    function(obj, a, b, ..., z=1, verbose=TRUE) standardGeneric("fancy"),
+    signature=c("obj", "a", "b"))
+```
+
+
+```{r}
+setClass("A", slots = c("one", "two"))
+
+setMethod("fancy", "A", function(obj, a, ...) {
+    paste("Hello a = ", a)
+})
+
+objA <- new("A")
+fancy(objA, a = 1)
+```
+
+```{r}
+# this will not work because param `a` been declared in method for class A
+fancy(objA, b = 1)
+```
+
+
+```{r}
+setClass("B", slots = c("three", "four"))
+
+setMethod("fancy", "B", function(obj, b, ...) {
+    paste("Hi b", b)
+})
+
+objB <- new("B")
+
+fancy(objB, b = 3)
+
+fancy(objB, b = 2, 4)
+
+```
+
+```{r}
+fancy(objB, a = 0.5) # `a` in signature but param `b` belongs to class `B`
+# Error in paste("Hi b", b) : argument "b" is missing, with no default
+```
+
+```{r}
+fancy(objB, 4)       # this will give an error because param not specified
+# Error in paste("Hi b", b) : argument "b" is missing, with no default
+```
+
+
+
