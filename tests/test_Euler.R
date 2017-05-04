@@ -3,6 +3,7 @@ library(testthat)
 source("./R/ode_generics.R")
 source("./R/Euler.R")
 
+
 ode <- new("ODE")
 
 
@@ -43,13 +44,11 @@ expect_equal(euler@numEqn, 3)
 euler <- setStepSize(euler, 0.1010)     # set a new step size
 expect_equal(getStepSize(euler), 0.1010)
 
-test_that("values correct before step", {
+test_that("values correct after init", {
     expect_true(!is.null(step(euler)))        # step from Euler returns a value
     expect_equal(euler@ode@state, c(0, 1, 3))
     expect_equal(euler@ode@rate, c(0, 0, 0))
     expect_equal(getRate(euler@ode), c(0, 0, 0))
-    expect_equal(length(ode@state), 0) # vector with zero length
-    expect_equal(length(ode@rate), 0)  # vector with zero length
 })
 
 # rate remains zero until we do setState and getRate at inherited class
@@ -59,7 +58,16 @@ test_that("values correct after step", {
     expect_equal(euler@ode@state, c(0, 1, 3))
     expect_equal(euler@ode@rate, c(0, 0, 0))
     expect_equal(getRate(euler@ode), c(0, 0, 0))
-    expect_equal(length(ode@state), 0) # vector with zero length
-    expect_equal(length(ode@rate), 0)  # vector with zero length
 })
+
+# setMethod("step", "Projectile", function(object) {
+    euler <- step(euler)
+    
+    rate  <- euler@ode@rate                           
+    state <- euler@ode@state   
+    
+# setMethod("setState", "Projectile", function(object, x, vx, y, vy) {
+x <- 0; vx <- 10; y <- 0; vy <- 10
+
+    
 

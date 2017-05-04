@@ -67,3 +67,5 @@ eulerRichardson <- step(eulerRichardson)
 expect_equal(eulerRichardson@ode@state, state)
 expect_equal(eulerRichardson@ode@rate, rate)
 expect_equal(eulerRichardson@midstate, state)       # midpoint after step
+
+
