@@ -387,5 +387,58 @@ fancy(objB, 4)       # this will give an error because param not specified
 # Error in paste("Hi b", b) : argument "b" is missing, with no default
 ```
 
+```{r}
+###   A non-standard generic function.  It insists that the methods
+###   return a non-empty character vector (a stronger requirement than
+###    valueClass = "character" in the call to setGeneric)
 
 
+
+setGeneric("authorNames",
+    function(obj, text) {
+      value <- standardGeneric("authorNames")
+      if(!(is(value, "character") && any(nchar(value)>0)))
+        stop("authorNames methods must return non-empty strings")
+      value
+      })
+
+setClass("A", slots = c("one", "two"))
+
+
+setMethod("authorNames", "A", function(obj, text) {
+    text
+})
+```
+
+
+```{r}
+objA <- new("A")
+authorNames(objA, "some chars")
+authorNames(objA, "")
+```
+
+
+```{r}
+###   A non-standard generic function.  It insists that the methods
+###   return a non-empty character vector (a stronger requirement than
+###    valueClass = "character" in the call to setGeneric)
+
+
+
+setGeneric("authorNames",
+    function(text) {
+      value <- standardGeneric("authorNames")
+      if(!(is(value, "character") && any(nchar(value)>0)))
+        stop("authorNames methods must return non-empty strings")
+      value
+      })
+
+
+setMethod("authorNames",, function(text) {   # works with a warning
+    text
+})
+
+authorNames("123")
+authorNames("abc")
+authorNames("")
+```
