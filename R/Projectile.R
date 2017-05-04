@@ -6,11 +6,12 @@
 ######################
 
 source("./R/ODE.R")
-source("./R/Euler.R")
+# source("./R/Euler.R")
+source("./R/RK4.R")
 
 setClass("Projectile", slots = c(
     g = "numeric",
-    odeSolver = "Euler"
+    odeSolver = "RK4"
     ),
     prototype = prototype(
         g = 9.8
@@ -19,7 +20,7 @@ setClass("Projectile", slots = c(
     )
 
 setMethod("initialize", "Projectile", function(.Object) {
-    .Object@odeSolver <- Euler(.Object)                              
+    .Object@odeSolver <- RK4(.Object)                              
     return(.Object)
 })
 

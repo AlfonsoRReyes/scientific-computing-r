@@ -11,12 +11,37 @@ parameters are not passed.
 * start developing in a unique file to avoid collisions and get clearer generics
 on sight.
 
+```{r}
+#                                                      test Projectile with RK4
+source("./R/ode_generics.R")
+source("./R/Projectile.R")
+
+
+x <- 0; vx <- 10; y <- 0; vy <- 10
+state <- c(x, vx, y, vy, 0)
+dt <- 0.01
+
+projectile <- Projectile()
+
+projectile <- setState(projectile, x, vx, y, vy)
+projectile@odeSolver <- init(projectile@odeSolver, 0.123)
+projectile@odeSolver <- setStepSize(projectile@odeSolver, dt) 
+
+while (projectile@state[3] >= 0)    {                
+    # state[5]:           state[1]: x;  # state[3]: y
+    cat(sprintf("%12f %12f %12f \n", projectile@state[5], 
+                projectile@state[1], projectile@state[3]))
+    projectile <- step(projectile)
+}
+
+```
+
+
 
 ```{r}
 # run ProjectileApp using the R scripts only
 
 source("./R/ode_generics.R")
-source("./R/Euler.R")
 source("./R/Projectile.R")
 
 
@@ -31,10 +56,12 @@ projectile@odeSolver <- init(projectile@odeSolver, 0.123)
 projectile@odeSolver <- setStepSize(projectile@odeSolver, dt) 
 
 while (projectile@state[3] >= 0)    {                 # state[3]: y
-    projectile <- step(projectile)
+    
     # state[5]:           state[1]: x
     cat(sprintf("%12f %12f %12f \n", projectile@state[5], 
                 projectile@state[1], projectile@state[3]))
+    
+    projectile <- step(projectile)
 }
 
 ```
