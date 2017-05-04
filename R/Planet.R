@@ -10,7 +10,7 @@ setClass("Planet", slots = c(
 )
 
 setMethod("initialize", "Planet", function(.Object, ...) {
-    .Object@GM <- 4 * sqrt(pi * pi)
+    .Object@GM <- 4 * pi * pi
     .Object@state <- vector("numeric", 5)
     .Object@odeSolver <- Euler(.Object)
     return(.Object)
