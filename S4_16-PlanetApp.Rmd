@@ -1,14 +1,22 @@
 ---
-title: "R Notebook"
+title: "PlanetApp  - Euler ODE solver"
 output: html_notebook
 ---
 
 
 ```{r}
-source("./R/ode_generics_planet.R")
+# #################
+# PlanetApp
+#
+#
+# source("./R/ode_generics_planet.R")
+source("./R/ode_generics.R")
 source("./R/Planet.R")
 
-state <- c(1, 0, 0, 6.28, 0)
+# x =  1, AU or Astronomical Units. Length of semimajor axis or the orbit of the Earth around the Sun.
+
+x <- 1; vx <- 0; y <- 0; vy <- 6.28; t <- 0
+state <- c(x, vx, y, vy, t)
 dt <-  0.01
 
 planet <- Planet()
@@ -16,19 +24,22 @@ planet <- Planet()
 planet@odeSolver <- setStepSize(planet@odeSolver, dt)
 planet <- init(planet, initState = state)
 
-while (TRUE) {
+# run infinite loop. stop with ESCAPE.
+while (planet@state[5] <= 365) {
     for (i in 1:5) {                 # advances time
         planet <- doStep(planet)
     }
-    cat(sprintf("%12f %12f %12f %12f %12f \n", planet@state[1], planet@state[2], 
-    planet@state[3], planet@state[4], planet@state[5]))
+    cat(sprintf("%12f %12f %12f %12f %12f \n", 
+                planet@state[1], planet@state[2], planet@state[3],
+                planet@state[4], planet@state[5]))
 }
 
 ```
 
-## unit test
+## unit tests
 
 ```{r}
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++unit tests
 library(testthat)
 
 source("./R/ode_generics_planet.R")
@@ -347,9 +358,6 @@ getStepSize(abstract)
 slot(abstract, "numEqn")
 ```
 
-```{r}
-
-```
 
 
 
@@ -360,44 +368,6 @@ slot(abstract, "numEqn")
 
 
 
-
-
-
-```{r}
-setClass("testComplex", slots = c(zz = "complex"))
-
-## method for whole group "Complex"
-setMethod("Complex", "testComplex",
-          function(z) c("groupMethod", callGeneric(z@zz)))
-
-## exception for Arg() :
-setMethod("Arg", "testComplex",
-          function(z) c("ArgMethod", Arg(z@zz)))
-
-z1 <- 1+2i
-z2 <- new("testComplex", zz = z1)
-z2
-```
-
-```{r}
-## some class definitions with simple inheritance
-setClass("B0", slots = c(b0 = "numeric"))
-setClass("B1", slots = c(b1 = "character"), contains = "B0")
-setClass("B2", slots = c(b2 = "logical"), contains = "B1")
-
-## and a rather silly function to illustrate callNextMethod
-f <- function(x) class(x)
-
-setMethod("f", "B0", function(x) c(x@b0^2, callNextMethod()))
-setMethod("f", "B1", function(x) c(paste(x@b1,":"), callNextMethod()))
-setMethod("f", "B2", function(x) c(x@b2, callNextMethod()))
-
-b1 <- new("B1", b0 = 2, b1 = "Testing")
-b1
-
-b2 <- new("B2", b2 = FALSE, b1 = "More testing", b0 = 10)
-b2
-```
 
 
 

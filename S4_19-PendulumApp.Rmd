@@ -1,5 +1,5 @@
 ---
-title: "Pendulum with EulerRichardson"
+title: "Pendulum with EulerRichardson ODE solver"
 output: html_notebook
 ---
 
@@ -22,8 +22,8 @@ thetaDot <- 0
 pendulum@state[3] <- 0      # set time to zero, t = 0
 
 pendulum <- setState(pendulum, theta, thetaDot)
-stepSize <- dt
-pendulum <- setStepSize(pendulum, stepSize)
+# stepSize <- dt
+pendulum <- setStepSize(pendulum, dt = dt)    # needs explicit declaration of dt
 
 state <- c(0.2, 0.0, 0.0)
 

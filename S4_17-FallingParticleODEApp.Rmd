@@ -1,5 +1,5 @@
 ---
-title: 'FallingParticleApp #3 running'
+title: 'FallingParticleApp - Euler ODE SOlver'
 output:
   html_document: default
   html_notebook: default
@@ -16,9 +16,35 @@ each other.
 
 * Use boolean comparisons to unit test parts of a script
 
+```{r}
+# ###########################
+# FallingParticleApp
+#
+source("./R/ode_generics.R")
+source("./R/FallingParticleODE.R")
+source("./R/Euler.R")
+
+initial_y <- 10
+initial_v <- 0
+dt <- 0.01
+
+ball <- FallingParticleODE(initial_y, initial_v)
+
+eusolver <- Euler(ball)
+eusolver <- setStepSize(eusolver, dt)
+
+# stop loop when the ball hits the ground
+while (ball@state[1] > 0) {
+    eusolver <- step(eusolver)
+    ball <- eusolver@ode
+    cat(sprintf("%12f %12f ",  ball@state[1], ball@rate[1] ))
+    cat(sprintf("%12f %12f ",  ball@state[2], ball@rate[2] ))
+    cat(sprintf("%12f %12f\n", ball@state[3], ball@rate[3] ))
+}
+```
 
 ```{r}
-# run unit tests
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++  + + unit tests
 library(testthat)
 
 source("./R/ode_generics.R")
@@ -47,38 +73,24 @@ rate <- eusolver@ode@rate
 while (ball@state[1] > 0) {
     eusolver <- step(eusolver)
     ball <- eusolver@ode
-    expect_false(all(eusolver@ode@state == c(10, 0, 0)))  # step makes the original state vector to change
-}
-
-# ball@state[1]
-# expect_equal(round(ball@state[1], 5), -0.090080)
-expect_equal(round(ball@state[1], 5), -0.29)      # obtained with dt = 0.1
-expect_equal(getStepSize(eusolver), dt)
-```
-
-```{r}
-source("./R/ode_generics.R")
-source("./R/FallingParticleODE.R")
-source("./R/Euler.R")
-
-initial_y <- 10
-initial_v <- 0
-dt <- 0.01
-
-ball <- FallingParticleODE(initial_y, initial_v)
-
-eusolver <- Euler(ball)
-eusolver <- setStepSize(eusolver, dt)
-
-
-while (ball@state[1] > 0) {
-    eusolver <- step(eusolver)
-    ball <- eusolver@ode
     cat(sprintf("%12f %12f ",  ball@state[1], ball@rate[1] ))
     cat(sprintf("%12f %12f ",  ball@state[2], ball@rate[2] ))
     cat(sprintf("%12f %12f\n", ball@state[3], ball@rate[3] ))
+    expect_false(all(eusolver@ode@state == c(10, 0, 0)))  # step makes the original state vector to change
 }
+
+expect_equal(round(ball@state[1], 5), -0.29)      # obtained with dt = 0.1
+expect_equal(getStepSize(eusolver), dt)
+expect_equal(c(ball@state[1], ball@rate[1], 
+              ball@state[2], ball@rate[2], 
+              ball@state[3], ball@rate[3]), 
+            c(-0.290000,   -13.720000,   
+             -14.700000,    -9.800000,     
+             1.500000,     1.000000))
 ```
+
+
+
 
 
 
