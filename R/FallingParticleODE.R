@@ -1,5 +1,6 @@
-# FallingParticleODE
-
+######################
+# FallingParticleODE.R 
+#
 source("./R/ODE.R")
 
 setClass("FallingParticleODE", slots = c(
