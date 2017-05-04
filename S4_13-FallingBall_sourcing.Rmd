@@ -1,0 +1,65 @@
+---
+title: "FallingBall class"
+output: html_notebook
+---
+
+
+```{r}
+source("./R/FallingBall.R")
+
+```
+
+## shorter and better version
+
+```{r}
+library(data.table)
+
+y0 <- 10
+v0 <- 0
+t  <- 0
+dt <- 0.01
+
+ball <- FallingBall(y = y0, v = v0, t = t, dt = dt)
+
+v = vector("list")
+i <-  1
+while (getY(ball) > 0) {           # Y position for the ball
+    ball <- step(ball)             # update the position
+    v[[i]] <- getObservation(ball) # get a row of data or observation
+    i <-  i + 1
+}
+dT <- data.table::rbindlist(v)     # convert observation to data table
+dT
+```
+
+
+
+## long version
+
+```{r}
+library(data.table)
+
+y0 <- 10
+v0 <- 0
+t  <- 0
+dt <- 0.01
+
+ball <- FallingBall(y = y0, v = v0, t = t, dt = dt)
+
+v = vector("list")
+i <-  1
+while (ball@y > 0) {
+    ball <- step(ball)
+    v[[i]] <- list(velocity = ball@v, ycoord = getY(ball), t = ball@t, dt = ball@dt)
+    # cat(ball@v, ball@y, ball@t, "\n")
+    i <-  i + 1
+}
+dT <- data.table::rbindlist(v)
+dT
+
+cat("Final time", ball@t)
+cat("\tFinal y: ", ball@y, "\tFinal v:", ball@v, "\n")
+cat("Analytic y:", analyticalPosition(ball, y0, v0), "\n")
+cat("Analytic v:", analyticalVelocity(ball, v0))
+```
+

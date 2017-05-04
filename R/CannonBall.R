@@ -1,11 +1,4 @@
----
-title: "Zelle Cannonball S4 class"
-output: html_notebook
----
 
-Source: Python, and introduction to computer science. Page 309
-
-```{r}
 
 setClass("Projectile", slots = c(
     xpos = "numeric",
@@ -21,11 +14,11 @@ setGeneric("getX", function(object) standardGeneric("getX"))
 
 setMethod("initialize", "Projectile",
           function(.Object, xpos = xpos, ypos = ypos, xvel = xvel, yvel = yvel){
-            .Object@xpos <- xpos
-            .Object@ypos <- ypos
-            .Object@xvel <- xvel
-            .Object@yvel <- yvel
-            return(.Object)
+              .Object@xpos <- xpos
+              .Object@ypos <- ypos
+              .Object@xvel <- xvel
+              .Object@yvel <- yvel
+              return(.Object)
           })
 
 setMethod("update", "Projectile", function(object, time) {
@@ -53,15 +46,3 @@ Projectile <- function(angle, velocity, height) {
     yvel <- velocity * sin(theta)
     new("Projectile", xpos, ypos, xvel, yvel)
 }
-```
-
-
-```{r}
-interval <-  0.25
-cball <- Projectile(angle = 45, velocity = 50, height = 0)
-while (getY(cball) >= 0) {
-    cball <- update(cball, interval)    
-    cat(getX(cball), getY(cball), "\n")
-}
-```
-

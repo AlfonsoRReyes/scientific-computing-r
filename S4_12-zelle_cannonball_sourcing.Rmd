@@ -1,0 +1,18 @@
+---
+title: "Cannonball - Zelle"
+output: html_notebook
+---
+
+```{r}
+source("./R/CannonBall.R")
+```
+
+
+```{r}
+interval <-  0.25
+cball <- Projectile(angle = 45, velocity = 50, height = 0)
+while (getY(cball) >= 0) {
+    cball <- update(cball, interval)    
+    cat(getX(cball), getY(cball), "\n")
+}
+```

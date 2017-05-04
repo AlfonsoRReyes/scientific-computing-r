@@ -330,3 +330,115 @@ efun = Rmlfun(1:10)
 efun(3)
 ```
 
+
+
+
+
+## Optional arguments in S4 generics
+
+Source: http://stackoverflow.com/questions/22395772/optional-arguments-in-s4-generics?rq=1
+
+```{r}
+setGeneric("fancy",
+    function(obj, a, b, ..., z=1, verbose=TRUE) standardGeneric("fancy"),
+    signature=c("obj", "a", "b"))
+```
+
+
+```{r}
+setClass("A", slots = c("one", "two"))
+
+setMethod("fancy", "A", function(obj, a, ...) {
+    paste("Hello a = ", a)
+})
+
+objA <- new("A")
+fancy(objA, a = 1)
+```
+
+```{r}
+# this will not work because param `a` been declared in method for class A
+fancy(objA, b = 1)
+```
+
+
+```{r}
+setClass("B", slots = c("three", "four"))
+
+setMethod("fancy", "B", function(obj, b, ...) {
+    paste("Hi b", b)
+})
+
+objB <- new("B")
+
+fancy(objB, b = 3)
+
+fancy(objB, b = 2, 4)
+
+```
+
+```{r}
+fancy(objB, a = 0.5) # `a` in signature but param `b` belongs to class `B`
+# Error in paste("Hi b", b) : argument "b" is missing, with no default
+```
+
+```{r}
+fancy(objB, 4)       # this will give an error because param not specified
+# Error in paste("Hi b", b) : argument "b" is missing, with no default
+```
+
+```{r}
+###   A non-standard generic function.  It insists that the methods
+###   return a non-empty character vector (a stronger requirement than
+###    valueClass = "character" in the call to setGeneric)
+
+
+
+setGeneric("authorNames",
+    function(obj, text) {
+      value <- standardGeneric("authorNames")
+      if(!(is(value, "character") && any(nchar(value)>0)))
+        stop("authorNames methods must return non-empty strings")
+      value
+      })
+
+setClass("A", slots = c("one", "two"))
+
+
+setMethod("authorNames", "A", function(obj, text) {
+    text
+})
+```
+
+
+```{r}
+objA <- new("A")
+authorNames(objA, "some chars")
+authorNames(objA, "")
+```
+
+
+```{r}
+###   A non-standard generic function.  It insists that the methods
+###   return a non-empty character vector (a stronger requirement than
+###    valueClass = "character" in the call to setGeneric)
+
+
+
+setGeneric("authorNames",
+    function(text) {
+      value <- standardGeneric("authorNames")
+      if(!(is(value, "character") && any(nchar(value)>0)))
+        stop("authorNames methods must return non-empty strings")
+      value
+      })
+
+
+setMethod("authorNames",, function(text) {   # works with a warning
+    text
+})
+
+authorNames("123")
+authorNames("abc")
+authorNames("")
+```

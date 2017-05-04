@@ -46,7 +46,8 @@ The code is run by invoking givePrediction() function on a new Bank class instan
 The constructor of Bank class reads the bank structure data from the `bank_model.csv` file that contains the list of cash points with their ids and types (ATM or Branch). 
 
 ```{r}
-setClass("Bank", slots = c(cashPoints = "list"))
+setClass("Bank", 
+         slots = c(cashPoints = "list"))
 
 # the Bank constructor reads a CSV file with the ATM id's and the
 # type of CashPoint

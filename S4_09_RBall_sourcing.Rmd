@@ -1,0 +1,49 @@
+---
+title: "Racquetball game with S4 classes"
+output: html_notebook
+---
+
+This example extracted from Zelle's book on Python.
+
+```{r}
+source("./R/RBall.R")
+```
+
+
+
+
+```{r}
+# The whole program using S4 classes
+n <-  50
+
+stats <- SimStats()
+for (i in 1:n) {
+    theGame <- RBallGame(0.5, 0.5, verbose = TRUE)
+    theGame <- play(theGame)
+    stats <- Update(stats, theGame)
+}
+printReport(stats)
+```
+
+```{r}
+# test one player
+p <- Player(0.5, "A")
+result <- ""
+
+for (i in 1:10) {
+    if (winsServe(p)) {
+        result <- "WIN"
+        p <- incScore(p)
+    } else {
+        result <-  "LOSE"
+    }
+    cat(sprintf("%5d %3s %3d %8s \n", i, whois(p), getScore(p), result))
+}
+```
+
+
+```{r}
+# test RBallGame class. Results for one game only
+game <- RBallGame(0.49, 0.51, verbose = TRUE)
+game <- play(game)
+```

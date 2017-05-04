@@ -1,0 +1,117 @@
+---
+title: "S4 classes - Gene sequence class using slots"
+output: html_notebook
+---
+
+
+```{r}
+source("./R/Sequence.R")
+```
+
+
+
+
+## Function to read sequences
+
+```{r}
+readFasta <- function(infile){
+  lines <- readLines(infile)
+  header <- grep("^>", lines)
+  cat("Sequences found at lines: ", header, "\n")
+  if (length(header) > 1) {
+    warning("Reading first sequence only.\n")
+    lines <- lines[header[1]:(header[2]-1)]
+    header <- header[1]
+  }
+  .id <- sub("^> *","", lines[header], perl=TRUE)
+  .sequence <- toupper(paste(lines[(header+1):length(lines)], collapse=""))
+  .alphabet <- toupper(unique(strsplit(.sequence,"")[[1]]))
+  if (all(.alphabet %in% c("A","C","G","T"))) {
+      newseq <- DnaSeq(.id, .sequence)
+  } else if (all(.alphabet %in% c("A","C","G","U"))) {
+      newSeq <- RnaSeq(.id, .sequence)
+  } else {
+      stop("Alphabet ", .alphabet," is unknown.")
+  }
+  if (validObject(newseq))
+    return(newseq)
+}
+```
+
+
+
+
+```{r}
+fastafilename <- dir(path="./inst/extdata",
+                     full.name = TRUE,
+                     pattern = "fasta$")
+fastafilename
+```
+
+## Read 1st sequence
+```{r}
+myseq <- readFasta(fastafilename[1])
+myseq
+```
+
+```{r}
+transcribe(myseq)
+```
+
+```{r}
+alphabet(myseq)
+```
+
+
+```{r}
+seq(myseq)
+```
+
+```{r}
+print(myseq)
+```
+
+```{r}
+rev(myseq)
+```
+
+```{r}
+comp(myseq)
+```
+
+```{r}
+length(myseq)
+```
+
+```{r}
+myseq[5:10]
+```
+
+```{r}
+myseq[5, 10]
+# T
+```
+
+```{r}
+myseq[1, 10]
+# A
+```
+
+## Read the 2nd seqence
+
+```{r}
+myseq2 <- readFasta(fastafilename[2])
+myseq2
+```
+
+```{r}
+# using setReplaceMethod
+id(myseq2) <- "Sequence #1"
+myseq2
+```
+
+```{r}
+# using setReplaceMethod
+`id<-`(myseq2, "this is sequence no. 1")
+```
+

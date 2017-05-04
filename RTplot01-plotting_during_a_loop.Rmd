@@ -1,0 +1,135 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(animation)
+library(ggplot2)
+# your data
+n  <- 1000
+df <- data.frame(time=1:n,y=runif(n))
+window <- 100
+# create the animation
+saveHTML({
+for(i in 1:(n-window)) {
+  print(ggplot(df) + geom_line(aes(x=time, y=y), size=0.7) + xlim(i,i+window))
+}
+})
+```
+
+
+
+```{r}
+x11()
+Plotz <- function(iter = 1000000, interval = 100000) {
+  # x <- 1:10
+    runs <- 100 #runs <- 100000
+  for(i in 1:iter){
+    xs <- runif(runs, min=-0.5, max=0.5)
+    # y <- runif(10)
+      ys <- runif(runs, min=-0.5,max=0.5)
+      in.circle <- xs^2 + ys^2 <= 0.5^2
+      mc.pi <- (sum(in.circle)/runs)*4
+    if(i %% interval == 0) {
+      # plot(x, y)
+        plot(xs, ys, pch ='.', col=ifelse(in.circle,"blue","red"), asp=1)
+    }
+  }
+  invisible(c(xs, ys))
+}
+Plotz()
+```
+
+
+
+```{r}
+# https://www.countbayesie.com/blog/2015/3/3/6-amazing-trick-with-monte-carlo-simulations
+x11()
+runs <- 100000
+#runif samples from a uniform distribution
+xs <- runif(runs, min=-0.5,max=0.5)
+ys <- runif(runs, min=-0.5,max=0.5)
+in.circle <- xs^2 + ys^2 <= 0.5^2
+mc.pi <- (sum(in.circle)/runs)*4
+plot(xs,ys,pch='.',col=ifelse(in.circle,"blue","grey")
+     ,xlab='',ylab='',asp=1,
+     main=paste("MC Approximation of Pi =",mc.pi))
+```
+
+
+```{r}
+x11()
+n=1000
+df=data.frame(time=1:n,y=runif(n))
+window=100
+for(i in 1:(n-window)) {
+    flush.console()
+    plot(df$time,df$y,type='l',xlim=c(i,i+window))
+    Sys.sleep(.09)
+}
+```
+
+
+```{r}
+plot(1:1)
+dev.new()
+plot(2,2)
+dev.set(dev.prev()) # go back to first
+title(main="test dev 1")
+
+dev.set(dev.next()) # go to second
+title(main="test dev 2")
+```
+
+```{r}
+iter = 1000000
+interval = 100000
+
+for(i in 1:iter) {
+    if(i %% interval == 0)   cat(i, "\n")
+}    
+```
+
+
+
+```{r}
+x11()
+Plotz <- function(iter = 1000000, interval = 100000) {
+  x <- 1:10
+  for(i in 1:iter){
+    y <- runif(10)
+    if(i %% interval == 0) {
+      plot(x, y)
+    }
+  }
+  return(c(x, y))
+}
+Plotz()
+```
+
+```{r}
+x<-c(1:100)
+y<-sin(x)
+z<-cos(x)
+plot(y=y,x=x)
+x11()
+plot(x=x,y=z)
+x11()
+```
+
+
+```{r}
+# https://stat.ethz.ch/R-manual/R-devel/library/grDevices/html/dev.html
+x11()
+plot(1:100)
+x11()
+plot(rnorm(100))
+dev.set(dev.prev())
+abline(0, 1) # through the 1:10 points
+dev.set(dev.next())
+abline(h = 0, col = "gray") # for the residual plot
+dev.set(dev.prev())
+# dev.off(); dev.off() #- close the two X devices
+```
+

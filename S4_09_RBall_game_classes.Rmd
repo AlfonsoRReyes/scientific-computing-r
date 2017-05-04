@@ -33,9 +33,7 @@ id <- function(a,b){
         sapply(slotNames(a),function(x)identical(slot(a,x),slot(b,x)))
         }
 
-```
 
-```{r}
 # generic for Player methods
 setGeneric("winsServe", function(object, ...) standardGeneric("winsServe"))
 setGeneric("incScore", function(object, ...) standardGeneric("incScore"))
@@ -52,11 +50,7 @@ setGeneric("update", function(object, aGame) standardGeneric("update"))
 setGeneric("printReport", function(object, ...) standardGeneric("printReport"))
 setGeneric("printLine", function(object, ...) standardGeneric("printLine"))
 
-```
 
-
-
-```{r}
 # methods for Player
 # setMethod("initialize", "Player",
 #           function(.Object, ..., prob){
@@ -76,18 +70,170 @@ setMethod("incScore", "Player", function(object) {
     })
 
 setMethod("getScore", "Player", function(object) {
-    #cat(object@score)
-    # validObject(object)
-    # object <- callNextMethod(object)
     return(object@score)})
 
 
+# Player <- function(prob) new("Player", prob = prob)
+# p <- Player(0.5)
+
+
+
+#############################################################################
+# set methods for RBAllGame
+setMethod("initialize", "RBallGame",
+          function(.Object, ..., probA = 0.5, probB = 0.5){
+            .Object@PlayerA <- Player(probA)
+            .Object@PlayerB <- Player(probB)
+            .Object@server <- .Object@PlayerA
+            #callNextMethod(.Object, ...)
+            return(.Object)
+          })
+
+setMethod("play", "RBallGame", function(object) {
+    i = 1
+    while (!isOver(object)) {
+        i <-  i + 1
+        cat(i)
+        if (i > 20) break
+        if (winsServe(object@server))
+            object@server <- incScore(object@server)
+        else
+            changeServer(object)
+        
+    }
+    return(object)
+})
+
+setMethod("isOver", "RBallGame", function(object) {
+    os <- getScores(object)
+    a <- os[["A"]]
+    b <- os[["B"]]
+    # cat(a, b)
+    res <- a == 15 || b == 15 || (a == 7 && b == 0) || (b == 7 && a == 0)
+    return(res)
+    })
+
+setMethod("changeServer", "RBallGame", function(object) {
+  if (all(id(object@server, object@PlayerA))) {
+      object@server <-  object@PlayerB
+      cat(getScore(object@PlayerB), "playerB\n")
+  }  else {
+      object@server <- object@PlayerA
+      cat(getScore(object@PlayerB), "playerA\n")
+  }
+  #return(object)
+})
+
+setMethod("getScores", "RBallGame", function(object) {
+    A <- getScore(object@PlayerA)
+    B <- getScore(object@PlayerB)
+    return(list(A = A, B = B))
+    # return(object)
+    })
+
+# RBallGame <- function(probA, probB) new("RBallGame", probA = probA, probB = probB)
+
+########################################################################################
+
+
+
+# set method for SimStats
+setMethod("initialize", "SimStats",
+          function(.Object, ...) {
+              .Object@winsA <- 0
+              .Object@winsB <- 0
+              .Object.shutsA <-  0
+              .Object.shutsB <-  0
+              #callNextMethod(.Object, ...)
+              return(.Object)
+          })
+
+setMethod("update", "SimStats", function(object, aGame) {
+              a <- getScores(aGame)[["A"]]
+              b <- getScores(aGame)[["B"]]
+              cat("scores", a, b, "\n")
+              if (a > b) {
+                  object@winsA <- object@winsA + 1
+                  if (b == 0)
+                      object@shutsA <- object@shutsA + 1
+              } else {
+                  object@winsB <- object@winsB + 1
+                  if (a == 0)
+                      object@shutsB <- object@shutsB + 1
+              }
+              return(object)
+          })
+
+# constructors
 Player <- function(prob) new("Player", prob = prob)
-p <- Player(0.5)
+RBallGame <- function(probA, probB) new("RBallGame", probA = probA, probB = probB)
+SimStats <- function() new("SimStats")
+
+# Player <- function(prob) new("Player", prob = prob)
+# RBallGame <- function(probA, probB) new("RBallGame", probA = probA, probB = probB)
+# 
+# rb <- RBallGame(0.4, 0.6)
+# getScores(rb)
+# isOver(rb)
+# play(rb)
+# changeServer(rb)
+# play(rb)
+
+
+# rb <- RBallGame(0.4, 0.6)
 ```
+
+
 ```{r}
+game <- RBallGame(0.4, 0.6)
+game <- play(game)
+```
+
+```{r}
+a = 8
+b = 7
+res <- a == 15 || b == 15 || (a == 7 && b == 0) || (b == 7 && a == 0)
+res
+```
+
+
+```{r}
+FchangeServer <- function(game) {
+    if (all(id(game@server, game@PlayerA))) {
+        game@server <- game@PlayerB
+        cat("Player B now serving \n")
+    } else {
+        game@server <- game@PlayerA
+        cat("Player A now serving \n")
+}
+    return(game)
+}
+```
+
+
+```{r}
+n <-  50
+game <- RBallGame(0.4, 0.6)
+
+
+
+```
+
+```{r}
+print(game@server)
+if (winsServe(game@server))  {
+    game <- incScore(game@server) 
+    #getScore(game)
+} else {
+    game <- FchangeServer(game)
+}    
+```
+
+
+```{r}
+winsServe(p)
 #incScore(p)
-incScore(p)
+p <- incScore(p)
 getScore(p)
 #getScore(p)
 ```
@@ -103,6 +249,7 @@ getScore(p)
 ```{r}
 n <-  50
 p <- Player(0.5)
+
 for (i in (1:n)) {
     if (winsServe(p)) p <- incScore(p)
     cat(i, getScore(p), "\n")
@@ -113,99 +260,73 @@ for (i in (1:n)) {
 
 
 
+
+
 ```{r}
-# set methods for RBAllGame
-setMethod("initialize", "RBallGame",
-          function(.Object, ..., probA = 0.5, probB = 0.5){
-            .Object@PlayerA <- Player(probA)
-            .Object@PlayerB <- Player(probB)
-            .Object@server <- .Object@PlayerA
-            #callNextMethod(.Object, ...)
-            return(.Object)
-          })
-
-setMethod("play", "RBallGame", function(object) {
-    while (!isOver(object)) {
-        if (winsServe(object@server))
-            incScore(object@server)
-        else
-            changeServer()
-    }
-})
-
-setMethod("isOver", "RBallGame", function(object) {
-    os <- getScores(object)
-    a <- os[["A"]]
-    b <- os[["B"]]
-    res <- a == b || b == 15 || (a == 7 && b == 0) || (b == 7 && a == 0)
-    return(res)
-    })
-
-setMethod("changeServer", "RBallGame", function(object) {
-  if (all(id(object@server, object@PlayerA)))
-      object@server <-  object@PlayerB
-  else
-      object@server <- object@PlayerB
-  
-  return(object)
-})
-
-setMethod("getScores", "RBallGame", function(object) {
-    A <- getScore(object@PlayerA)
-    B <- getScore(object@PlayerB)
-    #return(list(A = A, B= B))
-    return(object)
-    })
-
-
-# Player <- function(prob) new("Player", prob = prob)
-# RBallGame <- function(probA, probB) new("RBallGame", probA = probA, probB = probB)
-# 
-# rb <- RBallGame(0.4, 0.6)
-# getScores(rb)
-# isOver(rb)
-# play(rb)
-# changeServer(rb)
-# play(rb)
+n <-  10
+game <- RBallGame(0.4, 0.6)
+for (i in (1:n)) {
+    # game <- RBallGame(0.4, 0.6)
+   game <- play(game)
+    cat(isOver(game))
+    cat("\t", getScores(game)$A, getScores(game)$B, "\n")
+}    
 ```
 
+
+
+
+
 ```{r}
-# set method for SimStats
-setMethod("initialize", "SimStats",
-          function(.Object, ...) {
-              .Object@winsA <- 0
-              .Object@winsB <- 0
-              .Object.shutsA <-  0
-              .Object.shutsB <-  0
-              #callNextMethod(.Object, ...)
-              return(.Object)
-          })
+# test play
+n <-  50
+game <- RBallGame(0.4, 0.6)
+p1 <- game@PlayerA
+p2 <- game@PlayerB
 
-setMethod("update", "SimStats", function(object, aGame) {
-              a <- getScores(aGame)[["A"]]
-              b <- getScores(aGame)[["B"]]
-              print(a, b)
-              if (a > b) {
-                  object@winsA <- object@winsA + 1
-                  if (b == 0)
-                      object@shutsA <- object@shutsA + 1
-              } else {
-                  object@winsB <- object@winsB + 1
-                  if (a == 0)
-                      object@shutsB <- object@shutsB + 1
-              }
-          })
+for (i in (1:n)) {
+    if (winsServe(p1)) 
+        p1 <- incScore(p1)
+    else 
+        p2 <- incScore(p2)
+    cat(i, getScore(p1), getScore(p2), "\n")
+}    
+```
 
-# constructors
-Player <- function(prob) new("Player", prob = prob)
-RBallGame <- function(probA, probB) new("RBallGame", probA = probA, probB = probB)
-SimStats <- function() new("SimStats")
 
-stats <-  SimStats()
-theGame <-  RBallGame(0.5, 0.511)
-play(theGame)
-# getScores(theGame)
-update(stats, theGame)
+
+```{r}
+# test RBallGame methods
+n <-  50
+game <- RBallGame(0.4, 0.6)
+p1 <- game@PlayerA
+p2 <- game@PlayerB
+
+for (i in (1:n)) {
+    if (winsServe(p1)) p1 <- incScore(p1)
+    if (winsServe(p2)) p2 <- incScore(p2)
+    cat(i, getScore(p1), getScore(p2))
+    cat("\t", getScores(game)$A, getScores(game)$B, "\n")
+}
+```
+
+
+```{r}
+rb <- play(rb)
+rb@PlayerA
+rb@PlayerB
+isOver(rb)
+```
+
+
+```{r}
+
+
+# stats <-  SimStats()
+# theGame <-  RBallGame(0.5, 0.511)
+# play(theGame)
+# # getScores(theGame)
+# update(stats, theGame)
 ```
 
 ```{r}
@@ -215,7 +336,8 @@ n = 50
 for (i in (1:n)) {
     theGame <- RBallGame(probA, probB)
     theGame <- play(theGame)
-    theGame <- update(stats, theGame)
+    cat(getScores(theGame)$A, getScores(theGame)$B)
+    # stats <- update(stats, theGame)
 }
     
 ```

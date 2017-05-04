@@ -1,0 +1,50 @@
+---
+title: "Linking S4 classes to common object"
+output: html_notebook
+---
+
+```{r}
+# Create customer
+firstCustomer <- new("Customer", CustomerID = 1, Name = "test")
+
+# add orders and items to customer
+add(firstCustomer) <- new("Order", Description = "new iPhone", Cost = 145)
+add(firstCustomer) <- new("Order", Description = "macbook", Cost = 999)
+
+firstCustomer
+```
+
+
+Here's our business in action
+
+```{r}
+# create an instance of Business() class
+bus <- Business()
+
+# add customers
+bus <- add_customers(bus, c("Fred", "Barney"))
+
+# add items to Business
+bus <- add_items(bus, c("Phone", "Tablet"), c(200, 250))
+
+# purchase items by customers
+bus <- .purchase(bus, 1L, 1:2)  # Fred buys Phone, Tablet
+bus <- .purchase(bus, 2L, 2L)   # Barney buys Tablet
+```
+
+and our total sales (we'd want nice accessors for this)
+
+
+```{r}
+sum(bus@Items@Cost[bus@Transactions@ItemId])
+```
+
+```{r}
+bus <- Business()
+add_customers(bus, c("Fred", "Barney"))
+add_items(bus, c("Phone", "Tablet"), c(200, 250))
+.purchase(bus, 1L, 1:2)  # Fred buys Phone, Tablet
+.purchase(bus, 2L, 2L)   # Barney buys Tablet
+sum(bus@Items@Cost[bus@Transactions@ItemId])    # this doesn't add because no var
+```
+

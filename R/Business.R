@@ -1,14 +1,5 @@
----
-title: "Linking S4 classes to common object"
-output: html_notebook
----
 
-Source: http://stackoverflow.com/questions/29779909/how-to-automatically-update-a-slot-of-s4-class-in-r
 
-You can't link across two independent objects, so you need methods that use
-both. Here is an example with a replacement method:
-
-```{r}
 Customer <- setClass("Customer", 
                      slots = c(
                          CustomerID = "numeric", 
@@ -29,7 +20,7 @@ setMethod(f = "add<-",
           definition = function(object, value) {
               object@OrderHistory <- append(object@OrderHistory, value)
               object    
-  })
+          })
 
 setMethod(f = "show", 
           signature = "Customer", 
@@ -37,24 +28,9 @@ setMethod(f = "show",
               cat("** Customer #", object@CustomerID, ": ", object@Name, "\n", sep="")
               for(i in object@OrderHistory) 
                   cat("\t", i@Description, "\t", i@Cost, "\n", sep="")
-  })
+          })
 
-firstCustomer <- new("Customer", CustomerID = 1, Name = "test")
-add(firstCustomer) <- new("Order", Description = "new iPhone", Cost = 145)
-add(firstCustomer) <- new("Order", Description = "macbook", Cost = 999)
 
-firstCustomer
-```
-
-## Customers, items, transaction and business classes
-The following doesn't add to @BrodieG's approach, but emphasizes that you
-probably want to model tables of Customers, Items, etc., rather than individual
-customers &c. Also, in many cases I think classes are like data base tables, and
-principles of good data base design probably apply to good class design (again
-remembering the S4 classes and R's copy-on-change semantics mean that the
-classes model columns rather than rows as in many other languages).
-
-```{r}
 ## Customers -- analogous to a data.frame or data base table
 setClass(Class = "Customers", slots = c(
     CustomerId = "integer", 
@@ -62,22 +38,25 @@ setClass(Class = "Customers", slots = c(
 
 ## Items -- analogous to a data.frame or data base table
 setClass(Class = "Items", slots = c(
-    ItemId = "integer", 
-    Description = "character", 
-    Cost = "numeric"))
+                    ItemId = "integer", 
+                    Description = "character", 
+                    Cost = "numeric"))
 
 ## Transactions -- analogous to a data.frame or data base table
 setClass(Class = "Transactions", slots = c(
-    TransactionId = "integer", 
-    CustomerId = "integer", 
-    ItemId = "integer"))
+                    TransactionId = "integer", 
+                    CustomerId = "integer", 
+                    ItemId = "integer"))
+
+
 
 
 ## Business -- analogous to a data *base*
 Business = setClass(Class = "Business", slots = c(
-    Customers = "Customers",          # use class `Customers`
-    Items = "Items",                  # use class `Items`
-    Transactions = "Transactions"))   # use class `Transactions`
+                    Customers = "Customers",          # use class `Customers`
+                    Items = "Items",                  # use class `Items`
+                    Transactions = "Transactions"))   # use class `Transactions`
+
 
 
 
@@ -98,7 +77,7 @@ Business = setClass(Class = "Business", slots = c(
 
 
 
-# The following add vectors of customers and items to the business
+# The following functions add vectors of customers and items to the business
 add_customers <- function(business, customerNames)
 {
     customers <- slot(business, "Customers")
@@ -129,36 +108,9 @@ add_items <- function(business, descriptions, costs)
     initialize(business,
                Transactions = .update(transactions, 
                                       TransactionId = rep(.nextid(transactions, 
-                                                                "TransactionId"), 
-                                                        len), 
+                                                                  "TransactionId"), 
+                                                          len), 
                                       CustomerId = rep(customerId, len), 
                                       ItemId = itemIds))
 }
-```
-
-
-Here's our business in action
-
-```{r}
-bus <- Business()
-bus <- add_customers(bus, c("Fred", "Barney"))
-bus <- add_items(bus, c("Phone", "Tablet"), c(200, 250))
-bus <- .purchase(bus, 1L, 1:2)  # Fred buys Phone, Tablet
-bus <- .purchase(bus, 2L, 2L)   # Barney buys Tablet
-```
-
-and our total sales (we'd want nice accessors for this)
-
-
-```{r}
-sum(bus@Items@Cost[bus@Transactions@ItemId])
-```
-
-```{r}
-bus <- Business()
-add_customers(bus, c("Fred", "Barney"))
-add_items(bus, c("Phone", "Tablet"), c(200, 250))
-.purchase(bus, 1L, 1:2)  # Fred buys Phone, Tablet
-.purchase(bus, 2L, 2L)   # Barney buys Tablet
-```
 
