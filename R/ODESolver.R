@@ -19,7 +19,7 @@ setMethod("initialize", "ODESolver", function(.Object, .ode, ...) {
 })
 
 setMethod("step", "ODESolver", function(object, ...) {
-    # object                                                       
+    # object
 })
 
 setMethod("setStepSize", "ODESolver", function(object, stepSize, ...) {

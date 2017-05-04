@@ -24,6 +24,8 @@ setMethod("initialize", "Projectile", function(.Object) {
 })
 
 setMethod("setStepSize", "Projectile", function(object, stepSize, ...) {
+    # use explicit parameter declaration
+    # setStepSize generic has two step parameters: stepSize and dt
     object@odeSolver <- setStepSize(object@odeSolver, stepSize)
     object
 })

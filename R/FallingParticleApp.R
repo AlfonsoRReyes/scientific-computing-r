@@ -1,3 +1,5 @@
+# All classes and generic functions
+
 setGeneric("getRate", function(object, state, rate, ...) standardGeneric("getRate"))
 setGeneric("getState", function(object, ...) standardGeneric("getState"))
 setGeneric("init", function(object, stepSize, ...) standardGeneric("init"))

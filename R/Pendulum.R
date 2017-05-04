@@ -27,8 +27,10 @@ setMethod("initialize", "Pendulum", function(.Object) {
     return(.Object)
 })
 
-setMethod("setStepSize", "Pendulum", function(object, stepSize, ...) {
-    object@odeSolver <- setStepSize(object@odeSolver, stepSize)
+setMethod("setStepSize", "Pendulum", function(object, dt, ...) {
+    # use explicit parameter declaration
+    # setStepSize generic has two step parameters: stepSize and dt
+    object@odeSolver <- setStepSize(object@odeSolver, dt)
     object
 })
 
@@ -54,7 +56,7 @@ setMethod("getState", "Pendulum", function(object) {
 
 
 setMethod("getRate", "Pendulum", function(object, state, rate) {    
-    rate[1] <- state[2]     # rate of change of angle                                      # diff 11
+    rate[1] <- state[2]     # rate of change of angle               
     rate[2] <- -object@omega0Squared * sin(state[1])  # rate of change of dtheta                 
     rate[3] <- 1            # rate of change of time, dt/dt
     
