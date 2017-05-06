@@ -15,6 +15,23 @@ ospClasses <- "./inst/osp" #<- paste("./inst/osp", "osp.jar", sep = "/")
 ```
 
 ```{r}
+euler <- J("org.opensourcephysics.numerics.Euler")
+.jmethods(euler)
+```
+
+```{r}
+.jfields(euler)
+```
+
+```{r}
+ode <- J("org.opensourcephysics.numerics.ODE")
+.jfields(ode)
+.jmethods(ode)
+```
+
+
+
+```{r}
 fft <- rJava::.jnew("org/opensourcephysics/numerics/FFT")
 rJava::.jcall(fft, "V", "setN", as.integer(5))
 rJava::.jcall(fft, "I", "getN")
