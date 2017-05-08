@@ -59,16 +59,22 @@ plot(xs,ys,pch='.',col=ifelse(in.circle,"blue","grey")
 
 
 ```{r}
+# strip chart effect. x is time
 x11()
-n=1000
+n = 1000
 df=data.frame(time=1:n,y=runif(n))
 window=100
 for(i in 1:(n-window)) {
     flush.console()
-    plot(df$time,df$y,type='l',xlim=c(i,i+window))
+    plot(df$time,df$y, type = 'l', 
+         xlim = c(i, i+window)         # add the displacing effect
+         )
     Sys.sleep(.09)
 }
 ```
+
+
+
 
 
 ```{r}
