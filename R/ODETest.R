@@ -1,0 +1,46 @@
+
+source("./R/ODE.R")
+source("./R/RK4.R")
+
+setClass("ODETest", slots = c(
+    n     = "numeric",           # counts the number of getRate evaluations
+    odeSolver = "RK4"
+    ),
+    contains = c("ODE")
+    )
+
+
+setMethod("initialize", "ODETest", function(.Object) {
+    .Object@state <- c(5.0, 0.0)
+    return(.Object)
+})
+
+
+setMethod("getExactSolution", "ODETest", function(object, t) {              
+    return(5.0 * exp(-t))
+})
+
+
+setMethod("getState", "ODETest", function(object) {                
+    object@state
+})
+
+
+setMethod("getRate", "ODETest", function(object, state, rate) {    
+    rate[1] <- - state[1]     
+    rate[2] <-  1            # rate of change of time, dt/dt
+    
+    object@n <- object@n + 1
+    
+    object@state <- object@odeSolver@ode@state <- state
+    object@rate  <- object@odeSolver@ode@rate  <- rate
+    
+    object@rate     
+})
+
+
+# constructor
+
+ODETest <- function() {
+    new("ODETest")
+}
