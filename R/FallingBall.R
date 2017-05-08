@@ -1,4 +1,4 @@
-
+#' FallingBall.R
 
 setClass("FallingBall", slots = c(
     y = "numeric",
