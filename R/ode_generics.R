@@ -15,3 +15,6 @@ setGeneric("setStepSize", function(object, stepSize, dt, ...)
     signature = c("object", "stepSize", "dt"))
 
 # setGeneric("setStepSize", function(object, stepSize, ...) standardGeneric("setStepSize"))
+
+setGeneric("getExactSolution", function(object, t, ...) 
+    standardGeneric("getExactSolution"))
