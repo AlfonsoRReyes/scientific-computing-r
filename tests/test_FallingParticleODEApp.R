@@ -27,9 +27,9 @@ rate <- eusolver@ode@rate
 while (ball@state[1] > 0) {
     eusolver <- step(eusolver)
     ball <- eusolver@ode
-    cat(sprintf("%12f %12f ",  ball@state[1], ball@rate[1] ))
-    cat(sprintf("%12f %12f ",  ball@state[2], ball@rate[2] ))
-    cat(sprintf("%12f %12f\n", ball@state[3], ball@rate[3] ))
+    # cat(sprintf("%12f %12f ",  ball@state[1], ball@rate[1] ))
+    # cat(sprintf("%12f %12f ",  ball@state[2], ball@rate[2] ))
+    # cat(sprintf("%12f %12f\n", ball@state[3], ball@rate[3] ))
     expect_false(all(eusolver@ode@state == c(10, 0, 0)))  # step makes the original state vector to change
 }
 
