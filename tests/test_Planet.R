@@ -1,6 +1,6 @@
 library(testthat)
 
-source("./R/ode_generics_planet.R")
+source("./R/ode_generics.R")
 source("./R/Planet.R")
 
 # x =  1, AU or Astronomical Units. Length of semimajor axis or the orbit of the Earth around the Sun.
