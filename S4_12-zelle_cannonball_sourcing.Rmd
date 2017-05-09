@@ -13,6 +13,6 @@ interval <-  0.25
 cball <- Projectile(angle = 45, velocity = 50, height = 0)
 while (getY(cball) >= 0) {
     cball <- update(cball, interval)    
-    cat(getX(cball), getY(cball), "\n")
+    cat(sprintf("%12f %12f \n", getX(cball), getY(cball)))
 }
 ```
