@@ -7,7 +7,7 @@ setGeneric("setState", function(object, x, vx, y, vy, ...) standardGeneric("setS
 setGeneric("init", function(object, ...) standardGeneric("init"))
 
 
-# setStepSize uses  two step parameters: stepSize and dt
+# setStepSize uses either of two step parameters: stepSize and dt
 # stepSize works for most of the applications
 # dt is used in Pendulum
 setGeneric("setStepSize", function(object, stepSize, dt, ...) 
