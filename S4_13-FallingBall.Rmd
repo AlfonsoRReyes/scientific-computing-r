@@ -3,6 +3,7 @@ title: "FallingBall class"
 output: html_notebook
 ---
 
+Original class taken from Zelle's book on Python.
 
 ```{r}
 setClass("FallingBall", slots = c(
