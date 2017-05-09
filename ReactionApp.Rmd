@@ -3,6 +3,8 @@ title: "ReactionApp"
 output: html_notebook
 ---
 
+
+
 ```{r}
 # ReactionApp solves an autocatalytic oscillating chemical 
 # reaction (Brusselator model) using
@@ -25,6 +27,7 @@ while (solver@ode@state[3] < 100) {
         solver@ode@state[3]))
     solver <- step(solver)    
 }
+# at t=100, dt=0.1,  c(2.131958,     1.105316,   100.000000)
 
 ```
 
