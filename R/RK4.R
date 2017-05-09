@@ -79,7 +79,6 @@ setMethod("step", "RK4", function(object, ...) {
             (object@rate1[i] + 2 * object@rate2[i] + 2 * object@rate3[i] +
             object@rate4[i]) / 6.0 
     }
-    
     object                          # use this object to reassign in R
 }) 
 
