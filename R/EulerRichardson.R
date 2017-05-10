@@ -1,4 +1,4 @@
-source("./R/ODESolver.R")
+source("./R/AbstractODESolver.R")
 
 # * An Euler-Richardson (midpoint) method ODE solver.
 # *
@@ -17,7 +17,7 @@ source("./R/ODESolver.R")
 setClass("EulerRichardson", slots = c(
   midstate = "numeric"                              # this is the midpoint slot
 ),
-    contains = c("ODESolver") 
+    contains = c("AbstractODESolver") 
 )
 
 setMethod("initialize", "EulerRichardson", function(.Object, ode, ...) {
