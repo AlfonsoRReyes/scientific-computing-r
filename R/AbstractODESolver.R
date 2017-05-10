@@ -1,33 +1,34 @@
 # AbstractODESolver.R
 #
 source("./R/ODE.R")
+source("./R/ODESolver.R")
 
 
-setClass("ODESolver", slots = c(
+setClass("AbstractODESolver", slots = c(
     stepSize = "numeric",
     numEqn   = "numeric",
     ode      = "ODE"
 ), prototype = prototype(
     stepSize = 0.1,
     numEqn = 0
-)
+), contains = c("ODESolver")
 )
 
-setMethod("initialize", "ODESolver", function(.Object, .ode, ...) {
+setMethod("initialize", "AbstractODESolver", function(.Object, .ode, ...) {
     .Object <- init(.Object, 0.1)                                 
     return(.Object)
 })
 
-setMethod("step", "ODESolver", function(object, ...) {
+setMethod("step", "AbstractODESolver", function(object, ...) {
     # object
 })
 
-setMethod("setStepSize", "ODESolver", function(object, stepSize, ...) {
+setMethod("setStepSize", "AbstractODESolver", function(object, stepSize, ...) {
     object@stepSize = stepSize
     object
 })
 
-setMethod("init", "ODESolver", function(object, stepSize, ...) {
+setMethod("init", "AbstractODESolver", function(object, stepSize, ...) {
     object@stepSize <- stepSize
     state <- getState(object@ode)
     if (is.null(state)) {
@@ -38,14 +39,14 @@ setMethod("init", "ODESolver", function(object, stepSize, ...) {
     object
 })
 
-setMethod("getStepSize", "ODESolver", function(object, ...) {
+setMethod("getStepSize", "AbstractODESolver", function(object, ...) {
     return(object@stepSize)
 })
 
 
 # constructor
-ODESolver <- function(.ode) {
-    odesolver <- new("ODESolver", .ode)
+AbstractODESolver <- function(.ode) {
+    odesolver <- new("AbstractODESolver", .ode)
     odesolver@ode <- .ode
     odesolver
 }
