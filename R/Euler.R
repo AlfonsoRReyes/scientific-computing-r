@@ -1,4 +1,4 @@
-source("./R/ODESolver.R")
+source("./R/AbstractODESolver.R")
 
 # /**
 # * Euler implements an Euler method ODE solver.
@@ -12,7 +12,7 @@ source("./R/ODESolver.R")
 # */
 
 setClass("Euler", 
-    contains = c("ODESolver") 
+    contains = c("AbstractODESolver") 
 )
 
 setMethod("initialize", "Euler", function(.Object, ode, ...) {
