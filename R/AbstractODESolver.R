@@ -14,6 +14,7 @@ setClass("AbstractODESolver", slots = c(
 ), contains = c("ODESolver")
 )
 
+
 setMethod("initialize", "AbstractODESolver", function(.Object, .ode, ...) {
     .Object <- init(.Object, 0.1)                                 
     return(.Object)
