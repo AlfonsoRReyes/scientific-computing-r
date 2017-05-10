@@ -1,8 +1,7 @@
 library(testthat)
 
-source("./R/ode_generics.R")
-source("./R/ODE.R")
-source("./R/AbstractODESolver.R")
+# source("./R/ODE.R")
+# source("./R/AbstractODESolver.R")
 
 
 

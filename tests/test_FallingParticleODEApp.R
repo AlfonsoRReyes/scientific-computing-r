@@ -1,9 +1,9 @@
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++  + + unit tests
 library(testthat)
 
-source("./R/ode_generics.R")
-source("./R/FallingParticleODE.R")
-source("./R/Euler.R")
+# source("./R/ode_generics.R")
+# source("./R/FallingParticleODE.R")
+# source("./R/Euler.R")
 
 initial_y <- 10
 initial_v <- 0

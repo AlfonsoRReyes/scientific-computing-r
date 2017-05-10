@@ -1,7 +1,8 @@
 library(testthat)
 
-source("./R/ode_generics.R")
-source("./R/ODESolver.R")
+# source("./R/ode_generics.R")
+# source("./R/ODESolver.R")
+# source("./R/ODE.R")
 
 
 
@@ -28,7 +29,7 @@ test_that("ODESolver has methods implemented", {
 
 
 test_that("a subclass of ODESolver works", {
-    source("./R/ODE.R")
+
     
     # build a class out of ODESolver
     setClass("AbstractSolver", slots = c(

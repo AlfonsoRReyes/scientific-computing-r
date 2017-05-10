@@ -5,9 +5,9 @@
 #########################
 library(testthat)
 
-source("./R/ode_generics.R")
-source("./R/ODE.R")
-source("./R/RK4.R")
+# source("./R/ode_generics.R")
+# source("./R/ODE.R")
+# source("./R/RK4.R")
 
 state <- c(0, 1, 3)
 rate  <- c(0, 0, 0)

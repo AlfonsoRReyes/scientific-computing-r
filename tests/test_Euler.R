@@ -1,7 +1,7 @@
 library(testthat)
 
-source("./R/ode_generics.R")
-source("./R/Euler.R")
+# source("./R/ode_generics.R")
+# source("./R/Euler.R")
 
 
 ode <- new("ODE")

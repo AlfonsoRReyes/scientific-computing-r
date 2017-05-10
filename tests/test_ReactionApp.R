@@ -2,9 +2,9 @@
 
 library(testthat)
 
-source("./R/ode_generics.R")
-source("./R/Reaction.R")
-source("./R/RK4.R")
+# source("./R/ode_generics.R")
+# source("./R/Reaction.R")
+# source("./R/RK4.R")
 
 X <- 1; Y <- 5;
 dt <- 0.1
