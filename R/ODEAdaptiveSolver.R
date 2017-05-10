@@ -7,6 +7,11 @@ setClass("ODEAdaptiveSolver", slots = c(
     DID_NOT_CONVERGE = "numeric",
     BISECTION_EVENT_NOT_FOUND = "numeric"
     ), 
+    prototype = prototype(
+        NO_ERROR = 0,
+        DID_NOT_CONVERGE = 1,
+        BISECTION_EVENT_NOT_FOUND = 2
+    ),
     contains = c("ODESolver")
 )
 
