@@ -4,10 +4,8 @@ source("./R/ODE.R")
 source("./R/EulerRichardson.R")
 
 
-setGeneric("setState", function(object, theta, thetaDot, ...) 
-    standardGeneric("setState"))
-# setGeneric("setStepSize", function(object, dt, ...)
-#     standardGeneric("setStepSize"))
+# setGeneric("setState", function(object, theta, thetaDot, ...)
+#     standardGeneric("setState"))
 
 
 setClass("Pendulum", slots = c(
@@ -42,7 +40,7 @@ setMethod("step", "Pendulum", function(object) {
     object
 })
 
-setMethod("setState", "Pendulum", function(object, theta, thetaDot) {
+setMethod("setState", "Pendulum", function(object, theta = theta, thetaDot = thetaDot, ...) {
     object@state[1] <- theta     # angle
     object@state[2] <- thetaDot  # derivative of angle
     #                              state[3] is time
