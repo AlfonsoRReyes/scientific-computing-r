@@ -3,7 +3,9 @@ setGeneric("getState", function(object, ...) standardGeneric("getState"))
 setGeneric("step", function(object, ...) standardGeneric("step"))
 setGeneric("getStepSize", function(object, ...) standardGeneric("getStepSize"))
 setGeneric("doStep", function(object, ...) standardGeneric("doStep"))
-setGeneric("setState", function(object, x, vx, y, vy, ...) standardGeneric("setState"))
+# setGeneric("setState", function(object, x, vx, y, vy, ...) standardGeneric("setState"))
+# setGeneric("setState", function(object, theta, thetaDot, ...) standardGeneric("setState"))
+
 setGeneric("init", function(object, ...) standardGeneric("init"))
 
 
@@ -14,7 +16,18 @@ setGeneric("setStepSize", function(object, stepSize, dt, ...)
     standardGeneric("setStepSize"),
     signature = c("object", "stepSize", "dt"))
 
+# setState
+setGeneric("setState", function(object, x, vx, y, vy, theta, thetaDot, ...) 
+    standardGeneric("setState"),
+    signature = c("object", "x", "vx", "y", "vy", "theta", "thetaDot"))
+
 # setGeneric("setStepSize", function(object, stepSize, ...) standardGeneric("setStepSize"))
 
 setGeneric("getExactSolution", function(object, t, ...) 
     standardGeneric("getExactSolution"))
+
+
+
+setGeneric("setTolerance", function(object, tol, ...) standardGeneric("setTolerance"))
+setGeneric("getTolerance", function(object, ...) standardGeneric("getTolerance"))
+setGeneric("getErrorCode", function(object, tol, ...) standardGeneric("getErrorCode"))
