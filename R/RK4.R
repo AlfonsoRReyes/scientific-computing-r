@@ -6,7 +6,7 @@
 #' 
 ###############
 
-source("./R/ODESolver.R")
+source("./R/AbstractODESolver.R")
 
 
 setClass("RK4", slots = c(
@@ -16,7 +16,7 @@ setClass("RK4", slots = c(
   rate4 = "numeric",       
   estimated_state = "numeric"                           
 ),
-    contains = c("ODESolver") 
+    contains = c("AbstractODESolver") 
 )
 
 setMethod("initialize", "RK4", function(.Object, ode, ...) {
