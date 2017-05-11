@@ -13,7 +13,6 @@ setMethod("initialize", "RK45", function(.Object, ode, ...) {
 
 
 
-
 # constructor ODE solver using Euler method
 RK45 <- function(.ode) {
     # Euler constructor
