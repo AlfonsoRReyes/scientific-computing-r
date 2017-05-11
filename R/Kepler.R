@@ -32,8 +32,7 @@ setMethod("getRate", "Kepler", function(object, state, rate, ...) {
     object@rate[4] <- (- object@GM * state[3]) / r4
     object@rate[5] <- 1   # time derivative
     
-    object@state <- object@odeSolver@ode@state <- state
-    object@odeSolver@ode@rate <- object@rate
+    object@state <- state
     object@rate  
     
 })
