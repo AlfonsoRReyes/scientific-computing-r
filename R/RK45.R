@@ -14,9 +14,8 @@ setMethod("initialize", "RK45", function(.Object, ode, ...) {
 
 
 # constructor ODE solver using Euler method
-RK45 <- function(.ode) {
-    # rk45 <- new("RK45", .ode)     
-    rk45 <- DormandPrince45(.ode)
+RK45 <- function(ode) {
+    rk45 <- DormandPrince45(ode)             # equivalent to Java "super(ode)"
     return(rk45)
 }
 
