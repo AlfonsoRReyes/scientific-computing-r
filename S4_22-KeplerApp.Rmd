@@ -3,6 +3,8 @@ title: "KeplerApp"
 output: html_notebook
 ---
 
+## Lessons learned
+* A call to generic functions in other classes causes errors when a call is made to a major class.
 
 
 ```{r}
@@ -19,11 +21,13 @@ dt <- 0.1
 planet <- Kepler(r, v)
 solver <- RK45(planet)
 
-while (TRUE) {
-    solver <- step(solver)
-    cat(sprintf("%12f %12f %12f \n", solver@ode@state[1], 
-                solver@ode@state[2], solver@ode@state[3]))
-}
+# solver <- step(solver)
+
+# while (TRUE) {
+#     solver <- step(solver)
+#     # cat(sprintf("%12f %12f %12f \n", solver@ode@state[1], 
+#     #             solver@ode@state[2], solver@ode@state[3]))
+# }
 
 # 
 # while (solver@ode@state[3] < 100) {
