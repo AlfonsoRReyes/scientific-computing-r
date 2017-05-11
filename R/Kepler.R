@@ -4,44 +4,33 @@ source("./R/ODE.R")
 
 
 setClass("Kepler", slots = c(
-    odeSolver = "Euler",
     GM = "numeric"
     ), 
     contains = c("ODE")
 )
 
 setMethod("initialize", "Kepler", function(.Object, ...) {
-    .Object@GM <- 4 * pi * pi
-    .Object@state <- vector("numeric", 5)
-    .Object@odeSolver <- Euler(.Object)
+    .Object@GM <- 1.0                 # gravitation constant times combined mass
+    .Object@state <- vector("numeric", 5)  # x, vx, y, vy, t
     return(.Object)
 })
 
 
-setMethod("init", "Kepler", function(object, initState, ...) {
-    object@state <- object@odeSolver@ode@state <- initState
-    # callNextMethod(object@odeSolver, getStepSize(object@odeSolver))       
-    # initialize providing the step size
-    object@odeSolver <- init(object@odeSolver, getStepSize(object@odeSolver))
-    # object@odeSolver <- callNextMethod(object, object@odeSolver@stepSize)   
-    # object@odeSolver <- callNextMethod(object@odeSolver, getStepSize(object@odeSolver))  
-    
-    object@rate <- object@odeSolver@ode@rate
-    object@state <- object@odeSolver@ode@state
-    
-    object
-    
+setMethod("getState", "Kepler", function(object, ...) {
+    # Gets the state variables.
+    return(object@state)
 })
 
+
 setMethod("getRate", "Kepler", function(object, state, rate, ...) {
-    # Gets the rate of change using the argument's state variables.
-    r2 <- state[1] * state[1] + state[3] * state[3]
-    r3 <- r2 * sqrt(r2)
+    # Computes the rate using the given state.
+    r3 <- state[1] * state[1] + state[3] * state[3]  # distance squared
+    r4 <- r3 * sqrt(r3)   # distance cubed
     object@rate[1] <- state[2]
-    object@rate[2] <- (- object@GM * state[1]) / r3
+    object@rate[2] <- (- object@GM * state[1]) / r4
     object@rate[3] <- state[4]
-    object@rate[4] <- (- object@GM * state[3]) / r3
-    object@rate[5] <- 1
+    object@rate[4] <- (- object@GM * state[3]) / r4
+    object@rate[5] <- 1   # time derivative
     
     object@state <- object@odeSolver@ode@state <- state
     object@odeSolver@ode@rate <- object@rate
@@ -49,12 +38,15 @@ setMethod("getRate", "Kepler", function(object, state, rate, ...) {
     
 })
 
-setMethod("getState", "Kepler", function(object, ...) {
-    # Gets the state variables.
-    return(object@state)
-})
+
 
 # constructor
-Kepler <- function() {
-    new("Kepler")
+Kepler <- function(r, v) {
+    kepler <- new("Kepler")
+    kepler@state[1] = r[1]
+    kepler@state[2] = v[1]
+    kepler@state[3] = r[2]
+    kepler@state[4] = v[2]
+    kepler@state[5] = 0
+    return(kepler)
 }
