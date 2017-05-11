@@ -48,55 +48,64 @@ setMethod("init", "DormandPrince45", function(object, stepSize, ...) {
     if (is.null(state)) return()
     if (object@numEqn != length(state)) {
         object@numEqn <- length(state)
-        object@temp_state <- vector("numeric", numEqn)
-        object@k <- matrix(nrow= object@numStages,ncol =  object@numEqn)
+        object@temp_state <- vector("numeric", object@numEqn)
+        object@k <- matrix(data = 0, nrow = object@numStages,ncol =  object@numEqn)
     }
     object
 })
 
 
-setMethod("step", "DormandPrince45", function(object) {
+setMethod("step", "DormandPrince45", function(object, ...) {
     object@error_code <- object@NO_ERROR
     iterations <- 10
-    currentStep <- object@stepSize <- error <- 0
+    currentStep <- object@stepSize
+    error <- 0
     state <- getState(object@ode)
-    rate <- getRate(object@ode, state, object@k[0])
+    object@ode@rate <- getRate(object@ode, state, object@k[0])
     repeat  {
+        iteration <- iterations - 1
         currentStep <- object@stepSize
         # compute the k's
         for (s in 2:object@numStages) {
-            for (i in 1:numEqn) {
+            for (i in 1:object@numEqn) {
                 object@temp_state[i] <- state[i]
                 for (j in 1:s) {
                     object@temp_state[i] <- object@temp_state[i] + object@stepSize *
-                        object@a[s-1][j] * k[j][i]
+                        object@a[s-1][j] * object@k[j][i]
                 }
             }
-            rate <- getRate(object@ode, object@temp_state, k[s])
+            object@ode@rate <- getRate(object@ode, object@temp_state, object@k[s])
         }
         # compute the error
-        error <-  0
-        for (i in 1:numEqn) {
+        print(object@numEqn)
+        print(object@numStages)
+        error <- 0
+        for (i in 1:object@numEqn) {
             object@truncErr <- 0
             for (s in 1:object@numStages) {
                 object@truncErr <- object@truncErr + object@stepSize * object@er[s] *
-                    k[s][i]
+                    object@k[s][i]
+                # print(object@stepSize)
+                # print(object@er[s])
+                # print(object@k[s][i])
             }
             error <- max(error, abs(object@truncErr))
         }
-        if (error <= 1.4E-45) {   # error to small
-            error <- tol / 1.0e5 # increase step size x10
-        }
-        # find h step for the next try
-        if (error > tol) {
-            fac <- 0.9 * (error/tol)^-0.25
-            object@stepSize <- object@stepSize * max(fac, 0.1)
-        } else if (error < tol / 10.0) {
-            fac <- 0.9 * (error/tol)^-0.2
-            if (fac > 1)
-                object@stepSize <- object@stepSize * max(fac, 10)
+        # error to small
+        print(error)
+        if (error < 1.4e-45) {
+            error <- object@tol / 1.0e5 # increase step size x10
         }
         
+        # find h step for the next try
+        if (error > object@tol) {                            # shrink, no more than x10
+            fac <- 0.9 * (error / object@tol)^-0.25
+            object@stepSize <- object@stepSize * max(fac, 0.1)
+        } else if (error < object@tol / 10.0) {   # grow, but no more than factor of 10
+            fac <- 0.9 * (error / object@tol)^-0.2
+            if (fac > 1) # sometimes fac is <1 because error/tol is close to one
+                object@stepSize <- object@stepSize * min(fac, 10)
+        }
         if (error > object@tol && iterations > 0) break
     }   # end repeat loop   
     # advance the state
