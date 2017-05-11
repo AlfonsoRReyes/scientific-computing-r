@@ -5,7 +5,6 @@ source("./R/ODE.R")
 source("./R/DormandPrince45.R")
 
 DormandPrince45 <- function(ode) {
-    
     new("DormandPrince45", ode)
 }
 
@@ -43,9 +42,12 @@ expect_equal(dprince45@er,
              c(-11.0/360.0, 0.0, 10.0/63.0, -55.0/72.0, 27.0/40.0, -11.0/280.0)
 )
 
-dprince45@ode@state <- c(0, 1, 2, 3, 4)
+state <- c(2.00, 0.00, 0.00, 0.25, 0.00)
+dt <- 0.01
+dprince45@ode@state <- state
 
-dprince45 <- init(dprince45, 0.123)
+
+dprince45 <- init(dprince45, dt)
 
 cat(dprince45@stepSize)
 cat(dprince45@numEqn)
@@ -53,4 +55,5 @@ print(dprince45@temp_state)
 print(dprince45@k)
 
 
-dprince45 <- step(dprince45)
+dprince45 <- step(dprince45)     # giving error
+#  Error in if (error < 1.4e-45) { : missing value where TRUE/FALSE needed
