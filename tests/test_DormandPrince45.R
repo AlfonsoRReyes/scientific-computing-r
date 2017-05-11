@@ -1,5 +1,6 @@
 library(testthat)
 
+source("./R/ode_generics.R")
 source("./R/ODE.R")
 source("./R/DormandPrince45.R")
 
@@ -42,8 +43,14 @@ expect_equal(dprince45@er,
              c(-11.0/360.0, 0.0, 10.0/63.0, -55.0/72.0, 27.0/40.0, -11.0/280.0)
 )
 
+dprince45@ode@state <- c(0, 1, 2, 3, 4)
+
 dprince45 <- init(dprince45, 0.123)
+
 cat(dprince45@stepSize)
 cat(dprince45@numEqn)
 print(dprince45@temp_state)
 print(dprince45@k)
+
+
+dprince45 <- step(dprince45)
