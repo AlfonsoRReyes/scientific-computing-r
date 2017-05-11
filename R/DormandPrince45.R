@@ -1,5 +1,5 @@
 source("./R/ODEAdaptiveSolver.R")
-source("./R/ODE.R")
+# source("./R/ODE.R")
 
 setClass("DormandPrince45", slots = c(
     error_code = "numeric",
@@ -49,7 +49,7 @@ setMethod("init", "DormandPrince45", function(object, stepSize, ...) {
     if (object@numEqn != length(state)) {
         object@numEqn <- length(state)
         object@temp_state <- vector("numeric", object@numEqn)
-        object@k <- matrix(data = 0, nrow = object@numStages,ncol =  object@numEqn)
+        object@k <- matrix(data = 0, nrow = object@numStages, ncol =  object@numEqn)
     }
     object
 })
@@ -129,4 +129,5 @@ setMethod("step", "DormandPrince45", function(object, ...) {
 DormandPrince45 <- function(ode) {
     dormandPrince45 <- new("DormandPrince45", ode)
     dormandPrince45 <- init(dormandPrince45, dormandPrince45@stepSize)
+    return(dormandPrince45)
 }
