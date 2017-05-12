@@ -1,10 +1,8 @@
 
 source("./R/ODE.R")
-source("./R/RK4.R")
 
 setClass("ODETest", slots = c(
-    n     = "numeric",           # counts the number of getRate evaluations
-    odeSolver = "RK4"
+    n     = "numeric"           # counts the number of getRate evaluations
     ),
     contains = c("ODE")
     )
@@ -32,8 +30,8 @@ setMethod("getRate", "ODETest", function(object, state, rate) {
     
     object@n <- object@n + 1
     
-    object@state <- object@odeSolver@ode@state <- state
-    object@rate  <- object@odeSolver@ode@rate  <- rate
+    object@state <- state
+    object@rate  <- rate
     
     object@rate     
 })
@@ -41,6 +39,6 @@ setMethod("getRate", "ODETest", function(object, state, rate) {
 
 # constructor
 
-ODETest <- function() {
-    new("ODETest")
-}
+# ODETest <- function() {
+#     new("ODETest")
+# }
