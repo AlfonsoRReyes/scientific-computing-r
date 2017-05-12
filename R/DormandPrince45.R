@@ -65,9 +65,10 @@ setMethod("step", "DormandPrince45", function(object, ...) {
     iterations <- 10
     currentStep <- object@stepSize
     error <- 0
-    object@ode@state <- state <- getState(object@ode)
     
+    object@ode@state <- state <- getState(object@ode)
     object@ode@rate <- getRate(object@ode, state, object@k[1,])
+    
     # NEW iteration
     repeat  {
         cat("NEW iteration \n")
