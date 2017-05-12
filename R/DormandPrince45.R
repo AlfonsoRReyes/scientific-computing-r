@@ -66,9 +66,12 @@ setMethod("step", "DormandPrince45", function(object, ...) {
     currentStep <- object@stepSize
     error <- 0
     object@ode@state <- state <- getState(object@ode)
-    cat("state:", state, "\n")
-    object@ode@rate <- getRate(object@ode, state, object@k[1])
+    
+    object@ode@rate <- getRate(object@ode, state, object@k[1,])
+    # NEW iteration
     repeat  {
+        cat("NEW iteration \n")
+        cat("state:", state, "\n")
         iterations <- iterations - 1
         currentStep <- object@stepSize
         # compute the k's
@@ -91,7 +94,8 @@ setMethod("step", "DormandPrince45", function(object, ...) {
             cat(sprintf("k[%d]=", s))
             cat(object@k[s,])
             cat("\t", length(object@k[s,]), "\n")
-            object@ode@rate <- getRate(object@ode, object@temp_state, object@k[s])
+            object@ode@rate <- getRate(object@ode, object@temp_state, object@k[s,])
+            state <- getState(object@ode)
         }
         cat("\n cum=", cum, "\n")
         # compute the error
