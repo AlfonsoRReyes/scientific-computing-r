@@ -27,7 +27,7 @@ setMethod("initialize", "Pendulum", function(.Object) {
 
 setMethod("setStepSize", "Pendulum", function(object, dt, ...) {
     # use explicit parameter declaration
-    # setStepSize generic has two step parameters: stepSize and dt
+    # setStepSize generic may use two different step parameters: stepSize and dt
     object@odeSolver <- setStepSize(object@odeSolver, dt)
     object
 })
