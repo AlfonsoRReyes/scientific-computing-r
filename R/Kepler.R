@@ -24,12 +24,12 @@ setMethod("getState", "Kepler", function(object, ...) {
 
 setMethod("getRate", "Kepler", function(object, state, rate, ...) {
     # Computes the rate using the given state.
-    r3 <- state[1] * state[1] + state[3] * state[3]  # distance squared
-    r4 <- r3 * sqrt(r3)   # distance cubed
+    r2 <- state[1] * state[1] + state[3] * state[3]  # distance squared
+    r3 <- r2 * sqrt(r2)   # distance cubed
     object@rate[1] <- state[2]
-    object@rate[2] <- (- object@GM * state[1]) / r4
+    object@rate[2] <- (- object@GM * state[1]) / r3
     object@rate[3] <- state[4]
-    object@rate[4] <- (- object@GM * state[3]) / r4
+    object@rate[4] <- (- object@GM * state[3]) / r3
     object@rate[5] <- 1   # time derivative
     
     object@state <- state
