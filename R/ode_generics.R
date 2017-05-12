@@ -25,12 +25,13 @@ setGeneric("setStepSize", function(object, stepSize, dt, ...)
 
 
 
+#' New setState that should work with different methods
+#'  "theta", "thetaDot":  used in PendulumApp
+#'  "x", "vx", "y", "vy": used in ProjectileApp
+setGeneric("setState", function(object, ...) standardGeneric("setState"))
 
-# setGeneric("setStepSize", function(object, stepSize, ...) standardGeneric("setStepSize"))
 
-setGeneric("getExactSolution", function(object, t, ...) 
-    standardGeneric("getExactSolution"))
-
+setGeneric("getExactSolution", function(object, t, ...) standardGeneric("getExactSolution"))
 
 
 setGeneric("setTolerance", function(object, tol, ...) standardGeneric("setTolerance"))
