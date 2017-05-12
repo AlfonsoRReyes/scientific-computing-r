@@ -16,10 +16,15 @@ setGeneric("setStepSize", function(object, stepSize, dt, ...)
     standardGeneric("setStepSize"),
     signature = c("object", "stepSize", "dt"))
 
+
+
 # setState
-setGeneric("setState", function(object, x, vx, y, vy, theta, thetaDot, ...) 
-    standardGeneric("setState"),
-    signature = c("object", "x", "vx", "y", "vy", "theta", "thetaDot"))
+# setGeneric("setState", function(object, x, vx, y, vy, theta, thetaDot, ...) 
+#     standardGeneric("setState"),
+#     signature = c("object", "x", "vx", "y", "vy", "theta", "thetaDot"))
+
+
+
 
 # setGeneric("setStepSize", function(object, stepSize, ...) standardGeneric("setStepSize"))
 
