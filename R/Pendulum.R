@@ -25,7 +25,7 @@ setMethod("initialize", "Pendulum", function(.Object) {
     return(.Object)
 })
 
-setMethod("setStepSize", "Pendulum", function(object, dt, ...) {
+setMethod("setStepSize", signature("Pendulum"), function(object, dt, ...) {
     # use explicit parameter declaration
     # setStepSize generic may use two different step parameters: stepSize and dt
     object@odeSolver <- setStepSize(object@odeSolver, dt)
@@ -40,7 +40,7 @@ setMethod("step", "Pendulum", function(object) {
     object
 })
 
-setMethod("setState", "Pendulum", function(object, theta = theta, thetaDot = thetaDot, ...) {
+setMethod("setState", signature("Pendulum"), function(object, theta, thetaDot, ...) {
     object@state[1] <- theta     # angle
     object@state[2] <- thetaDot  # derivative of angle
     #                              state[3] is time

@@ -43,7 +43,7 @@ setMethod("step", "Projectile", function(object) {
     object
 })
 
-setMethod("setState", "Projectile", function(object, x, vx, y, vy, ...) {
+setMethod("setState", signature("Projectile"), function(object, x, vx, y, vy, ...) {
     object@state[1] <- x
     object@state[2] <- vx
     object@state[3] <- y
