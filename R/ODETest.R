@@ -1,3 +1,4 @@
+#' ODETest.R
 
 source("./R/ODE.R")
 
@@ -8,23 +9,24 @@ setClass("ODETest", slots = c(
     )
 
 
-setMethod("initialize", "ODETest", function(.Object) {
+setMethod("initialize", "ODETest", function(.Object, ...) {
+    .Object@n <-  0
     .Object@state <- c(5.0, 0.0)
     return(.Object)
 })
 
 
-setMethod("getExactSolution", "ODETest", function(object, t) {              
+setMethod("getExactSolution", "ODETest", function(object, t, ...) {              
     return(5.0 * exp(-t))
 })
 
 
-setMethod("getState", "ODETest", function(object) {                
+setMethod("getState", "ODETest", function(object, ...) {                
     object@state
 })
 
 
-setMethod("getRate", "ODETest", function(object, state, rate) {    
+setMethod("getRate", "ODETest", function(object, state, rate, ...) {    
     rate[1] <- - state[1]     
     rate[2] <-  1            # rate of change of time, dt/dt
     
