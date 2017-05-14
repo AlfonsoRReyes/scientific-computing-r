@@ -4,6 +4,8 @@ source("./R/ode_generics.R")
 source("./R/ODE.R")
 source("./R/DormandPrince45.R")
 
+cat("\014")
+
 DormandPrince45 <- function(ode) {
     new("DormandPrince45", ode)
 }
@@ -51,9 +53,14 @@ dprince45 <- init(dprince45, dt)
 
 cat(dprince45@stepSize)
 cat(dprince45@numEqn)
+cat(dprince45@numStages)
 print(dprince45@temp_state)
 print(dprince45@k)
 
 
-dprince45 <- step(dprince45)     # giving error
+# dprince45 <- step(dprince45)     # giving error
 #  Error in if (error < 1.4e-45) { : missing value where TRUE/FALSE needed
+
+while (TRUE) {
+    dprince45 <- step(dprince45)
+}
