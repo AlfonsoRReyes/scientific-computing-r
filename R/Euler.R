@@ -30,7 +30,7 @@ setMethod("init", "Euler", function(object, stepSize, ...) {
 })
 
 
-setMethod("step", "Euler", function(object, ...) {
+setMethod("step", signature(object = "Euler"), function(object, ...) {
     # step through the differential equation
     state <- getState(object@ode)                         # get the state
     rate  <- getRate(object@ode, state, object@ode@rate)  # get the rate             
