@@ -10,19 +10,9 @@ setGeneric("init", function(object, ...) standardGeneric("init"))
 
 
 # setStepSize uses either of two step parameters: stepSize and dt
-# stepSize works for most of the applications
-# dt is used in Pendulum
-setGeneric("setStepSize", function(object, stepSize, dt, ...) 
-    standardGeneric("setStepSize"),
-    signature = c("object", "stepSize", "dt"))
-
-
-
-# setState
-# setGeneric("setState", function(object, x, vx, y, vy, theta, thetaDot, ...) 
-#     standardGeneric("setState"),
-#     signature = c("object", "x", "vx", "y", "vy", "theta", "thetaDot"))
-
+# `stepSize`` works for most of the applications
+# `dt`` is used in Pendulum
+setGeneric("setStepSize", function(object, ...) standardGeneric("setStepSize"))
 
 
 #' New setState that should work with different methods
@@ -37,3 +27,20 @@ setGeneric("getExactSolution", function(object, t, ...) standardGeneric("getExac
 setGeneric("setTolerance", function(object, tol, ...) standardGeneric("setTolerance"))
 setGeneric("getTolerance", function(object, ...) standardGeneric("getTolerance"))
 setGeneric("getErrorCode", function(object, tol, ...) standardGeneric("getErrorCode"))
+
+
+
+
+
+
+
+# setState
+# setGeneric("setState", function(object, x, vx, y, vy, theta, thetaDot, ...) 
+#     standardGeneric("setState"),
+#     signature = c("object", "x", "vx", "y", "vy", "theta", "thetaDot"))
+
+
+
+# setGeneric("setStepSize", function(object, stepSize, dt, ...) 
+#     standardGeneric("setStepSize"),
+#     signature = c("object", "stepSize", "dt"))
