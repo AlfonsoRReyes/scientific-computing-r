@@ -1,3 +1,8 @@
+#' KeplerApp.R
+#' 
+#' Demostration of the use of ODE solver RK45
+#' 
+#' 
 source("./R/ode_generics.R")
 source("./R/Kepler.R")
 source("./R/RK45.R")
@@ -10,7 +15,7 @@ dt <- 0.1
 planet <- Kepler(r, v)
 solver <- RK45(planet)
 
-while (planet@state[5] <= 10) {
+while (planet@state[5] <= 10) {                              # stop at t = 10
     solver <- step(solver)
     planet <- solver@ode
     cat(sprintf("state[1]=%12f, state[2]= %12f,  state[3]=%12f, state[5]=%12f\n", 
