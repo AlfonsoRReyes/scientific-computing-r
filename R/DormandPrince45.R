@@ -84,25 +84,21 @@ setMethod("step", "DormandPrince45", function(object, ...) {
         currentStep <- object@stepSize
         # compute the k's
         cum <- 0
-        # for (s in 1:(object@numStages-1)) {
         for (s in 2:object@numStages) {
             for (i in 1:object@numEqn) {
                 object@temp_state[i] <- state[i]
                 for (j in 1:(s-1)) {
                 # for (j in 1:(s)) {
                     object@temp_state[i] <- object@temp_state[i] + object@stepSize * object@a[s-1, j] * object@k[j, i]
-                    # object@temp_state[i] <- object@temp_state[i] + object@stepSize * object@a[s, j] * object@k[j, i]
                     
                     # cat(s-1, j-1, "\t"); cat(object@a[s-1, j], "\n")
                     cat(sprintf("[%d][%d] tempState=%12f, stepSize=%12f, a=%12f, k=%12f \n", s-1, j-1, object@temp_state[i], object@stepSize, object@a[s-1, j], object@k[j, i]))
-                    # cat(sprintf("[%d][%d] tempState=%8f, stepSize=%8f, a=%10f, k=%10f \n", s, j-1, object@temp_state[i], object@stepSize, object@a[s, j], object@k[j, i]))
                     
                     cum <- cum + 1
                 }
             }
             # print k array
             cat(sprintf("k[%d]=", s-1))
-            # cat(sprintf("k[%d]=", s))
             cat(object@k[s,], "\n")
             
             object@ode <- getRate(object@ode, object@temp_state, object@k[s,])
@@ -137,9 +133,7 @@ setMethod("step", "DormandPrince45", function(object, ...) {
         } else if (error < object@tol / 10.0) {   # grow, but no more than factor of 10
             fac <- 0.9 * (error / object@tol)^-0.2
             if (fac > 1) { # sometimes fac is <1 because error/tol is close to one
-                # warning("fac > 1")
                 object@stepSize <- object@stepSize * min(fac, 10)
-                # cat("object@stepSize=", object@stepSize, "\n")
             }
         }
         cat(sprintf("error=%10f, tol=%10f, iterations=%d \n", error, object@tol, iterations))
