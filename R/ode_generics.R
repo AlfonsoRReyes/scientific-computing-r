@@ -28,6 +28,9 @@ setGeneric("setTolerance", function(object, tol, ...) standardGeneric("setTolera
 setGeneric("getTolerance", function(object, ...) standardGeneric("getTolerance"))
 setGeneric("getErrorCode", function(object, tol, ...) standardGeneric("getErrorCode"))
 
+setGeneric("enableRuntimeExceptions", function(object, enable, ...) 
+    standardGeneric("enableRuntimeExceptions"))
+
 
 
 
