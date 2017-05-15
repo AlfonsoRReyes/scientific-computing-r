@@ -131,7 +131,7 @@ setMethod("step", "DormandPrince45", function(object, ...) {
         }
         
         # find h step for the next try
-        if (error > object@tol) {                            # shrink, no more than x10
+        if (error > object@tol) {                     # shrink, no more than x10
             fac <- 0.9 * (error / object@tol)^-0.25
             object@stepSize <- object@stepSize * max(fac, 0.1)
         } else if (error < object@tol / 10.0) {   # grow, but no more than factor of 10
@@ -150,8 +150,7 @@ setMethod("step", "DormandPrince45", function(object, ...) {
     # advance the state
     for (i in 1:object@numEqn) {
         for (s in 1:object@numStages) {
-            state[i] <- state[i] + currentStep * object@b5[s] * 
-                object@k[s, i]
+            state[i] <- state[i] + currentStep * object@b5[s] * object@k[s, i]
         }
     }
     if (iterations == 0) {
