@@ -10,18 +10,15 @@ ode_solver <- setStepSize(ode_solver, 1)
 ode_solver <- setTolerance(ode_solver, 1e-8)
 
 time <-  0
-state <- getState(ode)
-state
-ode_solver@ode@state <- state
-ode_solver@numStages
-ode_solver@numEqn
-ode_solver@tol
-ode_solver@stepSize
+
 
 while (time < 50) {
-    time <- time + 1
     ode_solver <- step(ode_solver)
+    stepSize <-  ode_solver@stepSize
+    time <- time + stepSize
+    # ode <- ode_solver@ode
     state <- getState(ode_solver@ode)
-    xStrl <- "xl" + state[1]
-    cat("time=", time, xStrl, "\n")
+    cat("time=", time, "\t xl=", state[1], "\t error=", 
+        (state[1] - getExactSolution(ode_solver@ode, time)), ode_solver@ode@n, "\n")
 }
+cat("rate evaluated #", ode@n, ode_solver@ode@n)
