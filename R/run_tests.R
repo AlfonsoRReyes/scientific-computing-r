@@ -33,9 +33,11 @@ source("./R/ODETest.R")
 # test_file("./tests/test_ODESolver.R", reporter = "summary")
 # test_file("./tests/test_RK4.R", reporter = "summary")
 
-test_file("./tests/test_RK45.R", reporter = "summary")
+# test_file("./tests/test_RK45.R", reporter = "summary")
 
 # test_file("./tests/test_KeplerApp.R", reporter = "summary")
+
+test_file("./tests/test_DormandPrince45.R", reporter = "summary")
 
 # test_dir("./tests", reporter = "summary")
 
