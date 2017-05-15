@@ -26,21 +26,16 @@ solver <- RK45(planet)
 while (planet@state[5] <= 10) {
     solver <- step(solver)
     planet <- solver@ode
-    # cat(sprintf("%12f %12f %12f \n", solver@ode@state[1],
-    #             solver@ode@state[2], solver@ode@state[3]))
     cat(sprintf("state[1]=%12f, state[2]= %12f,  state[3]=%12f, state[5]=%12f\n", 
                 planet@state[1],
                 planet@state[2], planet@state[3], planet@state[5]))
 }
 
-# 
-# while (solver@ode@state[3] < 100) {
-#         cat(sprintf("%12f %12f %12f \n", solver@ode@state[1], 
-#         solver@ode@state[2], 
-#         solver@ode@state[3]))
-#     solver <- step(solver)    
-# }
 # at t=100, dt=0.1,  c(2.131958,     1.105316,   100.000000)
+# Java: state[0] = 0.444912, state[1]= -1.436203, state[2]= 0.459081, state[4]= 10.033245
+#       currentStep=    0.061646
+# R:    state[1] = 0.444912, state[2]= -1.436203, state[3]= 0.459081, state[5]= 10.033245 
+#       currentStep= 0.06164632
 
 ```
 
