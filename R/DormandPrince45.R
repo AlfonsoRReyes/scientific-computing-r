@@ -63,8 +63,6 @@ setMethod("init", "DormandPrince45", function(object, stepSize, ...) {
 
 
 setMethod("step", "DormandPrince45", function(object, ...) {
-    cat("Top first step ---------- \n")
-    print(object@k); cat("\n")
     object@error_code <- object@NO_ERROR
     iterations <- 10
     currentStep <- object@stepSize
@@ -72,14 +70,10 @@ setMethod("step", "DormandPrince45", function(object, ...) {
     
     state <- getState(object@ode)
     object@ode  <- getRate(object@ode, state, object@k[1,])
-    # state <- object@ode@state
     object@k[1,] <- object@ode@rate       # in Java rate is passed by param
     
     # NEW iteration
     repeat  {
-        cat("NEW iteration \n")
-        cat("state:", state, "\n")
-        print(object@k); cat("\n")
         iterations <- iterations - 1
         currentStep <- object@stepSize
         # compute the k's
@@ -88,24 +82,15 @@ setMethod("step", "DormandPrince45", function(object, ...) {
             for (i in 1:object@numEqn) {
                 object@temp_state[i] <- state[i]
                 for (j in 1:(s-1)) {
-                # for (j in 1:(s)) {
                     object@temp_state[i] <- object@temp_state[i] + object@stepSize * object@a[s-1, j] * object@k[j, i]
-                    
-                    # cat(s-1, j-1, "\t"); cat(object@a[s-1, j], "\n")
-                    cat(sprintf("[%d][%d] tempState=%12f, stepSize=%12f, a=%12f, k=%12f \n", s-1, j-1, object@temp_state[i], object@stepSize, object@a[s-1, j], object@k[j, i]))
-                    
                     cum <- cum + 1
                 }
             }
             # print k array
-            cat(sprintf("k[%d]=", s-1))
-            cat(object@k[s,], "\n")
-            
             object@ode <- getRate(object@ode, object@temp_state, object@k[s,])
             object@k[s,] <- object@ode@rate     # in Java rate is passed by param
             
         } # end for "s"
-        cat("\n cum=", cum, "\n")
         
         # compute the error
         
@@ -114,13 +99,11 @@ setMethod("step", "DormandPrince45", function(object, ...) {
             object@truncErr <- 0
             for (s in 1:object@numStages) {
                 object@truncErr <- object@truncErr + object@stepSize * object@er[s] * object@k[s, i]
-                cat(sprintf("[%d][%d] error = %12f truncError=%12f, er=%12f, k=%12f \n", i, s, error, object@truncErr, object@er[s], object@k[s, i]))
             }
             error <- max(error, abs(object@truncErr))
             
         }
         
-        cat(sprintf("[after trunc] error = %12f \n", error))
         
         if (error <= 1.4e-45) {   # error too small to be meaningful,
             error <- object@tol / 1.0e5 # increase step size x10
@@ -136,7 +119,6 @@ setMethod("step", "DormandPrince45", function(object, ...) {
                 object@stepSize <- object@stepSize * min(fac, 10)
             }
         }
-        cat(sprintf("error=%10f, tol=%10f, iterations=%d \n", error, object@tol, iterations))
         if (!((error > object@tol) && (iterations > 0))) break
         
     }   # end repeat loop  
@@ -154,7 +136,6 @@ setMethod("step", "DormandPrince45", function(object, ...) {
         }
     }
     object@ode@state <- state
-    cat("currentStep=", currentStep, "\n")
     return(object)
 }
 )
