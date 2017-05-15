@@ -9,6 +9,8 @@ source("./R/ODE.R")
 # source("./R/Euler.R")
 source("./R/RK4.R")
 
+# setGeneric("setState", function(object, x, vx, y, vy, ...) standardGeneric("setState"))
+
 setClass("Projectile", slots = c(
     g = "numeric",
     odeSolver = "RK4"
@@ -41,7 +43,7 @@ setMethod("step", "Projectile", function(object) {
     object
 })
 
-setMethod("setState", "Projectile", function(object, x, vx, y, vy) {
+setMethod("setState", signature("Projectile"), function(object, x, vx, y, vy, ...) {
     object@state[1] <- x
     object@state[2] <- vx
     object@state[3] <- y
@@ -66,7 +68,8 @@ setMethod("getRate", "Projectile", function(object, state, rate) {
     
     object@state <- object@odeSolver@ode@state <- state
     object@rate  <- object@odeSolver@ode@rate  <- rate
-    object@rate                                                       
+    # object@rate     
+    invisible(object)
 })
 
 

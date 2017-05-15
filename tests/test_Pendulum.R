@@ -2,9 +2,13 @@
 # ############################################################  Test Pendulum
 library(testthat)
 
-source("./R/ode_generics.R")
-source("./R/EulerRichardson.R")
-source("./R/Pendulum.R")                   # this script uses Euler-Richardson
+# source("./R/ode_generics.R")
+# source("./R/ODE.R")
+# source("./R/EulerRichardson.R")
+# source("./R/Pendulum.R")                   # this script uses Euler-Richardson
+
+# setGeneric("setState", function(object, theta, thetaDot, ...)
+#     standardGeneric("setState"))
 
 ode <- new("ODE")
 pendulum <- Pendulum()
@@ -15,7 +19,7 @@ thetaDot <- 0
 
 pendulum@state[3] <- 0      # set time to zero, t = 0
 
-pendulum <- setState(pendulum, theta, thetaDot)
+pendulum <- setState(pendulum, theta = theta, thetaDot = thetaDot)
 stepSize <- dt
 pendulum <- setStepSize(pendulum, dt = stepSize)
 
@@ -49,7 +53,7 @@ expect_true(length(ode@rate)  == 0)
 
 rate <- c(0, 0, 0)
 rate <- vector("numeric")
-expect_equal(getRate(pendulum@odeSolver@ode, state, rate),
+expect_equal(getRate(pendulum@odeSolver@ode, state, rate)@rate,
              c(0, -0.596008, 1))
 
 expect_equal(getStepSize(pendulum@odeSolver), dt)

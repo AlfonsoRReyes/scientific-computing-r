@@ -1,4 +1,4 @@
-source("./R/ODESolver.R")
+source("./R/AbstractODESolver.R")
 
 # * An Euler-Richardson (midpoint) method ODE solver.
 # *
@@ -17,7 +17,7 @@ source("./R/ODESolver.R")
 setClass("EulerRichardson", slots = c(
   midstate = "numeric"                              # this is the midpoint slot
 ),
-    contains = c("ODESolver") 
+    contains = c("AbstractODESolver") 
 )
 
 setMethod("initialize", "EulerRichardson", function(.Object, ode, ...) {
@@ -40,7 +40,9 @@ setMethod("init", "EulerRichardson", function(object, stepSize, ...) {
 setMethod("step", "EulerRichardson", function(object, ...) {
     # step through the diffrential equation
     state <- getState(object@ode)                         # get the state vector
-    rate  <- getRate(object@ode, state, object@ode@rate)  # get the rate vector
+    # rate  <- getRate(object@ode, state, object@ode@rate)  # get the rate vector
+    object@ode <- getRate(object@ode, state, object@ode@rate)  # get the rate vector
+    rate <- object@ode@rate
     
     dt2 <- object@stepSize / 2                            # divide stepSize
     
@@ -49,7 +51,9 @@ setMethod("step", "EulerRichardson", function(object, ...) {
         object@midstate[i] <- state[i] + rate[i] * dt2
     }
     
-    rate  <- getRate(object@ode, object@midstate, rate) # rate based on midpoint
+    # rate  <- getRate(object@ode, object@midstate, rate) # rate based on midpoint
+    object@ode <- getRate(object@ode, object@midstate, rate) # rate based on midpoint
+    rate <- object@ode@rate
     
     for (i in 1:object@numEqn) {
         state[i] <- state[i] + object@stepSize * rate[i] # calc new state

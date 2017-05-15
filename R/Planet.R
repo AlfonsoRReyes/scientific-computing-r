@@ -22,7 +22,7 @@ setMethod("doStep", "Planet", function(object, ...) {
     # object@odeSolver <- setStepSize(object@odeSolver, stepSize)
     object@state <- object@odeSolver@ode@state
     object@rate  <- object@odeSolver@ode@rate
-    object
+    invisible(object)
 })
 
 setMethod("init", "Planet", function(object, initState, ...) {
@@ -52,13 +52,14 @@ setMethod("getRate", "Planet", function(object, state, rate, ...) {
     
     object@state <- object@odeSolver@ode@state <- state
     object@odeSolver@ode@rate <- object@rate
-    object@rate  
+    # object@rate 
+    invisible(object)
     
 })
 
 setMethod("getState", "Planet", function(object, ...) {
     # Gets the state variables.
-    return(object@state)
+    invisible(object@state)
 })
 
 # constructor

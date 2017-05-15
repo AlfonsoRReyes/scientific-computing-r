@@ -2,9 +2,9 @@
 
 library(testthat)
 
-source("./R/ode_generics.R")
-source("./R/Reaction.R")
-source("./R/RK4.R")
+# source("./R/ode_generics.R")
+# source("./R/Reaction.R")
+# source("./R/RK4.R")
 
 X <- 1; Y <- 5;
 dt <- 0.1
@@ -28,7 +28,6 @@ solver <- step(solver)
 # solver@ode@rate
 # solver@ode@
 test_that("get these values after one step", {
-    cat("rate:", solver@ode@rate)
     expect_equal(solver@ode@state, c(1.342695, 4.641994, 0.1), tolerance = 0.000001)
     expect_equal(solver@estimated_state, c(1.345462, 4.638375, 0.100000), tolerance = 0.000001)
     expect_equal(solver@numEqn, 3)

@@ -6,7 +6,7 @@
 #' 
 ###############
 
-source("./R/ODESolver.R")
+source("./R/AbstractODESolver.R")
 
 
 setClass("RK4", slots = c(
@@ -16,7 +16,7 @@ setClass("RK4", slots = c(
   rate4 = "numeric",       
   estimated_state = "numeric"                           
 ),
-    contains = c("ODESolver") 
+    contains = c("AbstractODESolver") 
 )
 
 setMethod("initialize", "RK4", function(.Object, ode, ...) {
@@ -54,25 +54,27 @@ setMethod("step", "RK4", function(object, ...) {
     }
     
     # get the rate at the initial state
-    object@rate1 <- getRate(object@ode, state, object@rate1)  
+    # object@rate1 <- getRate(object@ode, state, object@rate1)
+    object@rate1 <- getRate(object@ode, state, object@rate1)@rate  
     for (i in 1:object@numEqn) {
         object@estimated_state[i] <- state[i] + object@stepSize * object@rate1[i] / 2 
     }
     
     # get the rate at the estimated state above
-    object@rate2 <- getRate(object@ode, object@estimated_state, object@rate2)  
+    object@rate2 <- getRate(object@ode, object@estimated_state, object@rate2)@rate
+    
     for (i in 1:object@numEqn) {
         object@estimated_state[i] <- state[i] + object@stepSize * object@rate2[i] / 2 
     }
     
     # get the rate at the estimated state above
-    object@rate3 <- getRate(object@ode, object@estimated_state, object@rate3) 
+    object@rate3 <- getRate(object@ode, object@estimated_state, object@rate3)@rate 
     for (i in 1:object@numEqn) {
         object@estimated_state[i] <- state[i] + object@stepSize * object@rate3[i]
     }
     
     # get the rate at the estimated state above
-    object@rate4 <- getRate(object@ode, object@estimated_state, object@rate4) 
+    object@rate4 <- getRate(object@ode, object@estimated_state, object@rate4)@rate 
     for (i in 1:object@numEqn) {
         # update the state before leaving
         object@ode@state[i] <- state[i] + object@stepSize * 

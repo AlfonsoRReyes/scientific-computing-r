@@ -5,11 +5,6 @@ source("./R/ODE.R")
 source("./R/RK4.R")
 
 
-setGeneric("setState", function(object, theta, thetaDot, ...) 
-    standardGeneric("setState"))
-# setGeneric("setStepSize", function(object, dt, ...)
-#     standardGeneric("setStepSize"))
-
 
 setClass("Pendulum", slots = c(
     omega0Squared = "numeric",

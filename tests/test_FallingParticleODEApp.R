@@ -1,9 +1,9 @@
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++  + + unit tests
 library(testthat)
 
-source("./R/ode_generics.R")
-source("./R/FallingParticleODE.R")
-source("./R/Euler.R")
+# source("./R/ode_generics.R")
+# source("./R/FallingParticleODE.R")
+# source("./R/Euler.R")
 
 initial_y <- 10
 initial_v <- 0
@@ -45,3 +45,4 @@ test_that("match this vector at the end of run with dt = 0.1", {
                -14.700000,  -9.800000,     
                1.500000,     1.000000))
 })    
+
