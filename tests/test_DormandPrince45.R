@@ -1,10 +1,9 @@
 library(testthat)
 
-source("./R/ode_generics.R")
-source("./R/ODE.R")
-source("./R/DormandPrince45.R")
+# source("./R/ode_generics.R")
+# source("./R/ODE.R")
+# source("./R/DormandPrince45.R")
 
-# cat("\014")
 
 test_that("ODE solver core is OK", {
     DormandPrince45 <- function(ode) {
@@ -63,30 +62,18 @@ test_that("ODE solver core is OK", {
     dt <- 0.01
     state <- c(2.00, 0.00, 0.00, 0.25, 0.00)
     solver@ode@state <- state
+    
     solver <- init(solver, dt)
+    
     # test after setting the state
     expect_equal(getState(solver@ode),  c(2.00, 0.00, 0.00, 0.25, 0.00))
     expect_s4_class(getRate(solver@ode), "ODE")     # returns an object
     expect_equal(getStepSize(solver), 0.01)
     
+    expect_equal(getStepSize(solver), 0.01)
+    expect_equal(getTolerance(solver), 1e-6)
+    expect_equal(getErrorCode(solver), solver@NO_ERROR)
+    expect_equal(solver@DID_NOT_CONVERGE, 1)
+    expect_equal(solver@BISECTION_EVENT_NOT_FOUND, 2)
+    
 # })
-
-# state <- c(2.00, 0.00, 0.00, 0.25, 0.00)
-
-# solver@ode@state <- state
-
-
-
-# print(solver)
-# 
-# cat(solver@stepSize)
-# cat(solver@numEqn)
-# cat(solver@numStages)
-# print(solver@temp_state)
-# print(solver@k)
-# 
-# 
-# 
-# while (TRUE) {
-#     solver <- step(solver)
-# }
