@@ -32,20 +32,17 @@ setMethod("initialize", "DormandPrince45", function(.Object, ode, ...) {
     .Object@b5 <- c(19.0/216.0, 0.0, 1000.0/2079.0, -125.0/216.0, 81.0/88.0, 5.0/56.0)
     .Object@er <- c(-11.0/360.0, 0.0, 10.0/63.0, -55.0/72.0, 27.0/40.0, -11.0/280.0)
     .Object@numStages <- 6    # number of intermediate rate computations
-    .Object@stepSize <- 0.01
-    .Object@numEqn <- 0
-    .Object@ode <- ode                          # set the ode to ODESolver slot
-    .Object@tol <- 1.0e-6
+    .Object@stepSize  <- 0.01
+    .Object@numEqn    <- 0
+    .Object@ode       <- ode                    # set the ode to ODESolver slot
+    .Object@tol       <- 1.0e-6
     .Object@enableExceptions <- FALSE
-    
-    # .Object@ode@rate <- vector("numeric")       # create vector for the rate
     return(.Object)
 })
 
 
 setMethod("init", "DormandPrince45", function(object, stepSize, ...) {
     # inititalize the solver
-    # object <- callNextMethod(object, stepSize)        # call superclass init
     object@stepSize <- stepSize
     state <- getState(object@ode)
     if (is.null(state)) {
@@ -63,90 +60,59 @@ setMethod("init", "DormandPrince45", function(object, stepSize, ...) {
 
 
 setMethod("step", "DormandPrince45", function(object, ...) {
-    cat("Top first step ---------- \n")
-    print(object@k); cat("\n")
     object@error_code <- object@NO_ERROR
-    iterations <- 10
-    currentStep <- object@stepSize
-    error <- 0
-    
-    state <- getState(object@ode)
-    object@ode  <- getRate(object@ode, state, object@k[1,])
-    # state <- object@ode@state
-    object@k[1,] <- object@ode@rate       # in Java rate is passed by param
-    
+    iterations        <- 10
+    currentStep       <- object@stepSize
+    error             <- 0
+    state             <- getState(object@ode)
+    object@ode        <- getRate(object@ode, state, object@k[1,])
+    object@k[1,]      <- object@ode@rate      # in Java, rate is passed by param
     # NEW iteration
     repeat  {
-        cat("NEW iteration \n")
-        cat("state:", state, "\n")
-        print(object@k); cat("\n")
-        iterations <- iterations - 1
+        iterations  <- iterations - 1
         currentStep <- object@stepSize
         # compute the k's
         cum <- 0
-        # for (s in 1:(object@numStages-1)) {
         for (s in 2:object@numStages) {
             for (i in 1:object@numEqn) {
                 object@temp_state[i] <- state[i]
                 for (j in 1:(s-1)) {
-                # for (j in 1:(s)) {
-                    object@temp_state[i] <- object@temp_state[i] + object@stepSize * object@a[s-1, j] * object@k[j, i]
-                    # object@temp_state[i] <- object@temp_state[i] + object@stepSize * object@a[s, j] * object@k[j, i]
-                    
-                    # cat(s-1, j-1, "\t"); cat(object@a[s-1, j], "\n")
-                    cat(sprintf("[%d][%d] tempState=%12f, stepSize=%12f, a=%12f, k=%12f \n", s-1, j-1, object@temp_state[i], object@stepSize, object@a[s-1, j], object@k[j, i]))
-                    # cat(sprintf("[%d][%d] tempState=%8f, stepSize=%8f, a=%10f, k=%10f \n", s, j-1, object@temp_state[i], object@stepSize, object@a[s, j], object@k[j, i]))
-                    
-                    cum <- cum + 1
+                    object@temp_state[i] <- object@temp_state[i] + 
+                        object@stepSize * object@a[s-1, j] * object@k[j, i]
+                    cum <- cum + 1    # dummy cum to test how many iterations
                 }
             }
             # print k array
-            cat(sprintf("k[%d]=", s-1))
-            # cat(sprintf("k[%d]=", s))
-            cat(object@k[s,], "\n")
-            
+            # get the ODE object, state and rate
             object@ode <- getRate(object@ode, object@temp_state, object@k[s,])
-            object@k[s,] <- object@ode@rate     # in Java rate is passed by param
-            
-        } # end for "s"
-        cat("\n cum=", cum, "\n")
-        
+            # assign rate to k vector
+            object@k[s,] <- object@ode@rate    # in Java rate is passed by param
+        } # end for loop "s"
         # compute the error
-        
         error <- 0
         for (i in 1:object@numEqn) {
             object@truncErr <- 0
             for (s in 1:object@numStages) {
-                object@truncErr <- object@truncErr + object@stepSize * object@er[s] * object@k[s, i]
-                cat(sprintf("[%d][%d] error = %12f truncError=%12f, er=%12f, k=%12f \n", i, s, error, object@truncErr, object@er[s], object@k[s, i]))
+                object@truncErr <- object@truncErr + 
+                    object@stepSize * object@er[s] * object@k[s, i]
             }
             error <- max(error, abs(object@truncErr))
-            
         }
-        
-        cat(sprintf("[after trunc] error = %12f \n", error))
-        
-        if (error <= 1.4e-45) {   # error too small to be meaningful,
-            error <- object@tol / 1.0e5 # increase step size x10
+        if (error <= 1.4e-45) {          # error too small to be meaningful,
+            error <- object@tol / 1.0e5  # increase step size x10
         }
-        
-        # find h step for the next try
+        # find h step for the next try. Update stepSize
         if (error > object@tol) {                     # shrink, no more than x10
             fac <- 0.9 * (error / object@tol)^-0.25
             object@stepSize <- object@stepSize * max(fac, 0.1)
-        } else if (error < object@tol / 10.0) {   # grow, but no more than factor of 10
+        } else if (error < object@tol / 10.0) {   # grow, but no more than x10
             fac <- 0.9 * (error / object@tol)^-0.2
-            if (fac > 1) { # sometimes fac is <1 because error/tol is close to one
-                # warning("fac > 1")
+            if (fac > 1) { # sometimes fac is <1 because error/tol is close to 1
                 object@stepSize <- object@stepSize * min(fac, 10)
-                # cat("object@stepSize=", object@stepSize, "\n")
             }
         }
-        cat(sprintf("error=%10f, tol=%10f, iterations=%d \n", error, object@tol, iterations))
         if (!((error > object@tol) && (iterations > 0))) break
-        
     }   # end repeat loop  
-    
     # advance the state
     for (i in 1:object@numEqn) {
         for (s in 1:object@numStages) {
@@ -160,7 +126,6 @@ setMethod("step", "DormandPrince45", function(object, ...) {
         }
     }
     object@ode@state <- state
-    cat("currentStep=", currentStep, "\n")
     return(object)
 }
 )
