@@ -136,7 +136,6 @@ setMethod("step", "DormandPrince45", function(object, ...) {
             fac <- 0.9 * (error / object@tol)^-0.25
             object@stepSize <- object@stepSize * max(fac, 0.1)
         } else if (error < object@tol / 10.0) {   # grow, but no more than factor of 10
-            warning("inside else if")
             fac <- 0.9 * (error / object@tol)^-0.2
             if (fac > 1) { # sometimes fac is <1 because error/tol is close to one
                 # warning("fac > 1")
