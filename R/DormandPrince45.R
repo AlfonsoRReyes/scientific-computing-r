@@ -1,5 +1,5 @@
 source("./R/ODEAdaptiveSolver.R")
-# source("./R/ODE.R")
+source("./R/ODE.R")
 
 setClass("DormandPrince45", slots = c(
     error_code       = "numeric",
@@ -19,6 +19,7 @@ setClass("DormandPrince45", slots = c(
     contains = c("ODEAdaptiveSolver")
     )
 
+
 setMethod("initialize", "DormandPrince45", function(.Object, ode, ...) {
     # initialized the Euler ODE solver
     .Object@error_code <- .Object@NO_ERROR
@@ -30,12 +31,12 @@ setMethod("initialize", "DormandPrince45", function(.Object, ode, ...) {
     
     .Object@b5 <- c(19.0/216.0, 0.0, 1000.0/2079.0, -125.0/216.0, 81.0/88.0, 5.0/56.0)
     .Object@er <- c(-11.0/360.0, 0.0, 10.0/63.0, -55.0/72.0, 27.0/40.0, -11.0/280.0)
-    .Object@numStages <- 6
+    .Object@numStages <- 6    # number of intermediate rate computations
     .Object@stepSize <- 0.01
     .Object@numEqn <- 0
-    .Object@tol <- 1.0E-6
-    .Object@enableExceptions <- FALSE
     .Object@ode <- ode                          # set the ode to ODESolver slot
+    .Object@tol <- 1.0e-6
+    .Object@enableExceptions <- FALSE
     
     # .Object@ode@rate <- vector("numeric")       # create vector for the rate
     return(.Object)
@@ -44,6 +45,7 @@ setMethod("initialize", "DormandPrince45", function(.Object, ode, ...) {
 
 setMethod("init", "DormandPrince45", function(object, stepSize, ...) {
     # inititalize the solver
+    # object <- callNextMethod(object, stepSize)        # call superclass init
     object@stepSize <- stepSize
     state <- getState(object@ode)
     if (is.null(state)) {
@@ -55,24 +57,29 @@ setMethod("init", "DormandPrince45", function(object, stepSize, ...) {
         object@temp_state <- vector("numeric", object@numEqn)
         object@k <- matrix(data = 0, nrow = object@numStages, ncol =  object@numEqn)
     }
+    object@ode@state <- state
     object
 })
 
 
 setMethod("step", "DormandPrince45", function(object, ...) {
+    cat("Top first step ---------- \n")
     print(object@k); cat("\n")
     object@error_code <- object@NO_ERROR
     iterations <- 10
     currentStep <- object@stepSize
     error <- 0
     
-    object@ode@state <- state <- getState(object@ode)
-    object@ode@rate <- getRate(object@ode, state, object@k[1,])
+    state <- getState(object@ode)
+    object@ode  <- getRate(object@ode, state, object@k[1,])
+    # state <- object@ode@state
+    object@k[1,] <- object@ode@rate       # in Java rate is passed by param
     
     # NEW iteration
     repeat  {
         cat("NEW iteration \n")
         cat("state:", state, "\n")
+        print(object@k); cat("\n")
         iterations <- iterations - 1
         currentStep <- object@stepSize
         # compute the k's
@@ -82,34 +89,44 @@ setMethod("step", "DormandPrince45", function(object, ...) {
             for (i in 1:object@numEqn) {
                 object@temp_state[i] <- state[i]
                 for (j in 1:(s-1)) {
-                    object@temp_state[i] <- object@temp_state[i] + object@stepSize *
-                        object@a[s-1, j] * object@k[j, i]
+                # for (j in 1:(s)) {
+                    object@temp_state[i] <- object@temp_state[i] + object@stepSize * object@a[s-1, j] * object@k[j, i]
+                    # object@temp_state[i] <- object@temp_state[i] + object@stepSize * object@a[s, j] * object@k[j, i]
                     
-                    cat(s, j, "\t")
-                    cat(object@a[s-1, j], "\n")
+                    # cat(s-1, j-1, "\t"); cat(object@a[s-1, j], "\n")
+                    cat(sprintf("[%d][%d] tempState=%12f, stepSize=%12f, a=%12f, k=%12f \n", s-1, j-1, object@temp_state[i], object@stepSize, object@a[s-1, j], object@k[j, i]))
+                    # cat(sprintf("[%d][%d] tempState=%8f, stepSize=%8f, a=%10f, k=%10f \n", s, j-1, object@temp_state[i], object@stepSize, object@a[s, j], object@k[j, i]))
                     
                     cum <- cum + 1
                 }
             }
-            # print k
-            cat(sprintf("k[%d]=", s))
-            cat(object@k[s,])
-            cat("\t", length(object@k[s,]), "\n")
-            object@ode@rate <- getRate(object@ode, object@temp_state, object@k[s,])
-            state <- getState(object@ode)
-        }
+            # print k array
+            cat(sprintf("k[%d]=", s-1))
+            # cat(sprintf("k[%d]=", s))
+            cat(object@k[s,], "\n")
+            
+            object@ode <- getRate(object@ode, object@temp_state, object@k[s,])
+            object@k[s,] <- object@ode@rate     # in Java rate is passed by param
+            # state <- object@ode@state
+            
+        } # end for "s"
         cat("\n cum=", cum, "\n")
+        
         # compute the error
+        
         error <- 0
         for (i in 1:object@numEqn) {
             object@truncErr <- 0
             for (s in 1:object@numStages) {
-                object@truncErr <- object@truncErr + object@stepSize * object@er[s] *
-                    object@k[s, i]
+                object@truncErr <- object@truncErr + object@stepSize * object@er[s] * object@k[s, i]
+                cat(sprintf("[%d][%d] error = %12f truncError=%12f, er=%12f, k=%12f \n", i, s, error, object@truncErr, object@er[s], object@k[s, i]))
             }
             error <- max(error, abs(object@truncErr))
+            
         }
-        # print(error)
+        
+        cat(sprintf("[after trunc] error = %12f \n", error))
+        
         if (error <= 1.4e-45) {   # error too small to be meaningful,
             error <- object@tol / 1.0e5 # increase step size x10
         }
@@ -119,7 +136,7 @@ setMethod("step", "DormandPrince45", function(object, ...) {
             fac <- 0.9 * (error / object@tol)^-0.25
             object@stepSize <- object@stepSize * max(fac, 0.1)
         } else if (error < object@tol / 10.0) {   # grow, but no more than factor of 10
-            # warning("inside else if")
+            warning("inside else if")
             fac <- 0.9 * (error / object@tol)^-0.2
             if (fac > 1) { # sometimes fac is <1 because error/tol is close to one
                 # warning("fac > 1")
@@ -128,9 +145,10 @@ setMethod("step", "DormandPrince45", function(object, ...) {
             }
         }
         cat(sprintf("error=%10f, tol=%10f, iterations=%d \n", error, object@tol, iterations))
-        if ((error > object@tol) && (iterations > 0)) break
+        if (!((error > object@tol) && (iterations > 0))) break
         
-    }   # end repeat loop   
+    }   # end repeat loop  
+    
     # advance the state
     for (i in 1:object@numEqn) {
         for (s in 1:object@numStages) {
@@ -144,13 +162,52 @@ setMethod("step", "DormandPrince45", function(object, ...) {
             warning("DormandPrince45 ODE SOlver did not converge")
         }
     }
-    return(currentStep)
+    object@stepSize <- currentStep
+    object@ode@state <- state
+    # return(currentStep)
+    cat("currentStep=", currentStep, "\n")
+    return(object)
 }
 )
 
+setMethod("enableRuntimeExceptions", "DormandPrince45", function(object, enable) {
+    object@enableExceptions <- enable
+})
 
-DormandPrince45 <- function(ode) {
-    dormandPrince45 <- new("DormandPrince45", ode)
+setMethod("setStepSize", "DormandPrince45", function(object, stepSize, ...) {
+    object@stepSize <- stepSize
+    object
+})
+
+setMethod("getStepSize", "DormandPrince45", function(object, ...) {
+    return(object@stepSize)
+})
+
+setMethod("setTolerance", "DormandPrince45", function(object, tol) {
+    object@tol <- abs(tol)
+    if (object@tol < 1.0E-12) {
+        err_msg = "Error: Dormand-Prince ODE solver tolerance cannot be smaller than 1.0e-12." # $NON-NLS-1$
+        if (object@enableExceptions) {
+            stop(err_msg)
+        }
+        cat(err_msg, "\n")
+        object@tol <- 1.0e-12
+    }
+    return(object)
+})
+
+setMethod("getTolerance", "DormandPrince45", function(object) {
+    return(object@tol)
+})
+
+
+setMethod("getErrorCode", "DormandPrince45", function(object) {
+    return(object@error_code)
+})
+
+
+DormandPrince45 <- function(.ode) {
+    dormandPrince45 <- new("DormandPrince45", .ode)
     dormandPrince45 <- init(dormandPrince45, dormandPrince45@stepSize)
     return(dormandPrince45)
 }
