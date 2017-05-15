@@ -107,7 +107,6 @@ setMethod("step", "DormandPrince45", function(object, ...) {
             
             object@ode <- getRate(object@ode, object@temp_state, object@k[s,])
             object@k[s,] <- object@ode@rate     # in Java rate is passed by param
-            # state <- object@ode@state
             
         } # end for "s"
         cat("\n cum=", cum, "\n")
