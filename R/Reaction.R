@@ -47,7 +47,8 @@ setMethod("getRate", "Reaction", function(object, state, rate) {
     
     object@state <- object@odeSolver@ode@state <- state
     object@rate  <- object@odeSolver@ode@rate  <- rate
-    object@rate                                                # time derivative
+    # object@rate                                                # time derivative
+    invisible(object)
 })
 
 

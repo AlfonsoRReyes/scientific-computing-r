@@ -53,7 +53,7 @@ expect_true(length(ode@rate)  == 0)
 
 rate <- c(0, 0, 0)
 rate <- vector("numeric")
-expect_equal(getRate(pendulum@odeSolver@ode, state, rate),
+expect_equal(getRate(pendulum@odeSolver@ode, state, rate)@rate,
              c(0, -0.596008, 1))
 
 expect_equal(getStepSize(pendulum@odeSolver), dt)

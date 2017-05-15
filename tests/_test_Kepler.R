@@ -1,8 +1,8 @@
 library(testthat)
 
-# source("./R/ode_generics.R")
-# source("./R/Kepler.R")
-# source("./R/RK45.R")
+source("./R/ode_generics.R")
+source("./R/Kepler.R")
+source("./R/RK45.R")
 
 # source("./R/DormandPrince45.R")
 
@@ -27,7 +27,7 @@ expect_equal(planet@GM, 1)
 expect_equal(getState(planet), c(2.00, 0.00, 0.00, 0.25, 0.00))
 state <- c(2.00, 0.00, 0.00, 0.25, 0.00)
 rate <- vector("numeric", length(state)) # make a vector for rate
-expect_equal(getRate(planet, state, rate), c(0.00, -0.25,  0.25,  0.00,  1.00))
+expect_equal(getRate(planet, state, rate)@rate, c(0.00, -0.25,  0.25,  0.00,  1.00))
 
 # print(planet)
     test_that("rate is uninitialized even after calling getRate()", {

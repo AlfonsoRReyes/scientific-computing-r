@@ -42,7 +42,7 @@ expect_equal(eulerRichardson@numEqn, 3)               # number of equations
 
 expect_true(!is.null(step(eulerRichardson)))    # step returns a value not NULL
 expect_true(length(ode@rate)  == 0)                     # rate still empty
-expect_equal(getRate(eulerRichardson@ode), c(0, 0, 0))  # rate has a vector
+expect_equal(getRate(eulerRichardson@ode)@rate, c(0, 0, 0))  # rate has a vector
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ test step()
 #                                rate is zero until we run setState and getRate

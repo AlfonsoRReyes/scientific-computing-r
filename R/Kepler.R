@@ -33,7 +33,8 @@ setMethod("getRate", "Kepler", function(object, state, rate, ...) {
     object@rate[5] <- 1   # time derivative
     
     object@state <- state
-    object@rate  
+    # object@rate  
+    invisible(object)
     
 })
 
