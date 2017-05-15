@@ -17,14 +17,11 @@ setClass("ODEAdaptiveSolver", slots = c(
 
 
 setMethod("setTolerance", "ODEAdaptiveSolver", function(object, tol) {
-    
 })
 
 
 setMethod("getTolerance", "ODEAdaptiveSolver", function(object) {
-    
 })
 
 setMethod("getErrorCode", "ODEAdaptiveSolver", function(object) {
-    
 })
