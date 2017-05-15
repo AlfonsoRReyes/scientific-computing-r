@@ -1,0 +1,137 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+http://stackoverflow.com/a/38052208/5270873
+
+
+```{r}
+
+library(microbenchmark)
+
+create.1<-function(elems)
+{
+  return(as.data.table(elems))
+}
+
+append.1<-function(dt, elems)
+{ 
+  return(rbindlist(list(dt,  elems),use.names = TRUE))
+}
+
+access.1<-function(dt)
+{
+  return(dt)
+}
+
+
+create.2<-function(elems)
+{
+  return(as.data.table(elems))
+}
+
+append.2<-function(dt, elems)
+{
+  n<-attr(dt, 'rowcount')
+  if (is.null(n))
+    n<-nrow(dt)
+  if (n==nrow(dt))
+  {
+    tmp<-elems[1]
+    tmp[[1]]<-rep(NA,n)
+    dt<-rbindlist(list(dt, tmp), fill=TRUE, use.names=TRUE)
+    setattr(dt,'rowcount', n)
+  }
+  pos<-as.integer(match(names(elems), colnames(dt)))
+  for (j in seq_along(pos))
+  {
+    set(dt, i=as.integer(n+1), pos[[j]], elems[[j]])
+  }
+  setattr(dt,'rowcount',n+1)
+  return(dt)
+}
+
+access.2<-function(elems)
+{
+  n<-attr(elems, 'rowcount')
+  return(as.data.table(elems[1:n,]))
+}
+
+
+create.3<-function(elems)
+{
+  con <- RSQLite::dbConnect(RSQLite::SQLite(), ":memory:")
+  RSQLite::dbWriteTable(con, 't', as.data.frame(elems))
+  return(con)
+}
+
+append.3<-function(con, elems)
+{ 
+  RSQLite::dbWriteTable(con, 't', as.data.frame(elems), append=TRUE)
+  return(con)
+}
+
+access.3<-function(con)
+{
+  return(RSQLite::dbReadTable(con, "t", row.names=NULL))
+}
+
+
+
+
+create.4<-function(elems)
+{
+  env<-new.env()
+  env$dt<-as.data.frame(elems)
+  return(env)
+}
+
+append.4<-function(env, elems)
+{ 
+  env$dt[nrow(env$dt)+1,]<-elems
+  return(env)
+}
+
+access.4<-function(env)
+{
+  return(env$dt)
+}
+
+
+
+test<-function(id, n=1000)
+{
+  n<-n-1
+  el<-list(a=1,b=2,c=3,d=4)
+  o <- do.call(paste0('create.',id),list(el))
+  s <- paste0('append.',id)
+  for (i in 1:n)
+  {
+    o <- do.call(s, list(o, el))
+  }
+  return(do.call(paste0('access.', id), list(o)))
+}
+
+
+
+r<-microbenchmark(#test(0,n=10), 
+                  test(1,n=10),
+                  test(2,n=10),
+                  test(3,n=10), 
+                  test(4,n=10))
+autoplot(r)
+
+```
+
+```{r}
+r<-microbenchmark(#test(0,n=10), 
+                  test(1,n=1000),
+                  test(2,n=1000),
+                  test(3,n=1000), 
+                  test(4,n=1000))
+autoplot(r)
+```
+
+Test #2 the winner!
+

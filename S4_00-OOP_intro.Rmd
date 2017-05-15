@@ -3,6 +3,37 @@ title: "R Notebook"
 output: html_notebook
 ---
 
+http://adv-r.had.co.nz/Functional-programming.html
+
+```{r}
+new_counter <- function() {
+  i <- 0
+  function() {
+    i <<- i + 1
+    i
+  }
+}
+
+counter_one <- new_counter()
+counter_two <- new_counter()
+
+counter_one()
+
+```
+
+```{r}
+counter_one()
+counter_one()
+```
+
+```{r}
+counter_two()
+counter_two()
+counter_one()
+```
+
+
+
 ## R fundamentals
 ```{r}
 x = 10

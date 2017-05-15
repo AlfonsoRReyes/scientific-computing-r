@@ -23,6 +23,8 @@ slot(pendulum@odeSolver, "stepSize")
 
 
 ```{r}
+# All ODE classes put together in one single chunk.
+# Continuity purposes only.
 
 setGeneric("getRate", function(object, state, rate, ...) standardGeneric("getRate"))
 setGeneric("getState", function(object, ...) standardGeneric("getState"))

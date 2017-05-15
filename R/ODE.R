@@ -15,5 +15,5 @@ setMethod("getState", "ODE", function(object, ...) {
 
 setMethod("getRate", "ODE", function(object, state, rate, ...) {
     # Gets the rate of change using the argument's state variables.
-    return(object@rate)
+    invisible(object)
 })

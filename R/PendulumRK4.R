@@ -1,15 +1,15 @@
 ####################
-# Pendulum.R
+# PendulumRK4.R
 #
 source("./R/ODE.R")
-source("./R/EulerRichardson.R")
+source("./R/RK4.R")
 
 
 
 setClass("Pendulum", slots = c(
     omega0Squared = "numeric",
     state = "numeric",
-    odeSolver = "Euler"
+    odeSolver = "RK4"
     ),
     prototype = prototype(
         omega0Squared = 3,
@@ -19,7 +19,7 @@ setClass("Pendulum", slots = c(
     )
 
 setMethod("initialize", "Pendulum", function(.Object) {
-    .Object@odeSolver <- Euler(.Object)                               
+    .Object@odeSolver <- RK4(.Object)                               
     return(.Object)
 })
 
