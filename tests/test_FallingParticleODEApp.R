@@ -45,3 +45,4 @@ test_that("match this vector at the end of run with dt = 0.1", {
                -14.700000,  -9.800000,     
                1.500000,     1.000000))
 })    
+
