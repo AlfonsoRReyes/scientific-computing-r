@@ -50,7 +50,7 @@ setMethod("init", "DormandPrince45", function(object, stepSize, ...) {
     state <- getState(object@ode)
     if (is.null(state)) {
         stop("state vector not defined")
-        return()      # state vector not defined.
+        return(object)      # state vector not defined.
     }
     if (object@numEqn != length(state)) {
         object@numEqn <- length(state)
@@ -159,9 +159,7 @@ setMethod("step", "DormandPrince45", function(object, ...) {
             warning("DormandPrince45 ODE SOlver did not converge")
         }
     }
-    # object@stepSize <- currentStep
     object@ode@state <- state
-    # return(currentStep)
     cat("currentStep=", currentStep, "\n")
     return(object)
 }
