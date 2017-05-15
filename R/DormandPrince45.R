@@ -161,7 +161,7 @@ setMethod("step", "DormandPrince45", function(object, ...) {
             warning("DormandPrince45 ODE SOlver did not converge")
         }
     }
-    object@stepSize <- currentStep
+    # object@stepSize <- currentStep
     object@ode@state <- state
     # return(currentStep)
     cat("currentStep=", currentStep, "\n")
