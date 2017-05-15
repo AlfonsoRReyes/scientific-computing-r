@@ -21,13 +21,16 @@ dt <- 0.1
 planet <- Kepler(r, v)
 solver <- RK45(planet)
 
-# solver <- step(solver)
+solver <- step(solver)
 
-# while (TRUE) {
-#     solver <- step(solver)
-#     # cat(sprintf("%12f %12f %12f \n", solver@ode@state[1], 
-#     #             solver@ode@state[2], solver@ode@state[3]))
-# }
+while (TRUE) {
+    solver <- step(solver)
+    planet <- solver@ode
+    # cat(sprintf("%12f %12f %12f \n", solver@ode@state[1],
+    #             solver@ode@state[2], solver@ode@state[3]))
+    cat(sprintf("%12f %12f %12f \n", planet@state[1],
+                planet@state[2], planet@state[3], planet@state[5]))
+}
 
 # 
 # while (solver@ode@state[3] < 100) {
