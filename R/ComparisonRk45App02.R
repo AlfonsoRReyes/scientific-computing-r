@@ -1,6 +1,7 @@
 #' ComparisonRK45App02.R
 #' 
 #' Updates ODE state instead of using internal state of ODE in ODE solver
+#' File ComparisonRK45App.R does npt makde ode abstraction
 #' 
 source("./R/ode_generics.R")
 source("./R/RK45.R")
