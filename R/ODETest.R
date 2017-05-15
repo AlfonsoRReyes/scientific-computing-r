@@ -35,12 +35,14 @@ setMethod("getRate", "ODETest", function(object, state, rate, ...) {
     object@state <- state
     object@rate  <- rate
     
-    object@rate     
+    # object@rate   
+    return(object)
 })
 
 
 # constructor
 
-# ODETest <- function() {
-#     new("ODETest")
-# }
+ODETest <- function() {
+    odetest <- new("ODETest")
+    odetest
+}
