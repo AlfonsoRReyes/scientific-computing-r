@@ -37,15 +37,12 @@ setMethod("initialize", "DormandPrince45", function(.Object, ode, ...) {
     .Object@ode <- ode                          # set the ode to ODESolver slot
     .Object@tol <- 1.0e-6
     .Object@enableExceptions <- FALSE
-    
-    # .Object@ode@rate <- vector("numeric")       # create vector for the rate
     return(.Object)
 })
 
 
 setMethod("init", "DormandPrince45", function(object, stepSize, ...) {
     # inititalize the solver
-    # object <- callNextMethod(object, stepSize)        # call superclass init
     object@stepSize <- stepSize
     state <- getState(object@ode)
     if (is.null(state)) {
@@ -67,11 +64,9 @@ setMethod("step", "DormandPrince45", function(object, ...) {
     iterations <- 10
     currentStep <- object@stepSize
     error <- 0
-    
     state <- getState(object@ode)
     object@ode  <- getRate(object@ode, state, object@k[1,])
     object@k[1,] <- object@ode@rate       # in Java rate is passed by param
-    
     # NEW iteration
     repeat  {
         iterations <- iterations - 1
@@ -90,10 +85,8 @@ setMethod("step", "DormandPrince45", function(object, ...) {
             object@ode <- getRate(object@ode, object@temp_state, object@k[s,])
             object@k[s,] <- object@ode@rate     # in Java rate is passed by param
             
-        } # end for "s"
-        
+        } # end for loop "s"
         # compute the error
-        
         error <- 0
         for (i in 1:object@numEqn) {
             object@truncErr <- 0
@@ -101,14 +94,10 @@ setMethod("step", "DormandPrince45", function(object, ...) {
                 object@truncErr <- object@truncErr + object@stepSize * object@er[s] * object@k[s, i]
             }
             error <- max(error, abs(object@truncErr))
-            
         }
-        
-        
         if (error <= 1.4e-45) {   # error too small to be meaningful,
             error <- object@tol / 1.0e5 # increase step size x10
         }
-        
         # find h step for the next try
         if (error > object@tol) {                     # shrink, no more than x10
             fac <- 0.9 * (error / object@tol)^-0.25
@@ -120,9 +109,7 @@ setMethod("step", "DormandPrince45", function(object, ...) {
             }
         }
         if (!((error > object@tol) && (iterations > 0))) break
-        
     }   # end repeat loop  
-    
     # advance the state
     for (i in 1:object@numEqn) {
         for (s in 1:object@numStages) {
