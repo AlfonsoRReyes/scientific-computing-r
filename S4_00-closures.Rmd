@@ -1,0 +1,101 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+## Closures
+
+http://adv-r.had.co.nz/Functional-programming.html
+
+```{r}
+new_counter <- function() {
+  i <- 0
+  function() {
+    i <<- i + 1
+    i
+  }
+}
+
+counter_one <- new_counter()
+counter_two <- new_counter()
+
+counter_one()
+
+```
+
+```{r}
+counter_one()
+counter_one()
+```
+
+```{r}
+counter_two()
+counter_two()
+counter_one()
+```
+
+## closures and the environment
+
+http://www.milanor.net/blog/function-closures-and-s4-methods/
+
+```{r}
+f <- function(x) {
+    g <- function(y) {
+        x + y
+    }
+}
+
+f1 <- f(x = 1)
+f1(y = 3)
+# [1] 4
+
+f1(y = 4)
+```
+
+```{r}
+ls(env=environment(f1))     # remembers only `g` and `x`, the inner components
+```
+```{r}
+ls(env=environment(f))      # remembers everything. It's global
+```
+
+```{r}
+environment(f1)$x
+# [1] 1
+
+environment(f1)$g
+# function(y) {
+#         x + y
+#     }
+# <environment: 0x0000000003381b18>
+```
+
+```{r}
+f99 <- f(99)
+f99(y = 1)
+```
+
+## Closures: “poor man’s objects”
+There are some cases where you do want shared changing state. Garrett uses a nice example of drawing cards, we will use a simple example of assigning sequential IDs. Consider the following code:
+
+https://www.r-bloggers.com/using-closures-as-objects-in-r/
+
+
+```{r}
+idSource <- function() {
+  nextId <- 1
+  list(nextID = function() { 
+    r <- nextId
+    nextId <<- nextId + 1
+    r
+  })
+}
+
+source <- idSource()
+source$nextID()
+```
+
+```{r}
+source$nextID()
+```
+
