@@ -3,6 +3,86 @@ title: "R Notebook"
 output: html_notebook
 ---
 
+https://www.r-bloggers.com/using-closures-as-objects-in-r/
+
+```{r}
+restrictEnvironment <- function(f, varList) {
+  oldEnv <- environment(f)
+  newEnv <- new.env(parent=parent.env(oldEnv))
+  for(v in varList) {
+    assign(v,get(v,envir=oldEnv),envir=newEnv)
+  }
+  environment(f) <- newEnv
+  f
+}
+
+child <- function() {
+    x <- 0; y <- 0; z <- 0; p <- 0; q <- 0
+    list(x=x,y=y,z=z,p=p,q=q)
+    }
+
+main <- function() {
+    x <- 1
+    y <- 2
+    z <- 3
+    varList <- list()
+    varList$x <- x
+    varList$y <- y
+    varList$z <- z
+    varList$terms <- list()
+    # print(varList)
+    environment(varList$terms) <- new.env(parent=globalenv())
+    # ls(environment(varList))
+    list(restrictEnvironment(function() {
+    x <- 0; y <- 0; z <- 0; p <- 0; q <- 0
+    list(x=x,y=y,z=z,p=p,q=q)
+    }, "varList"))
+}
+
+
+
+# main()
+# child()
+main()
+
+```
+
+
+```{r}
+a <- 10
+b <- 5
+
+oldEnv <- environment()
+```
+
+```{r}
+newEnv <- new.env(parent=parent.env(oldEnv))
+
+ls(newEnv)
+# character(0)
+```
+
+```{r}
+ls(oldEnv)
+# [1] "a"      "b"      "newEnv" "oldEnv"
+```
+
+```{r}
+x <- 1
+y <- 2
+z <- 3
+varList <- list(x = x, y = y, z=z)
+varList
+```
+
+```{r}
+for (v in varList) {
+    assign(v, get(v, envir = oldEnv), envir = newEnv)
+}
+```
+
+
+
 ## Closures
 
 http://adv-r.had.co.nz/Functional-programming.html
