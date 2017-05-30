@@ -1,0 +1,30 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+sVariable <- function(default=NULL){
+    .val <- default
+    function(value){
+        if( missing(value) ) .val
+        else{
+            old <- .val
+            .val <<- value
+            old
+        }
+    }
+}
+
+
+# define variable
+x <- sVariable(1)
+# get value (default)
+x()
+# set new value: return old value
+old <- x(3)
+old
+# get new value
+x()
+```
+
