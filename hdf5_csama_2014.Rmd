@@ -88,36 +88,38 @@ colnames(chromdim) <- bamFiles
 chromdim[,1]
 ```
 
-In this tutorial we will look at a region on the genome from 115200000 to 115300000 bases on chromosome
-one (overlapping the NRAS gene). Note that the .bam ﬁles we use only contain reads overlapping this region.
+In this tutorial we will look at a region on the genome from 115200000 to
+115300000 bases on chromosome one (overlapping the NRAS gene). Note that the
+.bam ﬁles we use only contain reads overlapping this region.
 
 ```{r}
 chrom = "1"
 startpos = 115200000
-endpos = 115300000
+endpos   = 115300000
 ```
 
-```{r}
-bamFiles
-```
+We can create nucleotide tallies using a number of diﬀerent functions:
+
+* h5vc::tallyBAM is a function that creates a nucleotide tally for one given .bam ﬁle, chromosome and region
+
+* h5vc::applyTallies is a function that applies h5vc::tallyBAM to a list of .bam
+ﬁles and handles the correct merging of the results into one block of data. This
+implementation uses BiocParallel::bplapply with the last registered BPPARAM,
+which defaults to serial execution but can be used with multicore
+(BiocParallel::MulticoreParam) as well as multi-machine 
+(BiocParallel::BatchJobsParam) setups.ꄰ
 
 
+
 ```{r}
-library(BSgenome.Hsapiens.UCSC.hg19)
-applyTallies(bamFiles, reference = Hsapiens[["chr1"]][startpos:endpos],
-             chrom, startpos, endpos, ncycles = 10)
+# library(BSgenome.Hsapiens.UCSC.hg19)
+# applyTallies(bamFiles, reference = Hsapiens[["chr1"]][startpos:endpos],
+#              chrom, startpos, endpos, ncycles = 10)
 ```
 
 
 We will use the applyTallies function and if your machine has more than one core
-available you could test the inﬂuence of registereing
-BiocParallel::MulticoreParam objects with diﬀerent numbers of workers. It is not
-expected to yield signiﬁcant speed-ups (and might even slow things down) on a
-normal laptop computer. Once you move to a server with a powerful RAID setup or
-a network ﬁleserver, you should be able to speed things up considerably, since
-there the I/O performance will not be the limiting factor anymore. Furthermore a
-big part of the used runtime goes to merging the tallies from the diﬀerent ﬁles
-into one block of data, this can not be parallelised easily and remains an
+available you could test the inﬂuence of registering BiocParallel::MulticoreParam objects with diﬀerent numbers of workers. It is not expected to yield signiﬁcant speed-ups (and might even slow things down) on a normal laptop computer. Once you move to a server with a powerful RAID setup or a network ﬁleserver, you should be able to speed things up considerably, since there the I/O performance will not be the limiting factor anymore. Furthermore a big part of the used runtime goes to merging the tallies from the diﬀerent ﬁles into one block of data, this can not be parallelised easily and remains an
 inﬂuential factor in the calculation.
 
 ```{r}
@@ -131,8 +133,9 @@ for( nWorkers in 1:maxWorkers ){
     # set the number of concurrent jobs (see ?register for details)
     register(MulticoreParam(workers = nWorkers))
     timeList[[nWorkers]] <- system.time(
-    tallyList[[nWorkers]] <- applyTallies(bamFiles, reference = Hsapiens[["chr1"]][startpos:endpos],
-                 chrom, startpos, endpos, ncycles = 10)
+    tallyList[[nWorkers]] <- applyTallies(bamFiles, 
+                                          reference = Hsapiens[["chr1"]][startpos:endpos], 
+                                          chrom, startpos, endpos)
     )
     print(paste("Tallied with", nWorkers, "parallel tasks!"))
 }
@@ -150,18 +153,19 @@ guess for what the reference base was, will in fact be the alternative allele of
 the homozygous variant. Please also read ?tallyBAM for background on the
 function and an explanation of the parameters. 
 
-To avoid this problem we canprovide a DNAString to the function which will be
-used as the refer- ence sequence, we get this from one of the BSGenome packages.
-Note that the followingcode uses BSgenome.Hsapiens.UCSC.hg19 which has a naming
-convention that is diﬀerent from the names of the choro- mosomes used in the
+To avoid this problem we can provide a DNAString to the function which will be
+used as the reference sequence, we get this from one of the BSGenome packages.
+
+Note that the following code uses `BSgenome.Hsapiens.UCSC.hg19` which has a naming
+convention that is diﬀerent from the names of the chromosomes used in the
 .bam ﬁles (“chrX” vs. “X”) and we need to ﬁx this through the call to
 paste0("chr", chrom).
 
 ```{r}
 # we load a reference genome and use a subset of it as a parameter to applyTallies
 suppressPackageStartupMessages(library(BSgenome.Hsapiens.UCSC.hg19))
-tallies <- applyTallies(
-bamFiles, chrom = chrom, start = startpos, stop = endpos, ncycles = 10,
+tallies <- applyTallies(bamFiles, 
+                        chrom = chrom, start = startpos, stop = endpos, ncycles = 10,
 reference = BSgenome.Hsapiens.UCSC.hg19[[paste0("chr", chrom)]][startpos:endpos] )
 # the first and last 10 sequencing cycles are called unreliable
 str(tallies)
@@ -238,7 +242,7 @@ index = list( startpos:endpos ) )
 h5ls(tallyFile)
 ```
 
-Another important aspect of using tally ﬁles is the sample meta-data. Since HDF5
+Another important aspect of using tally ﬁles is the sample metadata. Since HDF5
 datasets only store matrices without dimension names we need a way of knowing
 which id in the sample dimension corresponds to which sample and we probably
 want to keep some type of auxiliary information about each sample as well. We
@@ -266,6 +270,8 @@ sampleData$Library[sampleData$SampleID >= 37] <- "WholeGenome"
 setSampleData( tallyFile, group, sampleData, largeAttributes = TRUE )
 getSampleData( tallyFile, group )
 ```
+
+
 
 Modifying the sample meta-data is facilitated through the use of getSampleData
 and setSampleData, we can for example add another column to the data.frame.
@@ -309,3 +315,502 @@ function(x) file.info(x)$size )
 tallySize / bamSize
 ```
 
+
+
+
+
+
+
+
+
+
+```{r}
+startpos <- 115247090
+endpos   <- 115259515
+data <- h5readBlock(
+filename = tallyFile,
+group = group,
+range = c(startpos, endpos)
+)
+str(data)
+```
+
+```{r}
+data <- h5readBlock(
+filename = tallyFile,
+group = group,
+names = c("Coverages", "Reference"),
+range = c(startpos, endpos)
+)
+str(data)
+H5close()
+```
+
+
+
+```{r}
+data <- h5readBlock(
+filename = tallyFile,
+group = group,
+names = c("Coverages", "Reference"),
+samples = sampleData$Sample[3:7],
+range = c(startpos, endpos)
+)
+str(data)
+H5close()
+```
+
+The data object that are returned are lists of arrays with one entry per requested dataset, the layout is
+essentially the same as the results of a call to tallyBAM or applyTallies would have yielded. In addition
+there is always the special slot named h5dapplyInfo which contains a list specifying the start and end of the
+current block as well as a data.frame with information about the returned datasets and the group they were
+extracted from.
+While extracting a single block of data can be interesting for the investigation of speciﬁc regions within
+speciﬁc samples, when we want to calculate more general statistics the h5dapply function is of more use.
+The interface of the function is essentially identical to that of h5readBlock and only contains two additional
+paramters, which are the blocksize and the function to apply.
+An example of usage is this bit of code, that calculates binned coverage for all the samples. Note that they are
+whole exome sequencing data and therefore the binned coverage signal is heavily inﬂuenced by the presence
+or absence of coding sequence within each bin. You can tell which samples are whole exome and which are
+whole genome simply by looking at the numbers below.
+
+```{r}
+startpos = 115200000
+endpos   = 115300000
+data <- h5dapply( # extracting coverage binned at 1000 bases
+    filename = tallyFile,
+    group = group,
+    blocksize = 1000,
+    FUN = binnedCoverage,
+    sampledata = sampleData,
+    gccount = TRUE,
+    names = c( "Coverages", "Reference" ),
+    range = c(startpos, endpos)
+    )
+data <- do.call(rbind, data)
+rownames(data) <- NULL
+head(data)
+```
+
+Upon investigating the signature of the binnedCoverage function we can see that
+certain parameters must always be present in the signature of a function to be
+used with h5dapply, i.e. the data parameter is always the same with the name
+data and the structure of a list of entries with one slot per dataset.
+
+
+```{r}
+binnedCoverage
+```
+
+Since we have some whole genome samples available within the datasets, we will
+re-run the binnedCoverage function only on those samples since we can make more
+reliable ﬁts to GC content in them. At this point the subsetting by sample
+functionality build into h5dapply is helpful. Using this subsetting approach
+reduces time and memory requirements, since only the corresponding data is
+loaded from the HDF5 ﬁle. We do have to adapt the sampleData a bit, since the
+positions of the samples in the respective sample dimension are shifted by the
+subsetting.
+
+
+```{r}
+# Grab only the whole genome samples
+selectedSamples <- sampleData$Sample[sampleData$Library == "WholeGenome"]
+sampleDataSubset <- subset( sampleData, Sample %in% selectedSamples)
+# The Column propertie specifies the position of the sample in the datasets,
+# since we subset, the indexes are off and need to be adjusted
+sampleDataSubset$Column <- rank(sampleDataSubset$Column)
+# Apply the binnedCoverage function
+data <- h5dapply( # extracting coverage binned at 1000 bases
+    filename = tallyFile,
+    group = group,
+    blocksize = 1000,
+    samples = selectedSamples,
+    FUN = binnedCoverage,
+    sampledata = sampleDataSubset,
+    gccount = TRUE,
+    names = c( "Coverages", "Reference" ),
+    range = c(startpos, endpos)
+    )
+# h5dapply returns a list, we need to merge the results by row
+data <- do.call(rbind, data)
+rownames(data) <- NULL
+head(data)
+```
+
+This simple function returns a dataset with one column per sample as well as the
+gc-count in each bin. This is a pretty good starting point for a copy number
+analysis using e.g. the HMMCopy package. We can for example plot the coverages in
+bins vs. their GC count to check for biases.
+
+```{r }
+library(ggplot2)
+library(reshape2)
+data <- melt(data, id.vars = c("Start", "End", "GCCount"))
+colnames(data)[4] <- "Sample"
+colnames(data)[5] <- "Coverage"
+p <- ggplot(data, aes(x=GCCount, y = Coverage, col = Sample)) +
+geom_point() + facet_wrap(~ Sample, ncol = 2)
+print(p)
+```
+
+As we can see here, there are some diﬀerences between the samples (e.g.
+Sample.41 seems to have the strongest coverage-dependency on GC), in general
+most samples look rather ﬂat, which indicates little inﬂuence of the GC content
+on the local coverage. If we wanted to we could now use e.g. locfit.robust to ﬁt
+a model GCCount ~ Coverage for each sample and obtain a correction factor for
+each possible value of GCCount for each sample, which we could use to correct
+for GC-dependencies, which otherwise could generate noise in our log2-ratios
+between the matched normal and control samples, which we might want to use to
+produce copy number calls.
+
+There is only one requirement on the FUN argument to h5dapply (i.e. the function
+we want to apply to each block). We can use any function as FUN that expects its
+ﬁrst argument to be a list of arrays corresponding to the datasets in the
+current block. Further arguments are passed through by h5dapply but their names
+may not collide with the named arguments of h5dapply (ﬁlename, group, blocksize,
+FUN, names, dims, range, samples, sampleDimMap, verbose and BPPARAM). With the
+BPPARAMparameter we can control parallelisation behaviour of h5dapply, which can
+yield substantial runtime improvements, as exempliﬁed below (note that this code
+uses 4 concurrent processes for the calculations, if you are operating on a
+dual-core machine set this to 2, if you are on a bigger machine, increase the
+number of workers accordingly). In this simple benchmark we will use system.time
+to measure the runtime of a single call to h5dapply.
+
+```{r}
+startpos = 115200000
+endpos   = 115300000
+system.time(
+dataS <- h5dapply( # extracting coverage binned at 1000 bases
+    filename = tallyFile,
+    group = group,
+    blocksize = 1000,
+    FUN = binnedCoverage,
+    sampledata = sampleData,
+    gccount = TRUE,
+    names = c( "Coverages", "Reference" ),
+    range = c(startpos, endpos)
+    )
+)
+```
+
+```{r}
+library(BiocParallel) #load the library to enable parallel execution
+
+dataS <- do.call(rbind, dataS)
+system.time(
+dataP <- h5dapply( # extracting coverage binned at 1000 bases
+    filename = tallyFile,
+    group = group,
+    blocksize = 1000,
+    FUN = binnedCoverage,
+    sampledata = sampleData,
+    gccount = TRUE,
+    names = c( "Coverages", "Reference" ),
+    range = c(startpos, endpos),
+    BPPARAM = MulticoreParam(workers = 4)
+    )
+)
+```
+
+
+```{r}
+dataP <- do.call(rbind, dataP)
+# Are results of serial and parallel execution identical?
+identical(dataS, dataP)
+```
+
+## Calling variants
+
+As an example of how to develop new functions for usage with h5dapply we will
+now implement a naive, single-sample variant calling function. The function will
+be called myVariantCaller and will take four arguments:
+
+1. data: the list of arrays corresponding to the current block
+2. sampleNames: a vector of names to be used for the samples in the same order as the samples are stored
+in the sample dimension of the nucleotide tally.
+3. minAF: minimal allelic frequency a variant should have to be called
+4. minCov: minimal coverage a position must have in order for a variant to be called there
+
+Our implementation is exceedingly naive, in that it simply adds up all
+mismatches per sample irrespective of the alternative allele and then calculates
+the allelic frequency from that. We then build a ﬁlter on the coverage and
+allelic frequency and return all positions which fulﬁll our two criteria
+(allelic freqeuncy and coverage minimum).
+
+```{r}
+myVariantCaller <- function( data, sampleNames, minAF = 0.2, minCov = 20 ){
+    #sanity checks for the data
+    stopifnot("Counts" %in% names(data))
+    stopifnot("Coverages" %in% names(data))
+    #sum up coverages for each sample (forward strand + reverse strand coverage)
+    coverages <- apply(data$Coverages, c(1,3), sum)
+    # sum up all counts for each sample (i.e. #A + #C + #G + #T on both strands)
+    counts <- apply(data$Counts, c(2,4), sum)
+    # Now counts and coverage have a compatible shape
+    # and we can calculate estimates for the allelic frequency
+    afs <- counts / coverages
+    # Here we do the calling, by filtering for a minimal allelic Frequency and
+    # Coverage in each sample and position
+    filter <- afs >= minAF & coverages >= minCov
+    require(reshape2) #use melt to convert the array into a data.frame
+    filter <- melt(filter)
+    #rename the columns
+    colnames(filter) <- c("Sample", "Position", "Called")
+    filter$Sample <- sampleNames[filter$Sample]
+    # fix the position to reflect genomic coordinates
+    filter$Position <- filter$Position + data$h5dapplyInfo$Blockstart - 1
+    # We return only those positions that pass the filter
+    return(subset(filter, Called == TRUE))
+}
+```
+
+We will now apply this variant caller to the whole genome sequencing samples we had extracted earlier.￿
+
+```{r}
+selectedSamples <- sampleData$Sample[sampleData$Library == "WholeGenome"]
+sampleDataSubset <- subset( sampleData, Sample %in% selectedSamples)
+sampleDataSubset$Column <- rank(sampleDataSubset$Column)
+data <- h5dapply( # calling variants in bins of size 10kb
+    filename = tallyFile,
+    group = group,
+    blocksize = 10000,
+    samples = selectedSamples,
+    FUN = myVariantCaller,
+    sampleNames = selectedSamples,
+    names = c( "Coverages", "Counts" ),
+    range = c(startpos, endpos)
+    )
+data <- do.call(rbind, data)
+rownames(data) <- NULL
+head(data)
+```
+
+Let’s have a look at the ﬁrst positions where a variant has been called. We
+extract the nucleotide tally data around that position with a call to
+h5readBlock and use it to create a mismatchPlot, which gives us an overview over
+the region in the diﬀerent samples.
+
+
+```{r fig.asp=1}
+varpos <- data$Position[1]
+windowsize <- 50
+plotData <- h5readBlock(
+filename = tallyFile,
+group = group,
+samples = selectedSamples,
+range = c(varpos - windowsize, varpos + windowsize)
+)
+p <- mismatchPlot(
+data = plotData,
+sampledata = sampleDataSubset,
+position = varpos, windowsize = windowsize)
+print(p)
+```
+
+We can see a nice heterozygous variant (actually homozygous in some of the
+patients) that we found at this position (not bad for a variant caller written
+in 5 minutes), but we can also see that it occurs always in both samples of all
+patients (the sample pairs are in order always control and case) and that it is
+therefore not a very interesting variant in the current setting (a cohort of
+paired cancer samples). Maybe we need a smarter approach to ﬁnding the
+interesting positions.
+
+An example implementation of a comparative SNV caller is provided in the
+h5vc::callVariantsPaired function, which we can run on the whole dataset with
+the following code:
+
+```{r}
+startpos = 115200000
+endpos   = 115300000
+data <- h5dapply( # calling variants pairwise in bins of size 5kb
+    filename = tallyFile,
+    group = group,
+    blocksize = 10000,
+    FUN = h5vc::callVariantsPaired,
+    sampledata = sampleData,
+    cl = vcConfParams(
+        returnDataPoints = TRUE,
+        annotateWithBackground = TRUE
+    ),
+    names = c( "Coverages", "Counts", "Reference" ),
+    range = c(startpos, endpos),
+    verbose = TRUE
+)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```{r}
+windowsize = 50
+plots = list()
+for(idx in seq(length=nrow(data))){
+varpos <- data$Start[idx]
+sample <- data$Sample[idx]
+selectedSamples <- subset(
+sampleData,
+Patient == sampleData$Patient[sampleData$Sample == data$Sample[idx]]
+)$Sample
+sampleDataSubset <- subset( sampleData, Sample %in% selectedSamples)
+sampleDataSubset$Column <- rank(sampleDataSubset$Column)
+plotData <- h5readBlock(
+filename = tallyFile,
+group = group,
+samples = selectedSamples,
+range = c(varpos - windowsize, varpos + windowsize)
+)
+p <- mismatchPlot(
+data = plotData,
+sampledata = sampleDataSubset,
+position = varpos,
+windowsize = windowsize)
+plots[[idx]] <- p
+print(p + theme(strip.text.y = element_text(family="serif", angle = 0, size = 12)))
+}
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## Creating variant reportsꈞ-1000
+
+```{r}
+library(ReportingTools)
+```
+
+```{r}
+library(hwriter)
+
+for(idx in seq_len(length(plots))){
+png(paste("Var", idx, "png", sep="."), 1200, 800)
+print(plots[[idx]])
+dev.off()
+}
+
+reportData <- data
+reportData$mismatchPlot <- paste0(
+"<a target=\"_blank\" href=\"Var.",
+seq(length=nrow(data)),
+".png\">Link</a>" ) # add a link to the variant plot files
+htmlRep <- HTMLReport(shortName = "VariantReport", baseDirectory = getwd())
+publish( reportData, htmlRep ) # publish the data.frame to the HTML reports
+finish(htmlRep)
+```
+
+
+
+## Creating custom plots
+
+We can generate our own plots using the geom_h5vc function to add layers to a
+ggplot2 plot object. In the following example we use the example ﬁle provided by
+the h5vcData package to plot overviews of total number of mismatches.
+
+```{r}
+tallyFile <- system.file( "extdata", "example.tally.hfs5", package = "h5vcData" )
+sampleData <- getSampleData( tallyFile, "/ExampleStudy/16" )
+position <- 29979629
+windowsize <- 30
+samples <- sampleData$Sample[sampleData$Patient == "Patient8"]
+data <- h5readBlock(
+        filename = tallyFile,
+        group = "/ExampleStudy/16",
+        names = c("Coverages", "Counts"),
+        range = c(position - windowsize, position + windowsize)
+        )
+# Summing up all mismatches irrespective of the alternative allele
+data$CountsAggregate = colSums(data$Counts)
+# Simple overview plot showing number of mismatches per position
+p <- ggplot() +
+geom_h5vc( data=data,
+        sampledata=sampleData,
+        windowsize = 35, position = 500,
+        dataset = "Coverages", fill = "gray" ) +
+geom_h5vc( data=data,
+        sampledata=sampleData,
+        windowsize = 35, position = 500,
+        dataset = "CountsAggregate", fill = "#A535C0" ) +
+facet_wrap( ~ Sample, ncol = 2 )
+print(p)
+```
+
+
+## Summary
+
+In this tutorial we have learned how to read and write from HDF5 ﬁles, create
+nucleotide tallies from .bam ﬁles and write them to a tally ﬁle. We introduced
+the concept of sample meta-data and how to retrieve, modify and store it in a
+nucleotide tally ﬁle and explored ways of fetching data from nucleotide tally
+ﬁles and applying functions to the data in blocks along the genome. You should
+be able to use variant calling functions and indeed be able to implement such
+functions yourself, using whichever calling aproach you are interested in. Ww
+also covered the visualisation features that allow us to create overview plots
+of genomic regions of interest, e.g. the regions around variant calls.
+
+> Question: If you still have time and motivation, go ahead and have a look at the
+example data in diﬀerent ways, to see what you can ﬁnd. You could start with
+running the callVariantsSingle and callDeletionsPaired function of the region to
+see how the diﬀerent samples behave.
+
+> Question: You can also work through the simgle genome browser vignette (from the h5vc
+package), adapting it to use the NRAS.tally.hfs5 tally ﬁle that we created with this tutorial.
