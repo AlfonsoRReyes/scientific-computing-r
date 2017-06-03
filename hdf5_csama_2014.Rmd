@@ -88,8 +88,9 @@ colnames(chromdim) <- bamFiles
 chromdim[,1]
 ```
 
-In this tutorial we will look at a region on the genome from 115200000 to 115300000 bases on chromosome
-one (overlapping the NRAS gene). Note that the .bam ﬁles we use only contain reads overlapping this region.
+In this tutorial we will look at a region on the genome from 115200000 to
+115300000 bases on chromosome one (overlapping the NRAS gene). Note that the
+.bam ﬁles we use only contain reads overlapping this region.
 
 ```{r}
 chrom = "1"
@@ -97,15 +98,23 @@ startpos = 115200000
 endpos = 115300000
 ```
 
-```{r}
-bamFiles
-```
+We can create nucleotide tallies using a number of diﬀerent functions:
+
+* h5vc::tallyBAM is a function that creates a nucleotide tally for one given .bam ﬁle, chromosome and region
+
+* h5vc::applyTallies is a function that applies h5vc::tallyBAM to a list of .bam
+ﬁles and handles the correct merging of the results into one block of data. This
+implementation uses BiocParallel::bplapply with the last registered BPPARAM,
+which defaults to serial execution but can be used with multicore
+(BiocParallel::MulticoreParam) as well as multi-machine 
+(BiocParallel::BatchJobsParam) setups.ꄰ
 
 
+
 ```{r}
-library(BSgenome.Hsapiens.UCSC.hg19)
-applyTallies(bamFiles, reference = Hsapiens[["chr1"]][startpos:endpos],
-             chrom, startpos, endpos, ncycles = 10)
+# library(BSgenome.Hsapiens.UCSC.hg19)
+# applyTallies(bamFiles, reference = Hsapiens[["chr1"]][startpos:endpos],
+#              chrom, startpos, endpos, ncycles = 10)
 ```
 
 
