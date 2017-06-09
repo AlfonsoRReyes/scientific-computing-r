@@ -1,5 +1,5 @@
 ---
-title: "R Notebook"
+title: "Anom with functions"
 output: html_notebook
 ---
 
