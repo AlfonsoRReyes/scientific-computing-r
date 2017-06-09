@@ -1,0 +1,100 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+https://stackoverflow.com/questions/10454973/how-to-create-example-data-set-from-private-data-replacing-variable-names-and-l
+
+
+```{r}
+## A data.frame containing sensitive information
+df <- data.frame(
+    name = rep(readLines(file.path(R.home("doc"), "AUTHORS"))[9:13], each=2),
+    hiscore = runif(10, 99, 100),
+    passwd = replicate(10, paste(sample(c(LETTERS, letters), 9), collapse="")))
+
+df
+```
+
+```{r}
+## A function to anonymise columns in 'colIDs' 
+##    colIDs can be either column names or integer indices
+anonymiseColumns <- function(df, colIDs) {
+    id <- if(is.character(colIDs)) match(colIDs, names(df)) else colIDs
+    for(id in colIDs) {
+        prefix <- sample(LETTERS, 1)
+        suffix <- as.character(as.numeric(as.factor(df[[id]])))
+        df[[id]] <- paste(prefix, suffix, sep="")
+    }
+    names(df)[id] <- paste("V", id, sep="")
+    df
+}
+```
+
+
+## Anonymize the 1t column
+
+```{r}
+## Anonymise it
+df2 <- anonymiseColumns(df, c(1))
+df2
+```
+
+```{r}
+## Anonymise it
+df3 <- anonymiseColumns(df, c(3))
+df3
+```
+
+
+
+
+
+## Another solution
+Here is my version of the function. Advantages: no for loops, level labels match variable labels, can be applied to any df, ordered variable names beyond 26 letters, normalization of numeric variables...
+
+Thanks go to:
+*  @Tyler Rinker for a solution to using column names in apply functions &
+*  @Josh O'Brien for his response to this question
+
+It is available here as a gist.
+
+The data from @Josh O'Brien with a non factor variable
+
+https://stackoverflow.com/a/10458688/5270873
+
+
+```{r}
+   df <- data.frame(
+  name = rep(readLines(file.path(R.home("doc"), "AUTHORS"))[9:13], each=2),
+  hiscore = runif(10, 99, 100),
+  passwd = replicate(10, paste(sample(c(LETTERS, letters), 9), collapse="")))
+
+df$passwd<-as.character(df$passwd)
+
+df
+```
+
+```{r}
+# the function
+anonym<-function(df){
+  if(length(df)>26){
+    LETTERS<-replicate(floor(length(df)/26),{LETTERS<-c(LETTERS, paste(LETTERS, LETTERS, sep=""))})
+    }
+    names(df)<-paste(LETTERS[1:length(df)])
+
+    level.id.df<-function(df){
+        level.id<-function(i){
+      if(class(df[,i])=="factor" | class(df[,i])=="character"){
+        column<-paste(names(df)[i],as.numeric(as.factor(df[,i])), sep=".")}else if(is.numeric(df[,i])){
+          column<-df[,i]/mean(df[,i], na.rm=T)}else{column<-df[,i]}
+          return(column)}
+      DF <- data.frame(sapply(seq_along(df), level.id))
+      names(DF) <- names(df)
+      return(DF)}
+    df<-level.id.df(df)
+    return(df)}
+
+anonym(df)
+```
+

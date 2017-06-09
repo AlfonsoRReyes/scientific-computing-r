@@ -1,0 +1,25 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(digest)
+
+ # test 'length' parameter and file input
+ fname <- file.path(R.home(),"COPYING")
+ x <- readChar(fname, file.info(fname)$size) # read file
+ print(x)
+ for (alg in c("sha1", "md5", "crc32")) {
+   # partial file
+   h1 <- digest(x    , length=18000, algo=alg, serialize=FALSE)
+   h2 <- digest(fname, length=18000, algo=alg, serialize=FALSE, file=TRUE)
+   h3 <- digest( substr(x,1,18000) , algo=alg, serialize=FALSE)
+   stopifnot( identical(h1,h2), identical(h1,h3) )
+   # whole file
+   h1 <- digest(x    , algo=alg, serialize=FALSE)
+   h2 <- digest(fname, algo=alg, serialize=FALSE, file=TRUE)
+   stopifnot( identical(h1,h2) )
+ }
+```
+
