@@ -17,6 +17,7 @@ setkey(DT, x, y)
 DT[.("A", 7), roll = "nearest"]
 ```
 
+
 https://stackoverflow.com/q/15712826/5270873
 
 ```{r}
