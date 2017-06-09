@@ -1,5 +1,5 @@
 ---
-title: "R Notebook"
+title: "Anonymization with digest"
 output: html_notebook
 ---
 
@@ -8,11 +8,12 @@ https://www.r-bloggers.com/data-anonymization-in-r/
 
 
 ## Use cases
-Public reports.
-Public data sharing, e.g. R packages download logs from CRAN's RStudio mirror – cran-logs.rstudio.com – mask ip addresses.
-Reports or data sharing for external vendor.
-Development works can operate on anonymized PRODUCTION data.
-Manually or semi-manually populated data can often brings some new issue after migration to PRODUCTION data.
+* Public reports.
+* Public data sharing, e.g. R packages download logs from CRAN's RStudio mirror, cran-logs.rstudio.com – mask ip addresses.
+* Reports or data sharing for external vendor.
+* Development works can operate on anonymized PRODUCTION data.
+* Manually or semi-manually populated data can often brings some new issue after migration to PRODUCTION data.
+
 Such anonymized PRODUCTION data can be quite handy for the devs.
 
 ## Dependencies
