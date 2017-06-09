@@ -1,7 +1,9 @@
 ---
-title: "R Notebook"
+title: "Anom with functions"
 output: html_notebook
 ---
+
+Using simple functions (no packages)
 
 https://stackoverflow.com/questions/10454973/how-to-create-example-data-set-from-private-data-replacing-variable-names-and-l
 
