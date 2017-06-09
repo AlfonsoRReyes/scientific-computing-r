@@ -1,0 +1,26 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+## sdcMicroObj
+
+```{r}
+library(sdcMicro)
+
+showClass("sdcMicroObj")
+## Not run: 
+
+data(testdata)
+sdc <- createSdcObj(testdata, 
+                    keyVars=c('urbrur','roof','walls','water','electcon','relat','sex'), 
+                    numVars=c('expend','income','savings'), w='sampling_weight')
+
+head(sdc@manipNumVars)
+```
+
+
+```{r}
+
+```
+

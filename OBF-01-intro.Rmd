@@ -1,0 +1,86 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+## Using sdcMicro
+Statistical Disclosure Control (SDC) for the generation of protected microdata for researchers and for public use.
+
+This package includes all methods of the popular software mu-Argus plus several new methods. In comparison with mu-Argus the advantages of this package are that the results are fully reproducible even with the included GUI, that the package can be used in batch-mode from other software, that the functions can be used in a very flexible way, that everybody could look at the source code and that there are no time-consuming meta-data management is necessary. However, the user should have a detailed knowledge about SDC when applying the methods on data.
+
+```{r}
+## select another keyVar and run localSupp once again,
+#if you think the table is not fully protected
+data(free1)
+free1 <- as.data.frame(free1)
+
+f <- freqCalc(free1, keyVars=1:3, w=30)
+ind <- indivRisk(f)
+## and now you can use the interactive plot for individual risk objects:
+## plot(ind)
+ind
+```
+
+
+
+```{r}
+# load the sdcMicro package
+library(sdcMicro)
+
+## Data from mu-Argus:
+## Global recoding:
+data(free1)
+free1 <- as.data.frame(free1)
+
+free1[, "AGE2"] <- globalRecode(free1[,"AGE"], c(1,9,19,29,39,49,59,69,100), labels=1:8)
+
+
+```
+
+```{r}
+free1[, c("AGE", "AGE2")]
+```
+
+
+
+```{r}
+data(free1)
+free1 <- as.data.frame(free1)
+
+## application to a vector
+head(globalRecode(free1$AGE, breaks=c(1,9,19,29,39,49,59,69,100), labels=1:8))
+table(globalRecode(free1$AGE, breaks=c(1,9,19,29,39,49,59,69,100), labels=1:8))
+```
+
+```{r}
+## Fast generation of synthetic data with aprox.
+#the same covariance matrix as the original one.
+data(mtcars)
+cov(mtcars[, 4:6])                     # original data
+cov(dataGen(mtcars[, 4:6],n=200))      #synth data
+
+pairs(mtcars[,4:6])
+pairs(dataGen(mtcars[,4:6],n=200))
+```
+
+## addNoise
+method: choose between ‘additive’, ‘correlated’, ‘correlated2’, ‘restr’, ‘ROMM’, ‘outdect’
+
+
+```{r}
+data(Tarragona)
+a1 <- addNoise(Tarragona)     # creates a list with modified values (perturbed data)
+names(a1)
+
+head(a1$x)
+head(as.data.frame(a1$xm))
+```
+
+```{r}
+data(Tarragona)
+a1 <- addNoise(Tarragona, method = "correlated")    #modified values (perturbed data)
+names(a1)
+
+head(a1$x)
+head(as.data.frame(a1$xm))
+```
