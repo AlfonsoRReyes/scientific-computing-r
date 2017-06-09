@@ -1,0 +1,8 @@
+CUSTOMER.UID,CITY,POSTAL.CODE,ADDRESS,NAME,SEX
+CUST_1,London,SW1H 0QW,Silk Road 17,John Lennon,M
+CUST_2,Cardiff,CF23 9AE,Queen Road 19,Edward Snowden,M
+CUST_3,London,SW1P 3BU,Edinburgh Road 19,John Kennedy,M
+CUST_4,London,SW1P 3BU,Cardiff Road 21,Mahatma Gandhi,M
+CUST_5,Cardiff,CF23 9AE,King Road 10,Nelson Mandela,M
+CUST_6,London,SW1P 2EE,Cardiff Road 23,Vandana Shiva,F
+CUST_9,Glasgow,G40 3AS,Simple Road 11,Bob Marley,M

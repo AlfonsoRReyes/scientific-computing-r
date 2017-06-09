@@ -1,0 +1,231 @@
+
+
+https://www.r-bloggers.com/using-closures-as-objects-in-r/
+
+
+## Immutability
+One thing that might surprise some readers (even though familiar with R) is we said almost all R objects are immutable. At first glance this doesn’t seem to be the case consider the following:
+
+```{r}
+a <- list()
+print(a)
+
+a$b <- 1
+print(a)
+```
+
+The list “a” sure seemed to change. In fact it did not, this is an illusion foisted on you by R using some clever variable rebinding. Let’s look at that code more closely:
+
+```{r}
+library('pryr')
+## a <- list()
+print(address(a))
+## [1] "0x1059c5dc0"
+a$b <- 1
+print(address(a))
+## [1] "0x105230668"
+```
+
+R simulated a mutation or change on the object “a” by re-binding a new value
+(the list with the extra argument) to the symbol “a” in the environment we were
+executing in. We see this by the address change, the name “a” is no longer
+referring to the same value. “Environment” is a computer science term meaning a
+structure that binds variable names to values. R is very unusual in that most R
+values are immutable and R environments are mutable (what value a variable
+refers to get changed out from under you). At first glance R appears to be
+adding an item to our list “a”, but in fact what is doing is changing the
+variable name “a” to refer to an entirely new list that has one more element.
+
+
+## Closures: “poor man’s objects”
+There are some cases where you do want shared changing state. Garrett uses a
+nice example of drawing cards, we will use a simple example of assigning
+sequential IDs. Consider the following code:
+
+```{r}
+idSource <- function() {
+  nextId <- 1
+  list(nextID=function() { 
+    r <- nextId
+    nextId <<- nextId + 1
+    r
+  })
+}
+
+source <- idSource()
+source$nextID()
+## [1] 1
+source$nextID()
+## [1] 2
+```
+
+The idea is the following: in R a fresh environment (that is the structure
+binding variable names to values) is created during function evaluation. Any
+function created while evaluating our outer function has access to all variables
+in this environment (this environment is what is called a closure). So any names
+that appear free in the inner function (that is variable names that don’t have a
+definition in the inner function) end up referring to variable in the this new
+environment (or one of its parents if there is no name match). 
+
+Since
+environments are mutable re-binding values in this secret environment gives us
+mutable slots. The first gotcha is the need to use <<- or assign() to effect
+changes in the secret environment.
+
+This behaves a lot more like what Java or Python programmer would expect from an
+object and is fully idiomatic R. So if you want object-like behavior this is a
+tempting way to get it.
+
+
+
+```{r}
+# trying to observe address
+f <- function() {
+  a <- list(b = 1)
+  print(pryr::address(a))
+  a$b <- 2
+  print(pryr::address(a))
+  a$b <- 3
+  print(pryr::address(a))
+}
+f()
+
+# timing
+f1c <- function(n,verbose,shadow) {
+  v <- 1:n
+  vLast <- c()
+  if(shadow) {
+    vLast <- v
+  }
+  if(verbose) {
+    print(pryr::address(v))
+  }
+  for(i in 1:n) {
+    v[i] <- v[i]^2
+    if(shadow) {
+       vLast <- v
+    }
+    if(verbose) {
+       print(pryr::address(v))
+    }
+  }
+  c()
+}
+
+f1c(5,TRUE,FALSE)
+
+print(system.time(f1c(30000,FALSE,FALSE)))
+print(system.time(f1c(30000,FALSE,TRUE)))
+```
+
+
+```{r}
+library('biglm')
+
+datn <- function(n) {
+   d <- data.frame(x=runif(n))
+   d$y <- d$x>=runif(nrow(d))
+   d
+}
+
+d <- datn(100000)
+formula <- 'y~x'
+
+fitter <- function(formula,d) {
+  model <- bigglm(as.formula(formula),d,family=binomial(link='logit'))
+  list(predict=function(newd) {predict(model,newdata=newd,type='response')[,1]})
+}
+
+model <- fitter(formula,d)
+print(head(model$predict(d)))
+
+sizeTest1 <- function(d) {
+  model <- fitter(formula,d)
+  length(serialize(model, NULL))
+}
+
+for(n in c(1000,10000,100000)) {
+  print(sizeTest1(datn(n)))
+}
+
+
+```
+
+```{r}
+library('biglm')
+
+datn <- function(n) {
+   d <- data.frame(x=runif(n))
+   d$y <- d$x>=runif(nrow(d))
+   d
+}
+
+d <- datn(100000)
+formula <- 'y~x'
+
+sizeTest1 <- function(d) {
+  model <- fitter(formula,d)
+  length(serialize(model, NULL))
+}
+
+
+#' build a new funcion with a smaller environment
+#' @param f input function
+#' @param varaibles names we are allowing to be captured in the closere
+#' @return new function with closure restricted to varaibles
+#' @export
+restrictEnvironment <- function(f, varList) {
+  oldEnv <- environment(f)
+  newEnv <- new.env(parent=parent.env(oldEnv))
+  for(v in varList) {
+    assign(v,get(v,envir=oldEnv),envir=newEnv)
+  }
+  environment(f) <- newEnv
+  f
+}
+
+fitter <- function(formula,d) {
+  model <- bigglm(as.formula(formula),d,family=binomial(link='logit'))
+  
+  model$family$variance <- c()
+  model$family$dev.resids <- c()
+  model$family$aic <- c()
+  model$family$mu.eta <- c()
+  model$family$initialize <- c()
+  model$family$validmu <- c()
+  model$family$valideta <- c()
+  model$family$simulate <- c()
+  
+  environment(model$terms) <- new.env(parent=globalenv())
+  list(predict = restrictEnvironment(function(newd) {
+           predict(model, newdata = newd, type='response')[,1]
+          }, 'model'))
+}
+
+
+
+model <- fitter(formula, d)
+print(head(model$predict(d)))
+
+for(n in c(1000,10000,100000)) {
+  print(sizeTest1(datn(n)))
+}
+```
+
+
+
+```{r}
+library('biglm')
+datn <- function(n) {
+   d <- data.frame(x=runif(n))
+   d$y <- d$x>=runif(nrow(d))
+   d
+}
+
+d <- datn(100000)
+formula <- 'y~x'
+
+model <- bigglm(as.formula(formula),d,family=binomial(link='logit'))
+
+```
+

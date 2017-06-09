@@ -75,3 +75,10 @@ inst/osp_ode/opensourcephysics/ode/
 inst/osp_ode/opensourcephysics/manual/ch09/
 
 \.JGRhistory
+
+
+*.png
+
+csslib/
+
+jslib/

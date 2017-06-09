@@ -1,0 +1,296 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+The general idea is to be able to add elements to a container, and modify the
+container in-place. In R this is possible using some assignment tricks into the
+.GlobalEnv, but it can be frought with unintended consequences. Closures offer
+us a perfect alternative to keep surprises to a minimum. First, we'll create
+single environment that will act as the container and then add into that
+environment a stack vector and the two methods, push and pop.
+
+```{r}
+s <- new.env()
+
+  s$.Data <- vector()
+  s$push <- function(x) .Data <<- c(.Data, x)
+  s$pop  <- function() {
+      tmp <- .Data[length(.Data)]
+      .Data <<- .Data[-length(.Data)]
+      return(tmp)
+  }
+
+ls(s)
+ls(s, all = TRUE)             # shot .dot objects
+# [1] ".Data" "pop"   "push" 
+```
+
+We are using the double arrow <<- assignment operator in the push function to
+let assignment proceed up the internal stack frame until a variable is found to
+bind to. This allows for non-local modifications to our .Data variable. The push
+method appends new data to the stack and pop removes the last element of the
+stack and returns it to the caller. We can use the $ operator to access the
+internal methods of our environment.
+
+
+
+```{r}
+s$push(1)
+# Error in s$push(1) : object '.Data' not found
+```
+
+Oops, something is wrong. It turns out that <<– can't find the .Data object
+stored in the s object. We haven't matched the environment of the function to
+the object's environment. R isn't starting its search for .Data in the correct
+location; it needs more information. The functions environment and
+as.environment work well here.
+
+```{r}
+environment(s$push) <- as.environment(s)
+environment(s$pop)  <- as.environment(s)
+
+s$push(1)   # works now
+s$.Data
+# [1] 1
+```
+
+```{r}
+s$pop()
+s$.Data
+# [1] 1
+# numeric(0)
+```
+
+
+
+```{r}
+new_stack <- function() { 
+        stack <- new.env()
+        stack$.Data <- vector()
+        stack$push <- function(x) .Data <<- c(.Data,x)
+        stack$pop  <- function() {
+          tmp <- .Data[length(.Data)]
+          .Data <<- .Data[-length(.Data)]
+          return(tmp)
+        }
+        environment(stack$push) <- as.environment(stack)
+        environment(stack$pop) <- as.environment(stack)
+        class(stack) <- "stack"
+        stack
+}
+
+  new_betterstack <- function() {
+        stack <- new_stack()
+        stack_env <- as.environment(stack)
+        stack$shift   <- function(x) .Data <<- c(x, .Data)
+        stack$unshift <- function() {
+          tmp <- .Data[1]
+          .Data <<- .Data[-1]
+          return(tmp)
+        }
+        environment(stack$shift)   <- stack_env
+        environment(stack$unshift) <- stack_env
+        class(stack) <- c("betterstack", "stack")
+        stack
+  }
+  
+push <- function(x, value, ...) UseMethod("push")
+pop  <- function(x, ...) UseMethod("pop")  
+push.stack <- function(x, value, ...) x$push(value)
+pop.stack  <- function(x) x$pop()
+
+shift <- function(x, value, ...) UseMethod("shift")
+unshift  <- function(x, ...) UseMethod("unshift")  
+shift.stack <- function(x, value, ...) x$shift(value)
+unshift.stack  <- function(x) x$unshift()
+```
+
+```{r}
+nb <- new_betterstack()
+push(nb, 1:3)
+```
+
+```{r}
+nb$.Data
+```
+
+```{r}
+pop(nb)
+```
+
+```{r}
+ unshift(nb) # from the front
+```
+
+```{r}
+shift(nb, 3)
+```
+
+```{r}
+push(nb, 1)
+```
+
+```{r}
+nb$.Data
+```
+
+## one module that contains push, pop, shift and unshift
+
+```{r}
+# making a solid module from new_stack and new_betterstack
+flexStack <- function() {
+    stack <- new.env()
+    stack$.Data <- vector()
+    stack$push <- function(x) .Data <<- c(.Data, x)
+    stack$pop  <- function() {
+        tmp <- .Data[length(.Data)]
+        .Data <<- .Data[-length(.Data)]
+        return(tmp)
+    }
+    stack$shift <- function(x) .Data <<- c(x, .Data)
+    stack$unshift <- function() {
+        tmp    <- .Data[1]
+        .Data <<- .Data[-1]
+        return(tmp)
+    }
+    environment(stack$push)      <- as.environment(stack)
+    environment(stack$pop)       <- as.environment(stack)
+    environment(stack$shift)     <- as.environment(stack)
+    environment(stack$unshift)   <- as.environment(stack)    
+    
+    class(stack) <- "stack"
+    stack
+}
+
+push <- function(x, value, ...) UseMethod("push")
+pop  <- function(x, ...) UseMethod("pop")  
+push.stack <- function(x, value, ...) x$push(value)
+pop.stack  <- function(x) x$pop()
+
+shift <- function(x, value, ...) UseMethod("shift")
+unshift  <- function(x, ...) UseMethod("unshift")  
+shift.stack <- function(x, value, ...) x$shift(value)
+unshift.stack  <- function(x) x$unshift()
+
+```
+
+```{r}
+setClass("stackS4", slots = c(
+    .data = "numeric",
+    stack = "environment"
+)
+# , prototype = prototype(
+#     .data = vector("numeric"),
+#     stack = new.env()
+# )
+)
+
+setGeneric("push", function(object, value, ...) standardGeneric("push"))
+setGeneric("pop", function(object, ...) standardGeneric("pop"))
+setGeneric("shift", function(object, value, ...) standardGeneric("shift"))
+setGeneric("unshift", function(object, ...) standardGeneric("unshift"))
+
+setMethod("initialize", "stackS4", function(.Object, ...) {
+    .Object@.data <- vector("numeric")
+    .Object@stack <- new.env()
+    # environment(stack$push)      <- as.environment(stack)
+    # environment(stack$pop)       <- as.environment(stack)
+    # environment(stack$shift)     <- as.environment(stack)
+    # environment(stack$unshift)   <- as.environment(stack)    
+    
+    # class(stack) <- .Object@stack
+    # class(.Object@stack) <- .Object@stack
+    # stack    
+    .Object
+})
+
+setMethod("push", "stackS4", function(object, value, ...) {
+    # environment(object)      <- as.environment(object@stack)
+    object@.data <- c(object@.data, value)
+    object
+})
+
+setMethod("pop", "stackS4", function(object, ...) {
+        # environment(object)      <- as.environment(object@stack)
+        tmp <- object@.data[length(object@.data)]
+        object@.data <- object@.data[-length(object@.data)]
+        return(tmp)
+})
+
+st <- new("stackS4")
+st
+# nb <- new_betterstack()
+push(st, 1:3)
+```
+
+```{r}
+pop(st, 3)
+st@.data
+```
+
+
+
+
+
+
+```{r}
+nb <- flexStack()
+push(nb, 1:3)
+```
+
+```{r}
+nb$.Data
+# [1] 1 2 3
+```
+
+```{r}
+pop(nb)        # from the back
+nb$.Data
+# [1] 3
+# [1] 1 2
+```
+
+```{r}
+unshift(nb) # from the front
+# [1] 2
+```
+
+```{r}
+shift(nb, 3)
+```
+
+```{r}
+push(nb, 1)
+```
+
+```{r}
+nb$.Data
+```
+
+
+
+```{r}
+setClass('Stack', 
+         representation(list='list', cursor='numeric'),  # type defs
+         prototype(list=list(), cursor=NA_real_))        # default values
+
+setGeneric('push', function(obj, ...) standardGeneric('push'))
+setMethod('push', signature(obj='Stack'), 
+    function(obj, x) {
+        obj@list <- c(x, obj@list)
+        obj
+})
+
+setGeneric('pop', function(obj, ...) standardGeneric('pop'))
+setMethod('pop', signature(obj='Stack'),
+    function(obj) {
+        obj@cursor <- obj@list[[1]]
+        obj@list <- obj@list[-1]
+        obj
+    }
+)
+
+
+```
+

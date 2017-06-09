@@ -74,6 +74,7 @@ exec(b, 1)
 g <- function(x) return(24)
 b <- new("C")
 g(b)
+# [1] 24
 ```
 
 
@@ -123,7 +124,7 @@ exec(c, 2)
 # been implemented for a class B or C
 setGeneric('exec', function(object, y) standardGeneric('exec'))
 
-setGeneric('f', function(object) standardGeneric('f'))
+# setGeneric('f', function(object) standardGeneric('f'))
 
 setClass('A', representation(a='numeric'))
 
@@ -140,6 +141,7 @@ setMethod('exec', c('A', 'ANY'),
 setClass('B', representation(b='numeric'), contains = c("A"))
 setClass('C', representation(c='numeric'), contains = c("A"))
 
+# new methods added
 setMethod("exec", "B", function(object) {
     return(42)
 })
@@ -153,11 +155,25 @@ setMethod("exec", "C", function(object) {
 ```{r}
 b <- new("B")
 exec(b, 1)
+# [1] 42
 ```
 
 ```{r}
 c <- new("C")
 exec(c, 2)
+# [1] 24
+```
+
+```{r}
+exec(b)
+exec(c)
+# [1] 42
+# [1] 24
+```
+
+```{r}
+bb <- new("B")
+exec(bb)
 ```
 
 
@@ -195,7 +211,8 @@ exec(c, 1)
 # This implementation has a problem: it doesn alert the user that the method
 # has not been implemented
 
-setGeneric('exec', function(object, y) standardGeneric('exec'))
+setGeneric('exec', function(obj1, obj2) standardGeneric('exec'))
+setGeneric('f', function(object) standardGeneric('f'))
 
 setClass('A', representation(a='numeric'))
 setClass('B', representation(b='numeric'))
@@ -203,15 +220,29 @@ setClass('C', representation(c='numeric'))
 
 setClassUnion("BorC", c("B", "C"))
 
-setMethod("exec", c("A", "BorC"), function(object, y) {
-    cat(class(object))
-        if (!hasMethod('exec', class(object))) {
-            stop('Y must implement method f!')
-        } else {
-            return(f(y))
-        }
-    })
+# setMethod("exec", c("A", "BorC"), function(object, y) {
+#     cat(hasMethod(object))
+#     # cat(class(object))
+#     # cat(class(y))
+#         if (!hasMethod('exec', class(object))) {
+#             stop('Y must implement method f!')
+#         } else {
+#             return(f(y))
+#         }
+#     })
 
+setMethod('exec', signature = c('A', 'BorC'),
+      function(obj1, obj2) {
+        if (!hasMethod('f', class(obj2))) {
+          stop('Y must implement method f!')
+        } else {
+          return(obj1)
+        }
+      })
+
+```
+
+```{r}
 setMethod("exec", "B", function(object) {
     return(42)
 })
@@ -220,6 +251,7 @@ setMethod("exec", "C", function(object) {
     return(24)
 })
 ```
+
 
 
 ```{r}
@@ -231,5 +263,19 @@ exec(b, 1)
 
 ```{r}
 c <- new("C")
+exec(c)
 exec(c, 2)
 ```
+
+```{r}
+exec(b)
+exec(c)
+# [1] 42
+# [1] 24
+```
+
+```{r}
+a <- new("A")
+exec(a)
+```
+

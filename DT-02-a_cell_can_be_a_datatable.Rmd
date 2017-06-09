@@ -1,0 +1,40 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+data.table(
+        x = letters[1:3],
+        y = list( 1:10,
+                  letters[1:4],
+                  data.table(a=1:3, b=4:6)
+                  )
+        )
+
+
+```
+
+```{r}
+# select row in column x that has "c"
+DT[x == "c"]
+```
+
+```{r}
+# assign result when x == "c"
+dt.c <- DT[x == "c"]
+```
+
+
+```{r}
+# select column y
+dt.c$y
+```
+
+```{r}
+dt.c.y <- dt.c$y
+class(dt.c.y)
+names(dt.c.y)
+length(dt.c.y)
+```
+

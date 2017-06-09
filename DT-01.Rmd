@@ -1,0 +1,131 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+# get the nearest value to a lookup
+
+library(data.table)
+
+DT <- data.table(x = c("A", "A", "A", "B"), y = c(2, 9, 11, 3), 
+                 value = c(1.1, 1.2, 1.3, 1.4))
+
+DT
+
+setkey(DT, x, y)
+DT[.("A", 7), roll = "nearest"]
+```
+
+https://stackoverflow.com/q/15712826/5270873
+
+```{r}
+# another example for lookup nearest
+
+# master table
+DT1 = data.table(x=rep(c("a","b","c"),each=3), time=c(10,30,60), v=1:9)
+
+# table with lookup values
+DT2 = data.table(x=rep(c("a","b","c"),each=1), time=c(10,10,60))
+DT2=data.table(x=rep(c("a","b","c"),each=1),time=c(17,54,3))
+
+DT1
+DT2
+```
+
+```{r}
+# perform the lookup
+setkey(DT1,x,time)
+DT1[DT2, roll="nearest"]
+
+```
+
+```{r}
+# to roll to the next observation (next observation carried backwards) :
+DT1[DT2,roll=-Inf]
+```
+
+
+
+```{r}
+# this doesn't work but in SO looks nice
+setkey(DT2, time)
+DT1[, id := findInterval(DT1$time, DT2$time)]
+DT2[, id := 1:3]
+
+setkey(DT1, "x", "id")
+setkey(DT2, "x", "id")
+print(DT1[DT2][, id := NULL])
+```
+
+
+
+## Grouping by values
+
+```{r}
+dt = data.table(rnk = c(0, 0.0909090909090909, 
+                        0.181818181818182, 0.272727272727273),
+                val = c(0.0233775088495975, 0.0270831481152598, 
+                        0.0275016216267234, 0.0275016249293408),
+                key="val")
+dt
+```
+
+https://stackoverflow.com/a/21892102/5270873
+
+```{r}
+# group by `val`
+dt[,.N, by=val]
+```
+
+```{r}
+# tolerance
+sqrt(.Machine$double.eps)
+```
+
+
+## adding to a column given a condition
+
+```{r}
+library(data.table)
+
+DT <- data.table(x = c("A", "A", "A", "B"), y = c(2, 9, 11, 3), 
+                 value = c(1.1, 1.2, 1.3, 1.4))
+
+DT
+```
+
+```{r}
+# add 1 to a column given that x == B
+DT[x == "B", y := y + 1]
+DT
+```
+
+```{r}
+DT[value < 1.25, y := y + 1]
+DT
+```
+
+## selecting columns
+
+
+```{r}
+# DT[, .(v)]                     # same as above, .() is a shorthand alias to list()
+```
+
+
+```{r}
+# as a vector
+DT[, x]
+```
+
+```{r}
+# as a data.table
+DT[, list(x)]
+```
+
+```{r}
+# same as list()
+DT[, .(x)]
+```
+
