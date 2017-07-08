@@ -10,7 +10,8 @@ source("./R/RBall.R")
 ```
 
 
-
+## Play the game, silent
+Non-verbose, only summary at the end of the games
 
 ```{r}
 # The whole program using S4 classes
@@ -19,13 +20,39 @@ n <-  5        # play fifty games
 # Each game ends when a player defeats another by 7-0 or the first that reaches 15 points.
 
 stats <- SimStats()
-for (i in 1:n) {
-    theGame <- RBallGame(0.5, 0.5, verbose = TRUE)
+for (i in 1:n) {   # play `n` games
+    theGame <- RBallGame(0.5, 0.5, verbose = FALSE)
     theGame <- play(theGame)
-    stats <- Update(stats, theGame)
+    stats   <- Update(stats, theGame)
 }
 printReport(stats)
 ```
+
+
+## Play the game, verbose 
+Verbose plus summary at the end of the games
+
+```{r}
+# The whole program using S4 classes
+n <-  5        # play fifty games
+
+# Each game ends when a player defeats another by 7-0 or the first that reaches 15 points.
+
+stats <- SimStats()
+for (i in 1:n) {   # play `n` games
+    theGame <- RBallGame(0.5, 0.5, verbose = TRUE)
+    theGame <- play(theGame)
+    stats   <- Update(stats, theGame)
+}
+printReport(stats)
+```
+
+
+
+
+
+
+
 
 ```{r}
 # test one player

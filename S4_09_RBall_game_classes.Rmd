@@ -1,7 +1,48 @@
 ---
 title: "The making of RBall game class"
-output: html_notebook
+output:
+  html_document: default
+  html_notebook: default
 ---
+
+The application has three main classes:
+* the player represented by the class `Player` which defines the characteristics of each player in the game
+
+* the game represented by the class `RBallGame` which 
+
+
+## Player methods
+    * show: info of any player
+    * initialize: score, probability per player and ID
+    * winsServe: decide who wins this hand (random)
+    * incScore: increment the score in 1 if player wins
+    * getScore: get the current score
+    * whois: returns the player ID
+
+# RBallGame methods
+    initialize: define the players and who plays first
+    play: play the game until is over (loop). 
+          If player wins, increment score.
+          then, switch server.
+    isOver: game over if player reaches 15, or one player wins by 7-0.
+    changeServer: switch player after a win
+    getScores: get the current score for all players.
+
+## SimStats methods
+    initialize: initialize wins, shuts and games for players
+    Update: tracks number of games, wins and shuts
+    printReport: print games, wins and shuts for players
+
+
+## Game controller (use of the classes)
+    n =   5
+    stats <- SimStats()   # start the statistics; clear all
+    for (i in 1:n) {      # play `n` games
+        theGame <- RBallGame(0.5, 0.5, verbose = TRUE)  # start the game
+        theGame <- play(theGame)                        # play the game
+        stats <- Update(stats, theGame)                 # update the statistics
+    }
+    printReport(stats)                                  # print the report
 
 
 ```{r}
@@ -69,13 +110,12 @@ setMethod("show",
           })
 
 
-setMethod("initialize", "Player",
-          function(.Object, prob, ID){
-              .Object@score <- 0
-              .Object@prob  <- prob
-              .Object@ID    <-  ID
-              return(.Object)
-          })
+setMethod("initialize", "Player", function(.Object, prob, ID){
+    .Object@score <- 0
+    .Object@prob  <- prob
+    .Object@ID    <-  ID
+    return(.Object)
+})
 
 setMethod("winsServe", "Player", function(object) {
     ru <- runif(1)
@@ -98,12 +138,13 @@ setMethod("whois", "Player", function(object) {
 ###############################################################################
 # set methods for RBAllGame class
 setMethod("initialize", "RBallGame",
-          function(.Object, ..., probA = 0.5, probB = 0.5){
-              .Object@PlayerA <- Player(prob = probA, ID = "A")
-              .Object@PlayerB <- Player(prob = probB, ID = "B")
-              .Object@server <- .Object@PlayerA
-              return(.Object)
-          })
+    function(.Object, ..., probA = 0.5, probB = 0.5){
+        .Object@PlayerA <- Player(prob = probA, ID = "A")
+        .Object@PlayerB <- Player(prob = probB, ID = "B")
+        .Object@server <- .Object@PlayerA
+        return(.Object)
+})
+
 
 
 setMethod("play", "RBallGame", function(object) {
@@ -125,7 +166,7 @@ setMethod("play", "RBallGame", function(object) {
         if (RBall.env[["verbose"]]) cat(sprintf("%35d %7s %7s %8d %8d \n", 
                             i, whois(object@server), isOver(object), 
                             getScore(object@PlayerA), getScore(object@PlayerB)))
-        i <- i +1
+        i <- i + 1
     }
     object
 })
@@ -151,6 +192,9 @@ setMethod("getScores", "RBallGame", function(object) {
     return(list(A = getScore(object@PlayerA), 
                 B = getScore(object@PlayerB)))
 })
+
+
+
 
 ###############################################################################
 # set method for SimStats class
@@ -195,19 +239,26 @@ setMethod("printReport", "SimStats", function(object) {
 setMethod("printLine", "SimStats", function(object, aGame) {
 })
 
+
+
+```
+
+```{r}
 # create a project environment
 RBall.env <- new.env(parent = emptyenv()) # create new environment
 
 # constructors
 Player <- function(prob, ID) new("Player", prob = prob, ID = ID)
+
 RBallGame <- function(probA, probB, verbose = FALSE) {
     # use an environment to pass the verbose flag for printing
     RBall.env[["verbose"]] <- verbose
     new("RBallGame", probA = probA, probB = probB)
-}    
-SimStats <- function() new("SimStats")
+} 
 
+SimStats <- function() new("SimStats")
 ```
+
 
 
 
