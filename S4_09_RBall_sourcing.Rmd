@@ -14,7 +14,7 @@ source("./R/RBall.R")
 
 ```{r}
 # The whole program using S4 classes
-n <-  50        # play fifty games
+n <-  5        # play fifty games
 
 # Each game ends when a player defeats another by 7-0 or the first that reaches 15 points.
 
