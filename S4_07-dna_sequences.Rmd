@@ -148,18 +148,19 @@ setMethod("id", "GenericSeq", function(object, ...) object@id)
 setMethod("id<-", "GenericSeq",
           function(object,value) object@id <- value)
 
-setReplaceMethod("id",
-                 signature(object="GenericSeq",
-                           value="character"),
-                 function(object, value) {
-                   object@id <- value
-                   if (validObject(object))
-                     return(object)
-                 })
+# setReplaceMethod("id",
+#                  signature(object="GenericSeq",
+#                            value="character"),
+#                  function(object, value) {
+#                    object@id <- value
+#                    if (validObject(object))
+#                      return(object)
+#                  })
 
 
 setMethod("alphabet", "GenericSeq", function(object, ...) object@alphabet)
 setMethod("length", "GenericSeq", function(x) nchar(x@sequence))
+
 setMethod("seq", "GenericSeq", function(object, ...) object@sequence)
 
 setReplaceMethod("seq",
@@ -291,4 +292,23 @@ myseq[1, 10]
 myseq2 <- readFasta(fastafilename[2])
 myseq2
 ```
+
+
+```{r}
+# set the id using setReplaceMethod
+id(myseq2) <- "Sequence #1"
+myseq2
+```
+
+```{r}
+# get the id
+id(myseq2)
+```
+
+
+```{r}
+# using setReplaceMethod
+`id<-`(myseq2, "this is sequence no. 1")
+```
+
 
