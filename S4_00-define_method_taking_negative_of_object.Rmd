@@ -1,0 +1,24 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+https://stackoverflow.com/questions/34207995/how-to-define-s4-method-for-taking-the-opposite-of-the-object?rq=1
+
+```{r}
+setClass("testClass", 
+                 representation(a="numeric"))
+
+setMethod("Arith", c(e1="testClass", e2="missing"),
+                    function(e1, e2) {
+                        op = .Generic[[1]]
+                        switch(op,
+                            `-` = return(-e1@a)
+                        )
+                    }
+)
+
+tc <- new("testClass", a=2)
+-tc
+```
+
