@@ -1,0 +1,44 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+#' An S4 class that stores a list.
+#' @export
+    setClass("testClass", 
+      representation(a="list"))
+
+#' extract parts of testClass
+#'
+#' @name [
+#' @aliases [,testClass-method
+#' @docType methods
+#' @rdname extract-methods
+setMethod("[", signature(x = "testClass", i = "ANY", j="ANY"),
+  function (x, i, j, ..., drop) {
+     x@a[i]
+  }
+)
+
+#' replace names of testClass
+#'
+#' @name [
+#' @aliases [<-,testClass-method
+#' @docType methods
+#' @rdname extract-methods
+setReplaceMethod("names", signature(x = "testClass", value = "ANY"), definition = function (x, value) {
+  names(x@a) <- value
+  x
+})
+
+
+tc.a <- new("testClass", a = list(m = "abc", n = 100))
+
+```
+
+```{r}
+tc.a["m"]
+tc.a["n"]
+```
+
