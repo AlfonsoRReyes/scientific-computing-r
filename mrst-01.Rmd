@@ -1,0 +1,152 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+        Grid.Nx=64; Dx=1; Grid.hx = Dx/Grid.Nx; % Dimension in x−direction
+        Grid.Ny=64; Dy=1; Grid.hy = Dy/Grid.Ny; % Dimension in y−direction
+        Grid.Nz=1; Dz=1; Grid.hz = Dz/Grid.Nz; % Dimension in z−direction
+        N = Grid.Nx∗Grid.Ny; % Total number of grid blocks
+        Grid.V=Grid.hx∗Grid.hy∗Grid.hz; % Cell volumes
+        
+        Grid.K=ones(3,Grid.Nx,Grid.Ny,Grid.Nz); % Unit permeability
+        Grid.por =ones(Grid.Nx,Grid.Ny,Grid.Nz); % Unit porosity
+        
+        Q=zeros(N,1); Q([1 N])=[1 −1]; % Production/injection
+        Fluid.vw=1.0; Fluid.vo=1.0; % Viscosities
+        Fluid.swc=0.0; Fluid.sor=0.0; % Irreducible saturations
+        
+        S=zeros(N,1); % Initial saturation
+        nt = 25; dt = 0.7/nt; % Time steps
+        for t=1:nt
+            [P,V]=Pres(Grid,S,Fluid,Q); % pressure solver
+            S=Upstream(Grid,S,Fluid,V,Q,dt); % saturation solver
+            
+            % plot ﬁlled contours at the midpoints of the grid cells
+            contourf(linspace(Grid.hx/2,Dx−Grid.hx/2,Grid.Nx),...
+            linspace(Grid.hy/2,Dy−Grid.hy/2,Grid.Ny),...
+            
+            reshape(S,Grid.Nx,Grid.Ny),11,’k’);
+            axis square; caxis([0 1]); % equal axes and color
+            drawnow; % force update of plot
+        end
+
+```{r}
+library(pracma)
+# pracma doesn't have multidimensional arrays like in Matlab
+```
+
+```{r}
+m.ones <- function(x, y, z=NULL) {
+    if (is.null(z)) array(1, dim=c(x, y))
+    if (missing(y)) array(1, dim=c(x, z))
+    if (missing(x)) array(1, dim=c(y, z))
+    array(1, dim=c(x, y, z))
+}
+
+m.zeros <- function(x, y, z=NULL) {
+    if (is.null(z)) array(0, dim=c(x, y))
+    if (missing(y)) array(0, dim=c(x, z))
+    if (missing(x)) array(0, dim=c(y, z))
+    array(0, dim=c(x, y, z))
+}
+  
+```
+
+
+```{r}
+Grid.Nx=8; Grid.hx=1/Grid.Nx
+Grid.Ny=8; Grid.hy=1/Grid.Ny
+Grid.Nz=1; Grid.hz=1/Grid.Nz
+Grid.K = m.ones(3, Grid.Nx, Grid.Ny)
+
+Grid
+
+# N=Grid.Nx∗Grid.Ny∗Grid.Nz; q=zeros(N,1); q([1 N])=[1 −1];
+```
+
+```{r}
+arr = array(1, dim=c(200,22,3))
+dim(arr)
+```
+
+```{r}
+Grid <- list(Nx = 8, Ny = 8, Nz =8)
+Grid
+```
+
+```{r}
+
+setClass("Grid", slots = c(
+    Nx = "numeric",
+    Ny = "numeric",
+    Nz = "numeric",
+    por = "numeric"
+))
+
+# setMethod("initialize", "Grid", function(.Object) {
+#     callNextMethod(.Object)
+# })
+
+# setGeneric("Grid.Nx<-", function(object, value){standardGeneric("Grid.Nx<-")})
+# setReplaceMethod(f="Grid.Nx", signature="Grid", 
+#                  definition=function(object, value){ 
+#                      object@Nx <- value
+#                      return (object)
+# })
+# 
+# setGeneric("Grid.Ny<-", function(object, value){standardGeneric("Grid.Ny<-")})
+# setReplaceMethod(f="Grid.Ny", signature="Grid", 
+#                  definition=function(object, value){ 
+#                      object@Ny <- value
+#                      return (object)
+# })
+# 
+# setGeneric("Grid.Nz<-", function(object, value){standardGeneric("Grid.Nz<-")})
+# setReplaceMethod(f="Grid.Nz", signature="Grid", 
+#                  definition=function(object, value){ 
+#                      object@Nz <- value
+#                      return (object)
+# })
+# 
+# setMethod("show", signature = "Grid",
+#          function(object) {
+#            cat(object@Nx, "\n")
+#            cat(object@Ny, "\n")
+#            cat(object@Nz, "\n")
+#          }
+# )
+
+
+# constructor
+Grid <- function(Nx=0, Ny=0, Nz=0, por=0) {
+    new("Grid", Nx = Nx, Ny = Ny, Nz = Nz, por = por)
+}
+
+g <- Grid()
+# g <- Grid(Nx=0,Ny=0,Nz=0,por=0)
+```
+
+
+```{r}
+Grid <- Grid()
+Grid.Nx <- 3
+Grid.Ny <- 8
+Grid.Nz <- 4
+Grid.Nx
+Grid.Ny
+Grid.Nz
+# show(Grid)
+```
+
+
+```{r}
+Grid
+```
+
+
+```{r}
+g <- new("Grid", Nx=1)
+```
+
