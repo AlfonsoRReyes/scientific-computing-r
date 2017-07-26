@@ -1,0 +1,48 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+https://bugs.r-project.org/bugzilla3/show_bug.cgi?id=16141
+
+"A call to callGeneric can only appear inside a method definition. It then results in a call to the current generic function. The value of that call is the value of callGeneric. While it can be called from any method, it is useful and typically used in methods for group generic functions."
+
+```{r}
+setGeneric("foo", function(x, ...) standardGeneric("foo"))
+setMethod("foo", "character",
+  function(x, print.it=FALSE) if (print.it) print(x))
+
+foo("Hi!", print.it=TRUE)  # Hi!
+
+setMethod("foo", "numeric",
+    function(x, print.it=FALSE) {
+        x <- as.character(x)
+        callGeneric()
+}
+)
+
+foo(335, print.it=TRUE)  # 335
+```
+
+```{r}
+# First problem:
+
+  toto1 <- function(x, ...) foo(x, ...)
+  toto1("Hi!", print.it=TRUE)  # Hi!
+  toto1(335, print.it=TRUE)    # I get nothing here!
+  # fixed
+  # 335
+```
+
+```{r}
+# Second problem:
+
+  toto2 <- function(...) foo(...)
+  toto2("Hi!", print.it=TRUE)  # Hi!
+  toto2(335, print.it=TRUE)    # I get an error here! (unable to find an
+                               # inherited method for function 'foo' for
+                               # signature '"missing"')
+  # fixed
+  # 335
+```
+

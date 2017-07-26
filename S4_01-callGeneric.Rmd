@@ -5,7 +5,8 @@ output: html_notebook
 
 
 ```{r}
-setClass("testComplex", slots = c(zz = "complex"))
+setClass("testComplex", slots = c(
+    zz = "complex"))
 
 ## method for whole group "Complex"
 setMethod("Complex", "testComplex",

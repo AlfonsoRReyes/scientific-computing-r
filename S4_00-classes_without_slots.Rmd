@@ -1,0 +1,106 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+## 1
+These classes are defined by providing a prototype but no representation in the call to setClass.
+
+```{r}
+setClass("seq", contains = "numeric",
+         prototype = prototype(numeric(3)))
+```
+
+
+```{r}
+s1 <- new("seq")
+s1
+```
+
+```{r}
+slotNames(s1)
+```
+
+
+Instances of these classes are basically copies of the prototype with a class attribute. 'initialize` methods can be defined for these classes as is shown below.
+
+```{r}
+setMethod("initialize", "seq", function(.Object) {
+    .Object[1] = 10
+    .Object
+})
+
+new("seq")
+```
+
+## 2
+Another use for classes with no slots is to define user-controlled extensions of R's internal classes so that methods can be defined for them.
+
+
+```{r}
+tryCatch(setMethod("[", signature("integer"), 
+                   function(x, i, j, drop) print("howdy")),
+         error = function(e)
+             print("we failed"))
+```
+
+```{r}
+setClass("MyInt", representation("integer"))
+setMethod("[", signature("MyInt"),
+          function(x, i, j, drop) print("howdy"))
+
+x = new("MyInt", 4:5)
+x[3]
+```
+
+## 3
+
+```{r}
+setClass("DBFunc", "function")
+
+setMethod("$", signature = c("DBFunc", "character"),
+          function(x, name) 
+              slot(x, name)
+          )
+```
+
+## "["
+
+
+```{r}
+getGeneric("[")
+
+function (x, i, j, ..., drop = TRUE) standardGeneric("[", .Primitive("["))
+
+setClass("A", representation=representation(slt="numeric"))
+
+setMethod("[", c("A", "integer", "missing", "ANY"),
+    ## we won't support subsetting on j; dispatching on 'drop' doesn't
+    ## make sense (to me), so in rebellion we'll quietly ignore it.
+    function(x, i, j, ..., drop=TRUE)
+{
+    ## less clever: update slot, return instance
+    ## x@slt = x@slt[i]
+    ## x
+    ## clever: by default initialize is a copy constructor, too
+    initialize(x, slt=x@slt[i])
+})
+
+a = new("A", slt=1:5)
+a[3:1]
+```
+
+## "$"
+
+```{r}
+getGeneric("$")
+function (x, name) standardGeneric("$", .Primitive("$"))
+
+setMethod("$", "A", function(x, name) {
+    ## 'name' is a character(1)
+    slot(x, name)
+})
+
+a$slt
+```
+
