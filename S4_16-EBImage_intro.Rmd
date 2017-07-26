@@ -1,0 +1,173 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+https://stackoverflow.com/a/32734716/5270873
+https://www.bioconductor.org/packages/devel/bioc/vignettes/EBImage/inst/doc/EBImage-introduction.html#1_getting_started
+
+
+```{r}
+library(EBImage)
+
+nuc = readImage(system.file("images", "nuclei.tif", package="EBImage"))
+display(nuc, method = "raster", all = TRUE)
+```
+
+```{r}
+nuc1 <- nuc + 0.2
+display(nuc1, method = "raster")
+```
+```{r}
+nuc1 <- nuc - 0.2
+display(nuc1, method = "raster")
+```
+
+```{r}
+# decrease contrast
+nuc3 <- nuc * 0.5 
+display(nuc3, method = "raster")
+```
+
+```{r}
+# increase contrast
+nuc4 <- nuc * 2
+display(nuc4, method = "raster")
+```
+
+```{r}
+# increase gamma correction
+nuc5 <- nuc^2
+display(nuc5, method = "raster")
+```
+
+
+```{r}
+# decrease gamma correction
+nuc6 <- nuc^0.7
+display(nuc6, method = "raster")
+```
+
+```{r}
+# internal structure
+str(nuc)
+```
+
+```{r}
+# .Data dimensions
+dim(nuc)
+```
+
+```{r}
+# image data
+library(tibble)
+
+head(imageData(nuc))
+```
+
+```{r}
+# distribution of pixel intensitie
+hist(nuc)
+```
+
+```{r}
+# summary of Image objects is also provided by the show method
+nuc
+```
+
+```{r}
+print(nuc, short=TRUE)
+```
+
+```{r}
+nuc_comb = combine(
+  nuc,
+  nuc + 0.3,
+  nuc * 2,
+  nuc ^ 0.5
+)
+
+display(nuc_comb, all=TRUE, method = "raster")
+```
+
+```{r}
+cropped <- nuc[100:300, 20:80, 1:2]
+display(cropped, method = "raster", all = TRUE)
+```
+
+```{r}
+#  thresholding operation returns an Image object with binarized pixels values. 
+thresh <- nuc < 0.5
+display(thresh, method = "raster")
+```
+
+```{r}
+thresh
+```
+
+```{r}
+# image transposition, use transpose 
+nuc_t4 = combine(
+  nuc,
+  transpose(nuc),
+  transpose(transpose(nuc)),
+  transpose(transpose(transpose(nuc)))
+)
+
+display(nuc_t4, all = TRUE, method = "raster")
+# nuc_t <- transpose(nuc)
+# display(nuc_t, method = "raster")
+```
+
+```{r}
+# Otsu’s method is a technique to automatically perform clustering-based image thresholding.
+threshold = otsu(nuc)
+threshold
+nuc_th = combine( mapply(function(frame, th) frame > th, getFrames(nuc), threshold, SIMPLIFY=FALSE) )
+display(nuc_th, all=TRUE, method = "raster")
+
+```
+
+```{r}
+#  The watershed algorithm treats a grayscale image as a topographic relief, or heightmap. 
+nmask = watershed( distmap(nuc_th), 2 )
+display(colorLabels(nmask), all=TRUE, method = "raster")
+```
+
+## Cell segmentation
+We conclude our vignette by applying the functions described before to the task of segmenting cells. Our goal is to computationally identify and qualitatively characterize the cells in the sample fluorescent microscopy images. Even though this by itself may seem a modest goal, this approach can be applied to collections containing thousands of images, an that need no longer to be an modest aim!
+
+We start by loading the images of nuclei and cell bodies. To visualize the cells we overlay these images as the green and the blue channel of a false-color image.
+
+```{r}
+nuc = readImage(system.file('images', 'nuclei.tif', package='EBImage'))
+cel = readImage(system.file('images', 'cells.tif', package='EBImage'))
+
+cells = rgbImage(green=1.5*cel, blue=nuc)
+display(cells, all = TRUE, method = "raster")
+```
+
+```{r}
+nmask = thresh(nuc, w=10, h=10, offset=0.05)
+nmask = opening(nmask, makeBrush(5, shape='disc'))
+nmask = fillHull(nmask)
+nmask = bwlabel(nmask)
+
+display(nmask, all=TRUE, method = "raster")
+```
+
+
+```{r}
+ctmask = opening(cel>0.1, makeBrush(5, shape='disc'))
+cmask = propagate(cel, seeds=nmask, mask=ctmask)
+
+display(ctmask, method = "raster")
+```
+To visualize our segmentation on the we use paintObject.
+
+```{r}
+segmented = paintObjects(cmask, cells, col='#ff00ff')
+segmented = paintObjects(nmask, segmented, col='#ffff00')
+
+display(segmented, all=TRUE, method = "raster")
+```
+
