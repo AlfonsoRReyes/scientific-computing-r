@@ -24,14 +24,10 @@ There is a `Bank` class that can have many `CashPoints` associated with it. `Cas
 
 Each `CashPoint` holds its historical balances and has a givePrediction() method that provides a forecast. This method will be implemented differently in `ATM` and `Branch` classes. The example code implementing this structure is given on listing below. 
 
-
-
 First, by using a `setGeneric()` function we create a generic function givePrediction() that will dispatch appropriate methods following the class of its arguments 
 
 ```{r}
-setGeneric("givePrediction", function(object) {
-    standardGeneric("givePrediction")
-})
+setGeneric("givePrediction", function(object) { standardGeneric("givePrediction")})
 ```
 
 Next we create definitions of Bank, ATM and Branch classes of S4 type using the setClass() function and create a formal method for `givePrediction()` function for those classes. 
@@ -41,28 +37,39 @@ In our example, for the ATMs we use linear regression and for Branches simple me
 The code is run by invoking givePrediction() function on a new Bank class instance. 
 
 
-
 ## The bank class
 The constructor of Bank class reads the bank structure data from the `bank_model.csv` file that contains the list of cash points with their ids and types (ATM or Branch). 
 
+    bank_model.csv
+        CashPointId;CashPointType
+        CashPoint_1;ATM
+        CashPoint_2;Branch
+        CashPoint_3;ATM
+        CashPoint_4;Branch
+        CashPoint_5;ATM
+
 ```{r}
-setClass("Bank", 
-         slots = c(cashPoints = "list"))
+setClass("Bank", slots = c(
+             cashPoints = "list"))
 
 # the Bank constructor reads a CSV file with the ATM id's and the
 # type of CashPoint
-setMethod("initialize", "Bank", 
-          function(.Object) { 
-              # The Bank Model is a dataframe of cash points id and type
-              BankModel <- read.table(file = "./inst/extdata/bank_model.csv",
-                            sep = ";", header = TRUE, stringsAsFactors = FALSE)
-            .Object@cashPoints <- apply(BankModel, 1, 
-                                    function(cp) {
-                                        # cp[2]: ATM or Branch; cp[1]: id
-                                        cat(sprintf("%-8s %-14s \n", cp[2], cp[1]))
-                                        new(cp[2], cp[1]) })  # Branch/ATM get balance by id
-    # add a name to each list
+setMethod("initialize", "Bank", function(.Object) { 
+      # The Bank Model is a dataframe of cash points id and type
+      BankModel <<- read.table(file = "./inst/extdata/bank_model.csv",
+                    sep = ";", header = TRUE, stringsAsFactors = FALSE)
+    .Object@cashPoints <- apply(BankModel, 1, 
+                function(cp) {
+                    # cp[2]: ATM or Branch; cp[1]: id
+                    cat(sprintf("%-8s %-14s \n", cp[2], cp[1]))
+                    # create class instance on the go
+                    new(cp[2], cp[1]) })  # Branch or ATM get balance by id
+                    # Example: new("ATM",    "CashPoint_x")
+                    #          new("Branch", "CashPoint_x")
+    # add a name to each list adding chaspoint type 
     names(.Object@cashPoints) <- apply(BankModel, 1, paste, collapse = "_")
+    # "CashPoint_1_ATM"     "CashPoint_2_Branch" "CashPoint_3_ATM"
+    # "CashPoint_4_Branch"  "CashPoint_5_ATM" 
     return(.Object)
 })
 
@@ -72,12 +79,21 @@ setMethod("givePrediction", "Bank", function(object){
 })
 ```
 
+```{r}
+# test how class Bank works
+bank <- new("Bank")
+# ATM      CashPoint_1    
+# Branch   CashPoint_2    
+# ATM      CashPoint_3    
+# Branch   CashPoint_4    
+# ATM      CashPoint_5    
+# [1] "CashPoint_1_ATM"    "CashPoint_2_Branch" "CashPoint_3_ATM"    "CashPoint_4_Branch"
+# [5] "CashPoint_5_ATM" 
+```
+
 
 ```{r}
 isGeneric("initialize")
-```
-
-```{r}
 hasMethod("initialize")
 ```
 
@@ -88,16 +104,38 @@ An appropriate subset of data is first selected using the `BranchId` column. Dat
 
 After the creation of an object of type `Bank,` its `givePrediction()` method is invoked, which calls automatically via the S4 class system either ATM or Branch givePrediction() method according to the run-time type of cash point. 
 
+    branch_balances_data.csv
+        BranchId;Date;Balance
+        CashPoint_1;2012-12-01;423000
+        CashPoint_1;2012-12-02;312000
+        CashPoint_1;2012-12-03;220000
+        CashPoint_1;2012-12-04;123000
+        CashPoint_2;2012-12-01;223000
+        CashPoint_2;2012-12-02;212000
+        CashPoint_2;2012-12-03;320000
+        CashPoint_2;2012-12-04;223000
+        CashPoint_3;2012-12-01;323000
+        CashPoint_3;2012-12-02;312000
+        CashPoint_3;2012-12-03;270000
+        CashPoint_3;2012-12-04;223000
+        CashPoint_4;2012-12-01;323000
+        CashPoint_4;2012-12-02;412000
+        CashPoint_4;2012-12-03;320000
+        CashPoint_4;2012-12-04;373000
+        CashPoint_5;2012-12-01;223000
+        CashPoint_5;2012-12-02;192000
+        CashPoint_5;2012-12-03;150000
+        CashPoint_5;2012-12-04;133000
+
 ```{r}
 # CashPoint has two slots: id and balances
-setClass("CashPoint", 
-         slots = c( id = "character", 
-                    balances = "data.frame"), 
-         contains = "VIRTUAL")
+setClass("CashPoint", slots = c(
+    id = "character", 
+    balances = "data.frame"), 
+    contains = "VIRTUAL")
 
 # CashPoint doesn't do anything; only lends structure to ATM or Branch
-setMethod("initialize", "CashPoint", 
-          function(.Object, cashPointId){ 
+setMethod("initialize", "CashPoint", function(.Object, cashPointId){ 
               .Object@id <- cashPointId 
               balances <- read.table(file = "./inst/extdata/branch_balances_data.csv",
                                         sep = ";", header = TRUE)
@@ -119,8 +157,7 @@ For Branches we use the simple mean as balance predictor.
 ```{r}
 setClass("Branch", contains = "CashPoint")
 
-setMethod("givePrediction", "Branch", 
-          function(object){
+setMethod("givePrediction", "Branch", function(object){
             # for Branch only take the mean
             return(mean(object@balances$Balance))
 })
@@ -132,8 +169,7 @@ For the ATMs we use linear regression.
 ```{r}
 setClass("ATM", contains = "CashPoint")
 
-setMethod("givePrediction", "ATM", 
-          function(object) { 
+setMethod("givePrediction", "ATM", function(object) { 
               LM <- lm(Balance ~ as.numeric(Date), data = object@balances) 
               prediction <- predict(LM, data.frame(Date = 1 + max(object@balances$Date)))
               return(unname(prediction))

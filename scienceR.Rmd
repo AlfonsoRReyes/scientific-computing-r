@@ -4,30 +4,37 @@
 The following example shows how one can create quite complicated data structures
 by using list objects as components inside a list.
 
-```{r} spec.list <- vector(mode = "list", length = 3)
+```{r} 
+spec.list <- vector(mode = "list", length = 3)
 
 names(spec.list) <- c("O2", "H2O", "CO2")
 
-spec.list$O2  <- list(name = "oxygen", mol.weight = 32) spec.list$H2O <-
-list(name = "water", mol.weight = 18) spec.list$CO2 <- list(name = "carbon
-dioxide", mol.weight = 44)
+spec.list$O2  <- list(name = "oxygen", mol.weight = 32) 
+spec.list$H2O <- list(name = "water", mol.weight = 18) 
+spec.list$CO2 <- list(name = "carbon dioxide", mol.weight = 44)
+spec.list 
+``` 
 
-spec.list ``` The names() command initializes the names of the mother list. Each
+The names() command initializes the names of the mother list. Each
 daughter component of the mother list is in itself again a list object. Print
 spec.list on the screen and try to understand its contents.
 
 ## Plotting a mathematical function
 
-```{r} # 1st plot curve(expr = sin(3*pi*x))
+```{r} 
+# 1st plot 
+curve(expr = sin(3*pi*x))
 
-# 2nd set of plots curve(expr = sin(3*pi*x), from = 0, to = 2, col = "blue", 
-xlab = "x", ylab = "f(x)", main = "curve")
+# 2nd set of plots 
+curve(expr = sin(3*pi*x), from = 0, to = 2, col = "blue", 
+      xlab = "x", ylab = "f(x)", main = "curve")
 
-curve(expr = cos(3*pi*x), add = TRUE, col = "red", lty = 2) abline(h = 0, lty =
-2)
+curve(expr = cos(3*pi*x), add = TRUE, col = "red", lty = 2) 
+abline(h = 0, lty = 2)
 
-# add legend legend("bottomleft", c("sin", "cos"), text.col = c("blue", "red"),
-lty = 1:2) ```
+# add legend 
+legend("bottomleft", c("sin", "cos"), text.col = c("blue", "red"), lty = 1:2) 
+```
 
 ## Root of functions
 
@@ -43,7 +50,8 @@ and selects the subinterval in which a root must lie. This procedure is repeated
 until the interval is suﬃciently small (i.e. smaller than some preset
 tolerance). The bisection method can be implented by following function:
 
-```{r} bisection <- function(f, interval, tol=.Machine$double.eps^0.25,
+```{r} 
+bisection <- function(f, interval, tol=.Machine$double.eps^0.25,
 maxiter=1000) { a <- interval[1] b <- interval[2] if (a >= b) stop("startpoint a
 must be smaller than endpoint b") if (f(a)*f(b) >= 0) stop("f(a) and f(b) must
 have a different sign") i <- 1 while (i <= maxiter) #limit iterations to prevent
@@ -53,7 +61,8 @@ estimated precision if (f(mid) == 0 | estim.prec < tol) # root found { if
 list(root=mid,f.root=f(mid),iter=i,estim.prec=estim.prec) return(result) } i <-
 i + 1 # step counter increases if (sign(f(mid)) == sign(f(a))) a <- mid else b
 <- mid } stop(paste("Bisection method failed: max number of
-steps",maxiter,"exceeded")) } ```
+steps",maxiter,"exceeded")) } 
+```
 
 The bisection method requires four diﬀerent types of input: * f: the function
 for which the root needs to be found * interval: the interval speciﬁed by the

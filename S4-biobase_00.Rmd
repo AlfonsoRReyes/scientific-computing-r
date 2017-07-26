@@ -9,11 +9,13 @@ library(Biobase)
 
 
 ```{r}
+# load a dataset saved as a class
 data(sample.ExpressionSet)
 ```
 
 
 ```{r}
+# assign to object
 eset <-  sample.ExpressionSet
 eset
 ```
@@ -37,6 +39,7 @@ head(assayDataElement(eset, "se.exprs"))
 ```
 
 ```{r}
+# phenoData is another class AnnotatedDataFrame
 pheno <- phenoData(eset)
 pheno
 ```
