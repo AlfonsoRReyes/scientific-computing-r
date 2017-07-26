@@ -1,0 +1,482 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+http://www.stat.wvu.edu/~jharner/courses/stat523/notesFall13/c3s4.Rmd
+
+# Chapter 3 Object-Oriented Programming in R
+
+## Section 3.4 S4 OOP
+
+### 3.4.1 Classes
+
+A class is defined by a call to **setClass**, an instance of *classRepresentation*. The arguments to **setClass** can be:
+* Class: a character string naming the class
+* representation: the slot names in the class and their types specified as a vector
+* contains: a character vector indicating the classes extended or subclassed
+* prototype: an object (usually a list) providing the default values for the slots
+* validity: a function that checks the validity of the class instances
+
+The function **new** creates instances of the class and default values specified in *prototype* can be overridden.
+
+#### setClass
+```{r}
+setClass("A", representation(s1="numeric"), 
+          prototype=prototype(s1=0))
+myA = new("A")
+myA
+
+m2 = new("A", s1=10)
+m2
+```
+
+We can create a class B that contains A, i.e., that inherits from A. If will have the slots of A plus its own.
+
+#### superClass
+```{r}
+setClass("B", contains="A", representation(s2="character"),
+        prototype=list(s2="hi"))
+myB = new("B")
+myB
+```
+
+Removing classes is generally only done experimentally.
+
+#### removeClass
+```{r}
+setClass("Ohno", representation(y="numeric"))
+getClass("Ohno")
+removeClass("Ohno")
+tryCatch(getClass("Ohno"), error=function(x) "Ohno is gone")
+```
+
+#### 3.4.1.1 Introspection
+
+**getSlots** gives the slot names and types, whereas **slotNames** only gives the slot names.
+
+#### aSlots
+```{r}
+getSlots("A")
+slotNames("A")
+```
+
+**extends** with one arguments returns the names of all subclasses, including itself. With two arguemnts, it returns TRUE if the first argument is a subclass of the second.
+
+#### showExtends
+```{r}
+extends("B")
+extends("B", "A")
+extends("A", "B")
+
+library(RBioinf)
+superClassNames("B")
+subClassNames("A")
+```
+The last two functions are self descriptive and are from the `RBioinf` package.
+
+**getClass** and **extends** also show information about builtin classess (converted by **setOldClass**).
+
+#### simpleUseShow
+```{r}
+getClass("matrix")
+extends("matrix")
+```
+
+Use **isClass** to determine whether or not a class has been defined for an R object. Use **isS4** to determine if it is an S4 class. **is.object** works, but does not differentiate the type of class.
+
+#### 3.4.1.2 Coercion
+
+An object can be coerced from one class to another using the **as** function.
+
+In the following case, an instance of `B` is coerced to an instance of `A`.
+#### coercion
+```{r}
+myb = new("B")
+as(myb, "A")
+```
+In the assignment case, only part of the object is coerced.
+#### replacementcoerce
+```{r}
+mya = new("A", s1 = 20)
+as(myb, "A") <- mya
+myb
+```
+
+When classes are not nested, an explicit coercion function is needed using **setAs**. The following code coerces an adjaceny matrix of class `graphAM` to a matrix of class `matrix`.
+#### am2mat
+```{r}
+## setAs(from="graphAM", to="matrix",
+##       function(from) {
+##           if ("weight" %in% names(edgeDataDefaults(from))) {
+##               tm <- t(from@adjMat)
+##               tm[tm != 0] <- unlist(edgeData(from, attr="weight"))
+##               m <- t(tm)
+##           } else {
+##               m <- from@adjMat         
+##           }
+##           rownames(m) <- colnames(m)
+##           m
+##       })
+```
+
+#### 3.4.1.3 Creation of new instances
+
+The creation of an instance is controlled by: the creation of an prototype for the class, the creation of an **initialize** method, or by values supplied to **new**.
+
+Prototypes can be set by using a list or a call to **prototype**.
+
+In the following, the prototype is set by a call to the **prototype** function.
+#### initialize
+```{r}
+setClass("Ex1", representation(s1="numeric"),
+         prototype=prototype(s1=rnorm(10)))
+b = new("Ex1")
+bclass = getClass("Ex1")
+bclass@prototype
+b
+```
+
+#### ex2
+```{r}
+b2 = new("Ex1")
+b2
+```
+Creating a prototype from the **list** function** can fix this problem.
+
+A constructor function can be defined for a class.
+#### constructorFun
+```{r}
+makeex = function() {
+    obj = new("Ex1")
+    obj@s1 = rnorm(10)
+    }
+b2 = makeex()
+```
+
+#### protoInherits
+```{r}
+bb = getClass("B")
+bb@prototype
+```
+
+An **initialize** method can be defined for a class.
+
+Here unnamed arguments which are instances of superclasses are used.
+#### initializeEx
+```{r}
+setClass("W", representation(c1 = "character"))
+setClass("WA", contains=(c("A", "W")))
+a1 = new("A", s1=20)
+w1 = new("W", c1 = "hi")
+new("WA", a1, w1)
+```
+
+Here an **initialize** function is used. The user-defined **initialize** method overrides the default method.
+#### init2
+```{r}
+setClass("XX", representation(a1 = "numeric", 
+    b1 = "character"), 
+    prototype(a1 = 8, b1 = "hi there"))
+
+new("XX")
+
+setMethod("initialize", "XX", function(.Object, ..., b1) {
+   callNextMethod(.Object, ..., b1 = b1, a1 = nchar(b1))
+})
+
+new("XX", b1="yowser")
+```
+
+### MMEX
+```{r}
+ setClass("Capital",
+          representation=representation(
+            string="character"))
+ setClass("CountedCapital",
+          contains="Capital",
+          representation=representation(
+            length="numeric"))
+ setMethod("initialize",
+           "Capital", 
+           function(.Object, ..., string=character(0)) {
+             string <- toupper(string)
+             callNextMethod(.Object, ..., string=string)
+           })
+ setMethod("initialize",
+           "CountedCapital",
+           function(.Object, ...) {
+             .Object <- callNextMethod()
+             .Object@length <- nchar(.Object@string)
+             .Object
+           })
+ new("Capital", string="MiXeD")
+ new("CountedCapital", string="MiXeD")
+ new("CountedCapital", string=c("MiXeD", "MeSsaGe"))
+```
+
+#### 3.4.1.4 Validity
+
+Validity methods are stored as part of the class definition and can be defined by a call to **setClass** or by calling **setValidity**. The validity function must return `TRUE` or one or more character strings describing the failures. Validity or an object can be tested by calling **validObject**.
+
+#### 3.4.1.5 Classes without explicit slots
+
+### noslots
+```{r}
+setClass("seq", contains="numeric", 
+         prototype=prototype(numeric(3)))
+s1 = new("seq")
+s1
+slotNames(s1)
+```
+
+### initNoSlot
+```{r}
+setMethod("initialize", "seq", function(.Object) {
+  .Object[1]=10; .Object})
+
+ new("seq")
+```
+
+### showExt
+```{r}
+tryCatch(setMethod("[", signature("integer"), 
+                   function(x, i, j, drop) print("howdy")), 
+         error = function(e)
+         print("we failed"))
+
+setClass("Myint", representation("integer"))
+setMethod("[", signature("Myint"), 
+                   function(x, i, j, drop) print("howdy"))
+x = new("Myint", 4:5)
+x[3]
+```
+
+### funExt
+```{r}
+setClass("DBFunc", "function")
+setMethod("$", signature = c("DBFunc", "character"),
+  function(x, name) x(name))
+```
+
+### funExt2
+```{r}
+mytestFun = function(arg) print(arg)
+
+mtF = new("DBFunc", mytestFun)
+mtF$y
+is(mtF, "function")
+```
+
+### 3.4.2 Types of classes
+
+A class can either be instantiable or virtual. Direct instances of virtual classes cannot be created. You can test whether or not a class is virtual by using **isVirtualClass**.
+
+### 3.4.3 Attributes
+
+Use attributes with caution. S4 has been implemented with attributes, but without managing the names. Thus, users can corrupt them.
+
+### S4attr
+```{r}
+mya = new("A", s1 = 20)
+class(mya)
+attributes(mya)
+```
+Slot `s1` is corrupted below since it must be numeric.
+### S4attr2
+```{r}
+attr(mya, "s1") <- "L" 
+mya
+```
+
+### 3.4.4 Class Unions
+
+### cUex
+```{r}
+setClassUnion("lorN", c("list", "NULL"))
+subClassNames("lorN")
+superClassNames("lorN")
+
+isVirtualClass("lorN")
+isClassUnion("lorN")
+```
+
+### 3.4.5 Accessor functions
+
+Slots can be accessed directly by the @ operator. However, it is convenient to provide accessor functions for some or all of the components o the object.
+
+### access
+```{r}
+setClass("Foo", representation(a="ANY"))
+setGeneric("a", function(object) standardGeneric("a"))
+setMethod("a", "Foo", function(object) object@a)
+b = new("Foo", a=10)
+a(b)
+```
+
+### 3.4.6 Using S3 classes with S4 classes
+
+S3 class can describe the contents of a slot in an S4 class. They can also be used for dispatch of S4 methods by creating an S4 virtualization of the class.
+
+### setOldClass
+```{r}
+setOldClass("mymatrix")
+getClass("mymatrix")
+```
+
+### useClass
+```{r}
+setClass("myS4mat", representation(m = "mymatrix"))
+x=matrix(1:10, nc=2)
+class(x) = "mymatrix"
+m4 = new("myS4mat", m=x)
+m4
+```
+
+### findalloldclasses
+```{r}
+head(subClassNames(getClass("oldClass")))
+```
+
+### 3.4.7 S4 generic functions and methods
+
+Generic functions can be created by calls to **setGeneric**. Methods can be associated with them through a call to **setMethod**. The method definition indicates the class of each of the formal arguments and this is called the signature of the method.
+
+The first two arguments to **setGeneric** must be `name`, which specifies the name of the generic function, and `def`, which specifies the function defintion. The body of the functin is almost always a call to **standardGeneric**, since this function is used to dispatch to methods based on supplied arguments and establishes a default methods if no function with matching signatures is found.
+
+### simpleGeneric
+```{r}
+setGeneric("foo", 
+  function(object, x) standardGeneric("foo") )
+
+setMethod("foo", signature("numeric", "character"),
+  function(object, x) print("Hi, I'm method one"))
+
+foo(1, "two")
+```
+
+### genSig
+```{r}
+setGeneric("genSig", signature=c("x"), 
+  function(x, y=1) standardGeneric("genSig"))
+   
+setMethod("genSig", signature("numeric"), 
+  function(x, y=20) print(y))
+
+genSig(10)
+```
+
+### genericReturns
+```{r}
+ setGeneric("foo", function(x,y,...) {
+  y = standardGeneric("foo")
+   print("I'm back")
+  y
+ })
+
+ setMethod("foo", "numeric", function(x,y,...) {print("I'm gone")}
+ )
+
+ foo(1)
+```
+
+### getGenericsEx
+```{r}
+library("Biobase")
+allG = getGenerics()
+allGs = split(allG@.Data, allG@package)
+allGBB = allGs[["Biobase"]]
+length(allGBB)
+allGBB
+```
+
+###bypkg
+```{r}
+allGbb = getGenerics("package:Biobase")
+length(allGbb)
+```
+
+#### Evaluation model for generic functions
+
+### 3.4.8 The syntax of method declaration
+
+### Rdots
+```{r}
+setGeneric("bar", function(x, y, ...) standardGeneric("bar"))
+
+setMethod("bar", signature("numeric", "numeric"),
+  function(x, y, d) print("Method1"))
+
+##removes the method above
+setMethod("bar", signature("numeric", "numeric"),
+  function(x, y, z) print("Method2"))
+
+bar(1,1,z=20)
+bar(2,2,30)
+tryCatch(bar(2,4,d=20), error=function(e) 
+  print("no method1"))
+```
+
+### 3.4.9 the semantics of method invocation
+
+### 3.4.10 Replacement methods
+
+### replacement
+```{r}
+
+ setGeneric("a<-", function(x, value)
+            standardGeneric("a<-"))
+
+ setReplaceMethod("a", "Foo",
+  function(x, value) {
+    x@a = value
+    x
+  })
+
+  a(b) = 32
+
+  b
+```
+
+### 3.4.11 Finding methods
+
+### 3.4.12 Advanced topics
+
+#### 3.4.12.1 Setting methods on $
+
+### BiobEx eval=FALSE
+```{r}
+## setMethod("$", "eSet", function(x, name) {
+##     eval(substitute(phenoData(x)$NAME_ARG, 
+##                     list(NAME_ARG = name)))
+## })
+```
+
+#### 3.4.12.2 setIs
+
+#### 3.4.12.3 Dispatching on
+
+### ldots
+```{r}
+ cnew = function(x, ...) {
+   if(nargs() < 3)
+    c2(x, ...)
+   else
+    c2(x, cnew(...))   # recursion?
+ }
+```
+
+### ldots2
+```{r}
+setGeneric("c2", function(x, y) standardGeneric("c2"))
+```
+
+### plus
+```{r}
+setMethod("c2", signature("numeric", "numeric"), function(x, y) x + y) 
+
+cnew(1,2,3,4)
+cnew(1,2)
+cnew(1,2,3)
+```
