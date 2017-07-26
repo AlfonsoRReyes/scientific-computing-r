@@ -1,0 +1,211 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+## 2.4. Inheritance
+A class’ inheritance hiearchy can be specified when the class is defined using
+the contains option. The contains option is a vector that lists the classes the
+new class inherits from. In the following example we build on the Agent class
+defined in the previous section. The idea is that we need agents that represent
+a predator and two prey. We will focus on two predators for this example.
+
+The hierarchy for the classes is shown in Figure 2.. In this example we have one
+Prey class that is derived from the Agent class. There are two predator classes,
+Bobcat and Lynx. The Bobcat class is derived from the Agent class, and the Lynx
+class is derived from the Bobcat class. We will keep this very simple, and the
+only methods associated with the new classes is a move method. For our purposes
+it will only print out a message and set the values of the position and velocity
+to demonstrate the order of execution of the methods associated with the
+classes.
+
+The first step is to create the three new classes.
+
+```{r}
+######################################################################
+# Create the Prey class
+#
+# This is used to represent a prey animal
+Prey <- setClass(
+        # Set the name for the class
+        "Prey",
+
+        # Define the slots - in this case it is empty...
+        slots = character(0),
+
+        # Set the default values for the slots. (optional)
+        prototype = list(),
+
+        # Make a function that can test to see if the data is consistent.
+        # This is not called if you have an initialize function defined!
+        validity = function(object) {
+                if(sum(object@velocity^2)>70.0) {
+                        return("The velocity level is out of bounds.")
+                }
+                return(TRUE)
+        },
+
+        # Set the inheritance for this class
+        contains = "Agent"
+        )
+
+
+
+######################################################################
+# Create the Bobcat class
+#
+# This is used to represent a smaller predator
+Bobcat <- setClass(
+        # Set the name for the class
+        "Bobcat",
+
+        # Define the slots - in this case it is empty...
+        slots = character(0),
+
+        # Set the default values for the slots. (optional)
+        prototype=list(),
+
+        # Make a function that can test to see if the data is consistent.
+        # This is not called if you have an initialize function defined!
+        validity=function(object) {
+                if(sum(object@velocity^2)>85.0) {
+                        return("The velocity level is out of bounds.")
+                }
+                return(TRUE)
+        },
+
+        # Set the inheritance for this class
+        contains = "Agent"
+        )
+
+######################################################################
+# Create the Lynx class
+#
+# This is used to represent a larger predator
+Lynx <- setClass(
+        # Set the name for the class
+        "Lynx",
+
+        # Define the slots - in this case it is empty...
+        slots = character(0),
+
+        # Set the default values for the slots. (optional)
+        prototype = list(),
+
+        # Make a function that can test to see if the data is consistent.
+        # This is not called if you have an initialize function defined!
+        validity = function(object) {
+                if(sum(object@velocity^2)>95.0) {
+                        return("The velocity level is out of bounds.")
+                }
+                return(TRUE)
+        },
+
+        # Set the inheritance for this class
+        contains = "Bobcat"
+        )
+```
+
+The inheritance is specified using the contains option in the setClass command.
+Note that this can be a vector allowing for multiple inheritance. We choose not
+to use that to keep things simpler. If you are feeling like you need more
+self-loathing in your life you should try it out and experiment.
+
+Next we define a method, move, for the new classes. We will include methods for
+the Agent, Prey, Bobcat, and Lynx classes. The methods do not really do anything
+but are used to demonstrate the idea of how methods are executed.
+
+```{r}
+# create a method to move the agent.
+setGeneric(name="move", def = function(theObject) {
+                               standardGeneric("move")
+                       })
+
+setMethod(f="move",
+                      signature="Agent",
+                      definition=function(theObject)
+                      {
+                              print("Move this Agent dude")
+                              theObject <- setVelocity(theObject,c(1,2))
+                              validObject(theObject)
+                              return(theObject)
+                      }
+                      )
+
+setMethod(f="move",
+                      signature="Prey",
+                      definition=function(theObject)
+                      {
+                              print("Check this Prey before moving this dude")
+                              theObject <- callNextMethod(theObject)
+                              print("Move this Prey dude")
+                              validObject(theObject)
+                              return(theObject)
+                      }
+                      )
+
+setMethod(f="move",
+                      signature="Bobcat",
+                      definition=function(theObject)
+                      {
+                              print("Check this Bobcat before moving this dude")
+                              theObject <- setLocation(theObject,c(2,3))
+                              theObject <- callNextMethod(theObject)
+                              print("Move this Bobcat dude")
+                              validObject(theObject)
+                              return(theObject)
+                      }
+                      )
+
+setMethod(f="move",
+                      signature="Lynx",
+                      definition=function(theObject)
+                      {
+                              print("Check this Lynx before moving this dude")
+                              theObject <- setActive(theObject,FALSE)
+                                theObject <- callNextMethod(theObject)
+                              print("Move this Lynx dude")
+                              validObject(theObject)
+                              return(theObject)
+                      }
+                      )
+```
+
+There are a number of things to note. First each method calls the `callNextMethod`
+command. This command will execute the next version of the same method for the
+previous class in the hierarchy. Note that I have included the arguments (in the
+same order) as those called by the original function. Also note that the
+function returns a copy of the object and is used to update the object passed to
+the original function.
+
+Another thing to note is that the methods associated with the Lync, Bobcat, and
+Agent classes arbitrarily change the values of the position, velocity, and
+activity for the given object. This is done to demonstrate the changes that take
+place and reinforce the necessity for using the callNextMethod function the way
+it is used here.
+
+Finally, it should be noted that the `validObject` command is called in every
+method. You should try adding a print statement in the validity function. You
+might find that the order is a bit odd. You should experiment with this and play
+with it. There are times you do not get the expected results so be careful!
+
+We now give a brief example to demonstrate the order that the functions are
+called. In the example we create a Bobcat object and then call the move method.
+We next create a Lynx object and do the same. We print out the slots for both
+agents just to demonstrate the values that are changed.
+
+```{r}
+robert <- Bobcat()
+robert
+
+robert <- move(robert)
+robert
+
+lionel <- Lynx()
+lionel
+
+lionel <- move(lionel)
+lionel
+```
+

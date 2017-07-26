@@ -68,8 +68,6 @@ setMethod("inspect.vehicle",
 inspect.vehicle(new("Truck"), new("Inspector"))
 # Looking for rust
 # Checking cargo attachments
-
-
 ```
 
 
