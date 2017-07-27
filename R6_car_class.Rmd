@@ -18,6 +18,7 @@ Car <- R6Class("Car",
   public = list(
     make = NULL,
     price = NULL,
+    
     initialize = function(ma, pr) {
       self$make <- ma
       self$price <- pr

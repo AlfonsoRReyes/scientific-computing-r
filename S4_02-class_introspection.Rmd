@@ -1,0 +1,123 @@
+---
+title: "Introspection on EBImage class"
+output: html_notebook
+---
+
+
+```{r}
+library(EBImage)
+img <- Image()
+img
+```
+
+
+## Introspection
+
+```{r}
+class(Image)
+# "function"
+
+slotNames(img)
+# ".Data"     "colormode"
+
+getSlots("Image")
+  #   .Data colormode 
+  # "array" "integer" 
+
+
+getClass("Image")
+# Class "Image" [in ".GlobalEnv"]
+# 
+# Slots:
+#                           
+# Name:      .Data colormode
+# Class:     array   integer
+# 
+# Extends: 
+# Class "array", from data part
+# Class "structure", by class "array", distance 2
+# Class "vector", by class "array", distance 3, with explicit coerce
+
+
+isVirtualClass("Image")
+# FALSE
+
+```
+
+```{r}
+showMethods(class= "Image") 
+# Function ".DollarNames":
+#  <not an S4 generic function>
+# 
+# Function "asJSON":
+#  <not an S4 generic function>
+# Function: coerce (package methods)
+# from="Image", to="array"
+# 
+# 
+# Function "complete":
+#  <not an S4 generic function>
+# 
+# Function "formals<-":
+#  <not an S4 generic function>
+# 
+# Function "functions":
+#  <not an S4 generic function>
+# 
+# Function "prompt":
+#  <not an S4 generic function>
+# Function: show (package methods)
+# object="Image"
+```
+
+
+```{r}
+hasMethod("imageData", "Image")
+# FALSE
+
+hasMethod("show", "Image")
+# TRUE
+
+getMethod("show", "Image")
+# Method Definition:
+# 
+# function (object) 
+# showImage(object)
+# <bytecode: 0x0000000004a30c10>
+# 
+# Signatures:
+#         object 
+# target  "Image"
+# defined "Image"
+```
+
+```{r}
+RBioinf::subClassNames("Image")
+# character(0)
+
+
+RBioinf::superClassNames("Image")
+#  "array"     "structure" "vector"   
+```
+
+```{r}
+extends("Image")
+# "Image"     "array"     "structure" "vector"  
+
+extends("array")
+# "array"     "structure" "vector"  
+
+extends("structure")
+# "structure" "vector" 
+```
+
+```{r}
+extends("Image", "array")
+
+extends("array", "Image")
+
+extends("array", "vector")
+
+extends("structure", "vector")
+```
+
