@@ -1,7 +1,16 @@
 ---
-title: "R Notebook"
-output: html_notebook
+title: "EBImage S4 library"
+output:
+  html_document: default
+  html_notebook: default
 ---
+
+```{r setup, include=F, error=T, message=F, warning=F}
+knitr::opts_chunk$set(echo=T, comment=NA, error=T, warning=F, message = F, fig.align = 'center')
+```
+
+Sources: 
+
 https://stackoverflow.com/a/32734716/5270873
 https://www.bioconductor.org/packages/devel/bioc/vignettes/EBImage/inst/doc/EBImage-introduction.html#1_getting_started
 

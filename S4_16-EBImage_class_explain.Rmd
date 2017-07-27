@@ -1,0 +1,278 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+Grayscale = 0L
+Color     = 2L
+
+setClass ("Image",
+  representation (colormode="integer"),
+  prototype (colormode=Grayscale),
+  contains = "array"
+)
+
+Image = function(data = array(0, dim=c(1,1)), dim, colormode) {
+  if ( !missing(dim) && length(dim)<2 )
+    stop("The number of dimensions dim must be at least 2")
+  
+  setdim = function(data) {
+    if (is.array(data))
+      base::dim(data)
+    else 
+      c(1L, length(data))
+  }
+  
+  ## special character case
+  if (is.character(data)) {
+    colormode = 
+      if (missing(colormode)) 
+        Color
+      else
+        parseColorMode(colormode)
+    
+    if (missing(dim)) {
+      dim = setdim(data)
+      
+      if ( colormode==Color )
+        dim = c(dim[1:2], 3L, dim[-(1:2)])
+    }
+    
+    dimnames = dimnames(data)
+    data = col2rgb(data)/255
+    
+    if ( colormode==Color ) {
+      channels = if (length(dim)<3L) 1L else seq_len(dim[3L])
+      data = abind(lapply(channels, function(ch) {
+        array( if (ch>3L) 0 else data[ch,,drop=FALSE], dim[-3L], dimnames)
+      }), along = 2.5)
+      # replace a list of NULLs by the original NULL
+      if(is.null(dimnames)) dimnames(data) = NULL
+    }
+    else
+      data = array(data = (data[1,,drop=FALSE] + data[2,,drop=FALSE] + data[3,,drop=FALSE]) / 3, dim = dim, dimnames = dimnames)
+  }
+  ## default numeric case
+  else {
+    if (missing(dim))
+      dim = setdim(data)
+    
+    colormode = 
+      if (missing(colormode))
+        if (is.Image(data))
+          colorMode(data)
+        else
+          Grayscale
+      else 
+        parseColorMode(colormode)
+  }
+  
+  return( new("Image", 
+    .Data = 
+      ## improve performance by not calling array constructor on well formed arrays
+      if( is.array(data) && prod(dim)==length(data) ) {
+        if( length(dim(data)) != length(dim) || any(dim(data) != dim))
+          dim(data) = dim
+        data
+      }
+      else {
+        array(data, dim = dim)
+      },
+    colormode = colormode
+  ))    
+}
+
+
+is.Image <- function (x) is(x, "Image")
+
+imageData = function (y) {
+  if (is(y, 'Image')) y@.Data
+  else y
+}
+
+`imageData<-` = function (y, value) {
+  if (is(y, 'Image')) {
+    y@.Data = value
+    validObject(y)
+    y
+  } 
+  else value
+}
+
+colorMode = function (y) {
+  if (is(y, 'Image')) y@colormode
+  else Grayscale
+}
+
+
+numberOfFrames = function(y, type = c('total', 'render')) {
+    type = match.arg(type)
+    type = switch(type, total = 0L, render = 1L)
+    # .Call(C_numberOfFrames, y, type)
+}
+
+
+
+showImage = function (object, short=FALSE) {
+  nd = dim(object)
+  ld = length(nd)
+  dimorder = names(dimnames(object))
+  
+  cat(class(object)[1],'\n')
+  
+  cat('  colorMode    :',c('Grayscale', NA, 'Color')[1+colorMode(object)],'\n')
+  cat('  storage.mode :',typeof(object),'\n')
+  cat('  dim          :',nd,'\n')
+  if ( !is.null(dimorder) )
+  cat('  dimorder     :',dimorder,'\n')
+  cat('  frames.total :',numberOfFrames(object,'total'),'\n')
+  cat('  frames.render:',numberOfFrames(object,'render'),'\n')
+  
+  if ( !isTRUE(short) ) {
+    if (nd[1]>5) nd[1] = 5
+    if (nd[2]>6) nd[2] = 6
+    if (ld>2) nd[3:ld] = 1
+    
+    ndl = lapply(nd, seq_len)
+    
+    nds = paste0('[1:',nd[1],',1:',nd[2],paste(rep(',1',ld-2),collapse=''),']')
+    
+    cat('\nimageData(object)', nds, '\n', sep='')
+    # print.default(asub(object@.Data, ndl))
+  }
+  invisible()
+}
+setMethod ("show", signature(object = "Image"), function(object) showImage(object))
+```
+
+```{r}
+img <- Image()
+img
+```
+
+```{r}
+imageData(img) <-  matrix(runif(25), nrow =5, ncol=5, byrow=TRUE)
+img
+# display(img, interpolate = FALSE, method = "raster")
+image(img)
+```
+
+```{r}
+# library(EBImage)
+# colorMat = matrix(rep(c("red","green", "#0000ff"), 25), 5, 5)
+# image(colorMat)
+# colorImg = Image(colorMat)
+# colorImg
+# display(colorImg, interpolate = FALSE, method = "raster")
+```
+
+
+
+## Introspection
+
+```{r}
+class(Image)
+# "function"
+
+slotNames(img)
+# ".Data"     "colormode"
+
+getSlots("Image")
+  #   .Data colormode 
+  # "array" "integer" 
+
+
+getClass("Image")
+# Class "Image" [in ".GlobalEnv"]
+# 
+# Slots:
+#                           
+# Name:      .Data colormode
+# Class:     array   integer
+# 
+# Extends: 
+# Class "array", from data part
+# Class "structure", by class "array", distance 2
+# Class "vector", by class "array", distance 3, with explicit coerce
+
+
+isVirtualClass("Image")
+# FALSE
+
+```
+
+```{r}
+showMethods(class= "Image") 
+# Function ".DollarNames":
+#  <not an S4 generic function>
+# 
+# Function "asJSON":
+#  <not an S4 generic function>
+# Function: coerce (package methods)
+# from="Image", to="array"
+# 
+# 
+# Function "complete":
+#  <not an S4 generic function>
+# 
+# Function "formals<-":
+#  <not an S4 generic function>
+# 
+# Function "functions":
+#  <not an S4 generic function>
+# 
+# Function "prompt":
+#  <not an S4 generic function>
+# Function: show (package methods)
+# object="Image"
+```
+
+
+```{r}
+hasMethod("imageData", "Image")
+# FALSE
+
+hasMethod("show", "Image")
+# TRUE
+
+getMethod("show", "Image")
+# Method Definition:
+# 
+# function (object) 
+# showImage(object)
+# <bytecode: 0x0000000004a30c10>
+# 
+# Signatures:
+#         object 
+# target  "Image"
+# defined "Image"
+```
+
+```{r}
+RBioinf::subClassNames("Image")
+
+RBioinf::superClassNames("Image")
+```
+
+```{r}
+extends("Image")
+# "Image"     "array"     "structure" "vector"  
+
+extends("array")
+# "array"     "structure" "vector"  
+
+extends("structure")
+# "structure" "vector" 
+```
+
+```{r}
+extends("Image", "array")
+
+extends("array", "Image")
+
+extends("array", "vector")
+
+extends("structure", "vector")
+```
+
