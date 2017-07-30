@@ -60,6 +60,7 @@ print(result[,,2])
 
 
 ```{r}
+# print all matrices
 # sapply(result, function(x) {x = seq(1, dim(result)[3])
 #                                 result[,,x]})
 
