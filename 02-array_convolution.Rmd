@@ -5,15 +5,20 @@ output: html_notebook
 
 ```{r}
 conv3d <- function(A, B) {
-    
+    if (is.matrix(A) & is.matrix(B)) {
+        A <- array(A, dim = c(dim(A), 1))
+        B <- array(B, dim = c(dim(B), 1))
+    }
     D <- array(0, dim = c(2*dim(A)[1]-1, 2*dim(A)[2]-1, 2*dim(A)[3]-1))
     
     for (i in 1:dim(A)[3]) {  # 1, 2, 3
         D[,,i] <- i *.O$convn(A[,,i], B[,,i])
     }
-
-    for (j in (dim(A)[3]-1):1) {   # 2, 1
-        D[,,i+(dim(A)[3]-j)] <- j *.O$convn(A[,,j], B[,,j])
+    
+    if (dim(A)[3] > 1) {
+        for (j in (dim(A)[3]-1):1) {   # 2, 1
+            D[,,i+(dim(A)[3]-j)] <- j *.O$convn(A[,,j], B[,,j])
+        }
     }
     D   
 }
