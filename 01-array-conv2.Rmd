@@ -1,0 +1,40 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+```{r}
+conv2 <- function(I, kernel) {
+    SizeX <- ncol(I)
+    SizeY <- nrow(I)
+    KSizeX <- ncol(kernel)
+    KSizeY <- nrow(kernel)
+    
+    out <- matrix(0, nrow=2*SizeX -1, ncol=2*SizeY-1)
+    
+    for (row in KSizeX:SizeX-KSizeX) {
+        for (col in KSizeY:SizeY-KSizeY) {
+            accumulation <- 0
+            weightsum <- 0
+            for (i in 1:KSizeX) {
+                for (j in 1:KSizeY) {
+                    k <- I[row+i, col+j]
+                    accumulation <-  accumulation + k * kernel[i, j]
+                    weightsum <-  weightsum + kernel[i, j]
+                }
+            }
+            out[row, col] <- accumulation / weightsum
+        }
+    }
+    return(out)
+}
+
+
+A <- matrix(1, nrow = 3, ncol=3)
+B <- matrix(1, nrow = 5, ncol=2)
+
+conv2(A, B)
+
+```
+
