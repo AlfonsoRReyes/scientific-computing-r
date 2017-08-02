@@ -1,0 +1,42 @@
+---
+title: "Using lists to store matrices"
+output: html_notebook
+---
+
+https://www.r-bloggers.com/how-to-use-lists-in-r/
+
+## Creating a list of empty matrices using lapply()
+
+```{r}
+#initialize list to to 2 empty matrices of 2 by 3
+list2<-lapply(1:2, function(x) matrix(NA, nrow=2, ncol=3))
+list2
+```
+
+
+## initialize list to 2 matrices with random numbers
+
+```{r}
+#initialize list to 2 matrices with random numbers from normal distribution
+list2<-lapply(1:2, function(x) matrix(rnorm(6, 10, 1), nrow=2, ncol=3))
+list2
+```
+
+## Find the sums in the matrices inside the list
+
+```{r}
+#input list, output column sums of each matrix into a new list
+lapply(list2, colSums)
+```
+
+```{r}
+#input list, output column sums into a **vector** (which binds them into a matrix)
+sapply(list2, colSums)
+```
+
+
+```{r}
+#instead of binding, we can stack these column sums by using tranpose function t():
+t(sapply(list2, colSums))
+```
+

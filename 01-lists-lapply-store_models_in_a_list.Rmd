@@ -1,0 +1,88 @@
+---
+title: "Store all regression model outcomes into one object"
+output:
+  html_document: default
+  html_notebook: default
+---
+
+https://www.r-bloggers.com/how-to-use-lists-in-r/
+
+## create the data
+
+```{r}
+#create some data
+set.seed(2000)
+x = rbinom(1000,1,.6)
+mydata <- data.frame(trt=x,
+                   out1 = x*3+rnorm(1000,0,3),
+                   out2 = x*5+rnorm(1000,0,3),
+                   out3 = rnorm(1000,5,3),
+                   out4 = x*1+rnorm(1000,0,8))
+
+head(mydata)
+```
+
+
+## generate and collect the models in a list
+
+```{r}
+# 1. Use a loop
+
+results <-vector("list", 4) #first, initialize the results list
+
+# now use a loop for each outcome
+for(i in 1:4) {
+  results[[i]] <- lm(mydata[, i+1]~trt, data = mydata) 
+}
+results
+```
+
+We can do the same thing with `lapply`
+
+```{r}
+#2.Or, use lapply in one statement!
+results <- lapply(2:5, function(x) lm(mydata[,x]~trt, data = mydata))
+results
+```
+
+```{r}
+# name the results objects
+names(results) <- names(mydata)[2:5]
+print(results, max=2)
+```
+
+## extract coefficient, standard error into a matrix
+
+```{r}
+#extract coefficient and std error for each outcome and store in a matrix
+sapply(results, function(x) summary(x)$coefficients[2, 1:2])
+```
+
+
+```{r}
+#extract coefficients from the list
+coefs <- as.data.frame(t(sapply(results, function(x) summary(x)$coefficients[2,1:2])))
+coefs
+```
+
+```{r}
+#add outcome columnn and change name of SE column
+coefs$Outcome <- rownames(coefs)
+names(coefs)[2] <- "SE"
+coefs
+```
+
+## plot what is in the list
+
+```{r}
+#use ggplot to plot all the estimates
+require(ggplot2)
+ggplot(coefs, aes(Outcome, Estimate)) +
+  geom_point(size=4) + 
+  theme(legend.position="none")+
+  labs(title="Treatment effect on outcomes", x="", y="Estimate and 95% CI")+
+  geom_errorbar(aes(ymin=Estimate-1.96*SE,ymax=Estimate+1.96*SE),width=0.1)+
+  geom_hline(yintercept = 0, color="red")+
+  coord_flip()
+```
+
