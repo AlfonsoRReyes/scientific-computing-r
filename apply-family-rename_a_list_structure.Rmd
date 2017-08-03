@@ -1,0 +1,26 @@
+---
+title: "create a summary table from lists of matrices"
+output: html_notebook
+---
+
+
+```{r}
+k1 <- 
+structure(list(`3280.2000` = structure(c(0, 1.363, 0, 4.198, 
+1.097, 1.669, 0, 1.098, 0), .Dim = c(3L, 3L), .Dimnames = list(
+    c("3280.3500", "3280.400", "3280.4000"), c("3280.3500", "3280.400", 
+    "3280.4000"))), `160.2000` = structure(c(0.935, 0.929, 1.1, 
+1.152), .Dim = c(2L, 2L), .Dimnames = list(
+    c("160.2200", "160.2300"), c("160.2200", "160.2300")))), .Names = c("3280.2000", "160.2000"))
+
+#k1 Looks like
+class(k1)
+k1
+```
+
+
+```{r}
+h <- lapply(k1, function (x) { colnames(x) <- gsub("*.*\\.", "", colnames(x)); x})
+h
+```
+

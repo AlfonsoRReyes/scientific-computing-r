@@ -31,7 +31,6 @@ class( Mlist[1,1] )
 
 ## Demonstration of creating "matrix of lists" from a list:
 
-
 ```{r}
 # create a list first
 will.become.a.matrix <- list(c(1,2,4), c(NULL), c(1,2), c(3,4,5,6), c(1), c(1,3))
@@ -97,6 +96,38 @@ b
 apply(b, c(1,2), function(x) paste(eval(parse(text=x)), collapse = " "))
 ```
 
+```{r}
+# use length of the matrix instead of c(1,2)
+length(dim(b))
+apply(b, 1:length(dim(b)), function(x) paste(eval(parse(text=x)), collapse = " "))
+```
+
+```{r}
+# get the values in the matrix-list
+apply(b, 1:length(dim(b)), function(x) eval(parse(text=x)))
+```
+
+
+```{r}
+# array-list
+ar <- array(rep(list(), 6), dim = c(4,3,2)) 
+ar
+```
+
+```{r}
+# store a vector and a matrix in the array-list
+ar[[1]] <- c(1,2,3,4)   # store a vector in list #1
+ar[[2]] <- matrix(rnorm(4), 2, 2)
+ar
+```
+
+```{r}
+# get the values in the array-list
+# apply(ar, 1:length(dim(ar)), function(x) eval(parse(text=x)))
+apply(ar, 1:length(dim(ar)), function(x) eval(parse(text=x)) )
+```
+
+
 ## dynamic way to allocate the matrix-list
 
 ```{r}
@@ -126,6 +157,18 @@ CD
 ```
 
 ```{r}
+# extracting elements from a list using list-indices
+idx = list(c(1,3,6))
+do.call( `[`, c(list(CD), idx)) 
+```
+
+```{r}
+# extracting elements from a list using list-indices
+idx = list(c(1,1), c(3,4))
+do.call( `[`, c(list(CD), idx)) 
+```
+
+```{r}
 # access the values
 i = 3; j = 2
 CD[[i+nrow(CD)*(j-1)]]
@@ -150,4 +193,6 @@ class(CD[[3 + nrow(CD)*(4-1)]] )
 i = 3; j = 1
 CD[[i + nrow(CD)*(j-1)]]
 ```
+
+
 
