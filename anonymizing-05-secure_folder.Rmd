@@ -1,0 +1,46 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+# not available iin CRAN
+devtools::install_github("hadley/secure")
+```
+
+
+```{r}
+# create a vault folder
+# dir.create("./inst/vault")
+```
+
+
+```{r}
+# id_rsa private key must exist
+# id_rsa.pub key must exist
+# ./inst/vault must exist
+secure::add_user("f0nzie", secure::local_key())
+```
+
+```{r}
+secure::local_key(name = "rsa")
+```
+
+```{r}
+secure::github_key("alfonsorreyes")
+# <public_key> 4f:65:cb:a9:48:a5:b8:ae:cc:61:22:3f:4f:3e:be:d9
+```
+
+```{r}
+secure::local_key()
+```
+
+
+```{r}
+secure::encrypt("test", x = 1, y = 2)
+```
+
+```{r}
+secure::has_key()
+```
+
