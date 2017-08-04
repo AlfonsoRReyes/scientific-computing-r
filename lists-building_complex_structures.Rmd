@@ -1,0 +1,23 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+The following example shows how one can create quite complicated data structures
+by using list objects as components inside a list.
+
+```{r} 
+spec.list <- vector(mode = "list", length = 3)
+
+names(spec.list) <- c("O2", "H2O", "CO2")
+
+spec.list$O2  <- list(name = "oxygen", mol.weight = 32) 
+spec.list$H2O <- list(name = "water", mol.weight = 18) 
+spec.list$CO2 <- list(name = "carbon dioxide", mol.weight = 44)
+spec.list 
+``` 
+
+The names() command initializes the names of the mother list. Each
+daughter component of the mother list is in itself again a list object. Print
+spec.list on the screen and try to understand its contents.
+

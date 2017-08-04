@@ -1,0 +1,21 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+## Plotting a mathematical function
+
+```{r} 
+# 1st plot 
+curve(expr = sin(3*pi*x))
+
+# 2nd set of plots 
+curve(expr = sin(3*pi*x), from = 0, to = 2, col = "blue", 
+      xlab = "x", ylab = "f(x)", main = "curve")
+
+curve(expr = cos(3*pi*x), add = TRUE, col = "red", lty = 2) 
+abline(h = 0, lty = 2)
+
+# add legend 
+legend("bottomleft", c("sin", "cos"), text.col = c("blue", "red"), lty = 1:2) 
+```

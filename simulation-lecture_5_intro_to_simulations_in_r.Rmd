@@ -4,6 +4,7 @@ output: html_notebook
 ---
 
 ## Central Limit Theorem in an exponential distribution
+
 ```{r}
 ################################
 # Using a for loop to illustrate the
