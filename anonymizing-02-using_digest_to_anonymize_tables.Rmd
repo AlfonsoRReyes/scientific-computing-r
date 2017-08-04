@@ -10,8 +10,9 @@ knitr::opts_chunk$set(echo=T, comment=NA, error=T, warning=F, message = F, fig.a
 ```
 
 
-Source: https://www.r-bloggers.com/data-anonymization-in-r/
+Sources: https://www.r-bloggers.com/data-anonymization-in-r/
 
+https://jangorecki.github.io/blog/2014-11-07/Data-Anonymization-in-R.html
 
 ## Use cases
 * Public reports.

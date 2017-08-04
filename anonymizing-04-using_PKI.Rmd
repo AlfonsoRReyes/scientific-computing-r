@@ -1,0 +1,28 @@
+---
+title: "Anonymizing using PKI"
+output: html_notebook
+---
+
+```{r}
+require(PKI)
+
+key <- PKI.genRSAkey(2048)         # generate the key
+x <- charToRaw("Hello, world!")    # original word to hexa
+e <- PKI.encrypt(x, key)           # encrypt
+y <- PKI.decrypt(e, key)           # decrypt
+
+stopifnot(identical(x, y))
+
+print(rawToChar(y))                # hexa to character
+```
+
+
+```{r}
+charToRaw("Hello, world!")
+```
+
+
+```{r}
+print(rawToChar(y))
+```
+

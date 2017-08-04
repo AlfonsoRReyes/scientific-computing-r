@@ -1,0 +1,23 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+Sources: https://stackoverflow.com/questions/15871522/is-digest-function-in-r-suitable-for-anonymising-participant-identifiers
+
+https://stackoverflow.com/a/15872968/5270873
+
+```{r}
+library(digest)
+
+data <- data.frame(raw_id = c("alfonso", "janet"), hours = c(12, 10))
+data
+
+passphrase <- "my_very_long_password_1234"       # to be changed each time
+data$raw_id <- paste(data$raw_id, passphrase)
+
+# we add a new column `id` for the anonymized data
+data$id <- sapply(data$raw_id, function(X) digest(X, algo="sha1"))
+data[c("raw_id", "id")]
+```
+
