@@ -9,6 +9,9 @@ Statistical Disclosure Control (SDC) for the generation of protected microdata f
 This package includes all methods of the popular software mu-Argus plus several new methods. In comparison with mu-Argus the advantages of this package are that the results are fully reproducible even with the included GUI, that the package can be used in batch-mode from other software, that the functions can be used in a very flexible way, that everybody could look at the source code and that there are no time-consuming meta-data management is necessary. However, the user should have a detailed knowledge about SDC when applying the methods on data.
 
 ```{r}
+# load the sdcMicro package
+library(sdcMicro)
+
 ## select another keyVar and run localSupp once again,
 #if you think the table is not fully protected
 data(free1)
@@ -54,7 +57,7 @@ table(globalRecode(free1$AGE, breaks=c(1,9,19,29,39,49,59,69,100), labels=1:8))
 
 ```{r}
 ## Fast generation of synthetic data with aprox.
-#the same covariance matrix as the original one.
+# the same covariance matrix as the original one.
 data(mtcars)
 cov(mtcars[, 4:6])                     # original data
 cov(dataGen(mtcars[, 4:6],n=200))      #synth data
@@ -65,7 +68,6 @@ pairs(dataGen(mtcars[,4:6],n=200))
 
 ## addNoise
 method: choose between ‘additive’, ‘correlated’, ‘correlated2’, ‘restr’, ‘ROMM’, ‘outdect’
-
 
 ```{r}
 data(Tarragona)
@@ -78,7 +80,7 @@ head(as.data.frame(a1$xm))
 
 ```{r}
 data(Tarragona)
-a1 <- addNoise(Tarragona, method = "correlated")    #modified values (perturbed data)
+a1 <- addNoise(Tarragona, method = "correlated")    # modified values (perturbed data)
 names(a1)
 
 head(a1$x)
