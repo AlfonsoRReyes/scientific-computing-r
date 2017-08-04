@@ -1,21 +1,29 @@
 ---
 title: "R Notebook"
-output: html_notebook
+output:
+  html_document: default
+  html_notebook: default
 ---
 
+```{r setup, include=F, error=T, message=F, warning=F}
+knitr::opts_chunk$set(echo=T, comment=NA, error=T, warning=F, message = F, fig.align = 'center')
+```
 
-https://www.r-bloggers.com/data-anonymization-in-r/
+
+Source: https://www.r-bloggers.com/data-anonymization-in-r/
 
 
 ## Use cases
-Public reports.
-Public data sharing, e.g. R packages download logs from CRAN's RStudio mirror – cran-logs.rstudio.com – mask ip addresses.
-Reports or data sharing for external vendor.
-Development works can operate on anonymized PRODUCTION data.
-Manually or semi-manually populated data can often brings some new issue after migration to PRODUCTION data.
+* Public reports.
+* Public data sharing, e.g. R packages download logs from CRAN's RStudio mirror – cran-logs.rstudio.com – mask ip addresses.
+* Reports or data sharing for external vendor.
+* Development works can operate on anonymized PRODUCTION data.
+* Manually or semi-manually populated data can often brings some new issue after migration to PRODUCTION data.
+
 Such anonymized PRODUCTION data can be quite handy for the devs.
 
-## Dependencies
+## Install dependencies
+
 ```{r}
 suppressPackageStartupMessages({
   library(data.table)
@@ -30,16 +38,17 @@ set.seed(123)
 ## Sample of survey data
 Anonymize sensitive information in survey data, data storage in a single table.
 
-
 ```{r}
 library(data.table)
 # copy data from the web page
 # SURV <- read.delim("clipboard")
 
+# load the original data
 load(file = "./data/survey.rda")
 load(file = "./data/customer.rda")
 load(file = "./data/sales.rda")
 
+# load as datatables
 SURV     <- as.data.table(SURV)
 CUSTOMER <- as.data.table(CUSTOMER)
 SALES    <- as.data.table(SALES)
@@ -47,58 +56,75 @@ SALES    <- as.data.table(SALES)
 
 
 
-
 ## Anonymize function
-Function will calculate hashes only for unique inputs and return vector of masked inputs.
-My version will use digest(x, algo="crc32") because it fits better into html tables, algo crc32 is not really secure.
+The following function will calculate hashes only for unique inputs and return vector of masked inputs.
 
-Read ?digest::digest for supported algo, also consider to salt your input vector, e.g. x=paste0("prefix",x,"suffix"). Performance improvement possible using Rcpp / C: digest #2.
+My version will use `digest(x, algo="crc32")` because it fits better into html tables. `algo crc32` is not really secure.
+
+Read `?digest::digest` for supported algo, also consider to salt your input vector, e.g. `x=paste0("prefix",x,"suffix")`. Performance improvement possible using Rcpp / C: digest #2.
 
 ```{r}
 # serializing requires that the variables or columns are characters not factors
 anonymize <- function(x, algo = "crc32") {
     unq_hashes <- vapply(unique(x), function(object)
-                digest(object, algo = algo, serialize = FALSE), FUN.VALUE = "", USE.NAMES = TRUE)
+                digest(object, algo = algo, serialize = FALSE), 
+                FUN.VALUE = "", USE.NAMES = TRUE)
+    
     unname(unq_hashes[x])
 }
 ```
 
 
 ## Anonymize survey data
-We will keep city and sex fields unmasked.
+We will keep `city` and `sex` fields unmasked. The rest will be anonymized.
 
 ```{r}
 # choose columns to mask
 cols_to_mask <- c("NAME", "ADDRESS", "POSTAL.CODE")
+
 # backup original data
 SURV_ORIG <- copy(SURV)
+
 # anonymize
-SURV[, (cols_to_mask) := lapply(.SD, anonymize),.SDcols=cols_to_mask]
+SURV[, (cols_to_mask) := lapply(.SD, anonymize), .SDcols = cols_to_mask]
+
 # pretty print
 head(SURV)
+
+# anonymized data
 ```
 
+
 ## Why not just random data or integer sequence
-When using the digest function to hide sensitive data you:
-* keep rows distribution: aggregates by masked columns will still match to aggregates on original columns, see simple grouping below:
+When using the `digest` function to hide sensitive data you:
+
+* keep the rows distribution
+* aggregates by masked columns will still match to aggregates on original columns.
+
+See simple grouping below:
 
 ```{r}
+# original data
 SURV_ORIG[, .(.N, 
-             mean_age = mean(AGE), 
+             mean_age   = mean(AGE), 
              mean_score = mean(SCORE)), 
          by = .(CITY, POSTAL.CODE)][, .SD]
 ```
 
-We do the same for the modified data:
+
+Let's do the same for the modified anonymized data:
 
 ```{r}
+# anonymized data
 SURV[, .(.N, 
              mean_age = mean(AGE), 
              mean_score = mean(SCORE)), 
          by = .(CITY, POSTAL.CODE)][, .SD]
 ```
 
-* keep relationships on equi joins: `if t1.col1 == t2.col4 TRUE` then also `digest(t1.col1) == digest(t2.col4) TRUE`.
+* keep relationships on equi-joins: 
+`if t1.col1 == t2.col4 TRUE` then also `digest(t1.col1) == digest(t2.col4) TRUE`.
+
 Example in next section below.
 
 
@@ -106,16 +132,19 @@ Example in next section below.
 Anonymize relational data in sales data, data normalized into SALES and CUSTOMER tables.
 
 ```{r}
+# original data
 head(SALES, 4)
 ```
 
 ```{r}
+# original data
 head(CUSTOMER, 2)
 ```
 
 
 
 ```{r}
+# original data
 # CUSTOMER[SALES, on="CUSTOMER.UID"]
 setkey(CUSTOMER, CUSTOMER.UID)                 # set the key on CUSTOMER.UID
 setkey(SALES, CUSTOMER.UID) 
@@ -123,45 +152,55 @@ CUSTOMER[SALES]
 ```
 
 
-
 ```{r}
+# original data
 # join and aggregate. Group by city and postal code
 CUSTOMER[SALES][, .(QUANTITY = sum(QUANTITY), 
                     VALUE = sum(VALUE)), 
                 by = .(CITY, POSTAL.CODE)]
 ```
 
+So far, what we have shown the original tables with the set keys, aggregated data of the joined tables SALES and CUSTOMER.
 
-## Anonymize sales data
+
+## Anonymize SALES data
 
 ```{r}
+# anonymize the column CUSTOMER.UID in the SALES table
 SALES[, CUSTOMER.UID := anonymize(CUSTOMER.UID)]
 
+# select the columns to anonymize in CUSTOMER table
 cols_to_mask <- c("CUSTOMER.UID", "NAME", "ADDRESS", "POSTAL.CODE")
 # cols_to_mask <- c("NAME", "ADDRESS", "POSTAL.CODE")
 CUSTOMER[, (cols_to_mask) := lapply(.SD, anonymize), .SDcols = cols_to_mask]
+
+# set the key on CUSTOMER.UID 
 setkey(CUSTOMER, CUSTOMER.UID)
 ```
 
 
 
 ```{r}
+# show the anonymized CUSTOMER table
 CUSTOMER
 ```
 
-
 ```{r}
+# show the anonymized SALES table
 SALES
 ```
 
 ```{r}
+# show anonymized joined tables
 CUSTOMER[SALES]
 ```
 
 ```{r}
-# also the aggregates on masked columns will match to the origin
+# also the aggregates on masked columns will match to the original structure
 head(
-    CUSTOMER[SALES][,.(QUANTITY = sum(QUANTITY), VALUE = sum(VALUE)), by=.(CITY, POSTAL.CODE)]
+    CUSTOMER[SALES][, .(QUANTITY = sum(QUANTITY), 
+                       VALUE = sum(VALUE)), 
+                    by = .(CITY, POSTAL.CODE)]
 )
 ```
 
@@ -169,15 +208,7 @@ head(
 
 
 
-
-
-
-
-
-
-
-
-
+## Extras
 
 
 ```{r}
