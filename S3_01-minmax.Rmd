@@ -1,0 +1,252 @@
+---
+title: "S3 class"
+output: html_notebook
+---
+
+## Challenge
+Develop a class for numeric vectors that 
+remembers its range (like factors do)
+Will extend a numeric vector to add to 
+attributes: min and max
+
+## Create a S3 class
+
+```{r}
+# Option # 1
+# Structure function takes vector and adds attributes
+# class attribute determines S3 class
+structure(1:10, min = 0, max = 10, class = "minmax")
+```
+
+
+```{r}
+# Option # 2
+# Customary to create convenience function to create
+# objects of specific class
+minmax <- function(x, minx = min(x), maxx = max(x)) {
+  stopifnot(is.numeric(x))
+  
+  structure(x, min = minx, max = maxx, class = "minmax")
+}
+```
+
+
+```{r}
+minmax(1:10)
+```
+
+## check if of that class
+
+```{r}
+# Also customary to create function to test if
+# an object is of that class:
+is.minmax <- function(x) {
+  inherits(x, "minmax")
+}
+
+is.minmax(minmax(1:10))
+
+mm <- minmax(5:15)
+is.minmax(mm)
+```
+
+## print method
+
+```{r}
+# First method is usually a print method. Always 
+# look at the generic first so that you can match 
+# the arguments correctly.
+
+print
+# Can tell it's a generic method because it uses
+# UseMethod
+
+# Methods follow simple naming scheme
+print.minmax <- function(x, ...) {
+  print.default(as.numeric(x))
+  cat("Range: [", attr(x, "min"), ", ", 
+    attr(x, "max"), "]\n", sep = "")  
+}
+
+```
+
+
+```{r}
+minmax(4:40)
+```
+
+## What's wrong with the following code?
+
+```{r}
+minmax(1:10, max = 5)
+```
+
+### fixing it
+
+```{r}
+# constructor?
+
+minmax <- function(x, minx = min(x), maxx = max(x)) {
+  stopifnot(is.numeric(x))
+  stopifnot(all(minx <= x))
+  stopifnot(all(maxx >= x))
+  
+  structure(x, min = minx, max = maxx, class = "minmax")
+}
+```
+
+```{r}
+minmax(1:10, max = 5)
+```
+
+
+```{r}
+a <- minmax(1:10, max = 20) 
+a
+```
+
+
+## Need to add methods for these generic functions
+
+* max
+* min
+* range
+
+
+### max
+```{r}
+max.minmax <- function(..., na.rm = FALSE) {
+    arg <- list(...)
+        if (length(arg) == 1) {
+            attr(arg[[1]], "max")
+        } else {
+            stop("Maximum of more than one minmax not ", 
+            "implemented")    
+        }
+}
+
+
+
+max(minmax(7:77))
+
+max(minmax(7:77), minmax(8:19))
+```
+
+
+### min
+
+```{r}
+min.minmax <- function(..., na.rm = FALSE) {
+    arg <- list(...)
+        if (length(arg) == 1) {
+            attr(arg[[1]], "min")
+        } else {
+            stop("Minimum of more than one minmax not ", 
+            "implemented")    
+        }
+}
+
+
+
+min(minmax(7:77))
+
+min(minmax(7:77), minmax(8:19))
+```
+
+
+## Extend the function to work with any  number of inputs
+
+### max
+
+```{r}
+max.minmax <- function(..., na.rm = FALSE) {
+  parts <- list(...)
+  if (length(parts) == 1) {
+    attr(parts[[1]], "max")
+  } else {
+    max(vapply(parts, "max", numeric(1)))
+  }
+}
+
+
+max(minmax(7:77))
+
+max(minmax(7:77), minmax(8:188))
+
+```
+
+
+### min
+
+```{r}
+min.minmax <- function(..., na.rm = FALSE) {
+  parts <- list(...)
+  if (length(parts) == 1) {
+    attr(parts[[1]], "min")
+  } else {
+    min(vapply(parts, "min", numeric(1)))
+  }
+}
+
+
+min(minmax(7:77))
+
+min(minmax(7:77), minmax(3:19))
+
+```
+
+### range
+
+```{r}
+range.minmax <- function(..., na.rm = FALSE) {
+  c(min(..., na.rm = TRUE), max(..., na.rm = TRUE))
+}
+
+
+a <- minmax(1:10, max = 20) 
+a[1:5]
+```
+
+## locate the generic
+
+```{r}
+# Always need to locate the generic so you can 
+# figure out what the arguments are.  This is 
+# sometimes hard!
+
+match.fun("[")
+?"["
+```
+
+```{r}
+# In this case we can punt, and allow the parent 
+# method to do the hard work
+"[.minmax" <- function(x, ...) {
+  minmax(NextMethod(), minx = attr(x, "min"), 
+    maxx = attr(x, "max"))
+}
+
+v <- minmax(15:20)
+v[3]
+```
+
+
+## as dataframe
+
+```{r}
+# Storing S3 objects in a data frame requires a 
+# method for as.data.frame.
+
+# df <- data.frame(a = a)    # <- will give error because has not been implemented
+
+as.data.frame.minmax <- function(x, ...) {
+  structure(list(x), 
+    row.names = seq_along(x), 
+    class = "data.frame")
+}
+
+df
+df <- data.frame(a = a)
+df[1:5, "a"]
+```
+
