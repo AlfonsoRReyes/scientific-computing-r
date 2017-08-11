@@ -1,5 +1,5 @@
 ---
-title: "S3 class"
+title: "S3 class by H. Wickham"
 output: html_notebook
 ---
 
