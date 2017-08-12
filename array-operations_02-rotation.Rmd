@@ -1,0 +1,38 @@
+---
+title: "Rotation of arrays"
+output: html_notebook
+---
+
+
+```{r}
+# function to rotate 3d array in 90 degrees jumps
+rot90.3d <- function(z, n) {
+    p <- dim(z)[3]
+    if (n%%2 == 0) out <- array(0, dim=dim(z))
+    else out <- array(0, dim = c(dim(z)[2], dim(z)[1], dim(z)[3]))
+    
+    for (k in 1:p) {
+        mx <- z[,,k]
+        out[,,k] <- pracma::rot90(mx, n)
+    }
+    out
+}
+a <- array(1:18, dim = c(3,3,2))
+a
+```
+```{r}
+rot90.3d(a, 1)
+```
+
+```{r}
+rot90.3d(a, 2)
+```
+
+```{r}
+rot90.3d(a, 3)
+```
+
+
+```{r}
+rot90.3d(a, 4)
+```
