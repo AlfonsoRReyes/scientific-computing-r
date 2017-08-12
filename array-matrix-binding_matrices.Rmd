@@ -1,0 +1,13 @@
+---
+title: "binding matrices"
+output: html_notebook
+---
+
+```{r}
+x <- matrix( 1:9 , 3 , 3 )
+y <- matrix( 10:18 , 3 , 3 )
+
+sapply(list(x,y), identity, simplify="array")
+# similarly to save a couple of keystrokes, the following is usually identical
+sapply(list(x,y), I, simplify="array")
+```
