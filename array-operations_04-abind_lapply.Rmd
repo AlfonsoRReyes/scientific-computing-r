@@ -1,0 +1,17 @@
+---
+title: "print array with abind, lapply"
+output: html_notebook
+---
+
+```{r}
+D <- array(1:48, dim = c(4,4,3))
+D
+```
+
+
+```{r}
+library(abind)
+
+# print a 3D array without a foor loop
+abind(lapply(1:dim(D)[3], function(i) D[,,i]), along = 3)
+```
