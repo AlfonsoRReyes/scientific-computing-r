@@ -1,0 +1,25 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+install.packages("geozoo")
+install.packages("tourr")
+
+```
+
+```{r}
+library(geozoo)
+library(tourr)
+```
+
+
+```{r}
+p = 4
+n = 1000
+# Cube with points on it's face.  
+# A 3D version would be a box with solid walls and a hollow interior.
+cube.face(p)
+```
+
