@@ -1,0 +1,99 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+
+## stack matrices into an array
+```{r}
+library(narray)
+
+A = matrix(1:4, nrow=2, ncol=2, dimnames=list(c('a','b'),c('x','y')))
+B = matrix(5:6, nrow=2, ncol=1, dimnames=list(c('b','a'),'z'))
+C = stack(list(A, B), along=2)
+
+D = stack(list(m=A, n=C), along=3) # we can also introduce new dimensions
+# , , m          , , n
+#
+#   x y  z         x y z
+# a 1 3 NA       a 1 3 6
+# b 2 4 NA       b 2 4 5
+D
+```
+
+## mapping functions on arrays
+
+```{r}
+map(D, along=3, function(x) x*2) 
+# , , m
+# 
+# x y  z
+# a 2 6 NA
+# b 4 8 NA
+# 
+# , , n
+# 
+# x y  z
+# a 2 6 12
+# b 4 8 10
+```
+
+
+
+## stack matrices
+
+```{r}
+library(narray)
+
+A = matrix(1:4, nrow=2, ncol=2, dimnames=list(c('a','b'),c('x','y')))
+B = matrix(5:6, nrow=2, ncol=1, dimnames=list(c('b','a'),'z'))
+A
+B
+
+C = stack(list(A, B), along=2)
+#    x y z
+#  a 1 3 6   # B is stacked correctly according to its names
+#  b 2 4 5
+C
+```
+
+
+```{r}
+D
+```
+
+```{r}
+# repeat the array along the slice axis twice
+rep(D, 2, along = 3)
+```
+
+```{r}
+# repeat along the columns twice
+rep(D, 2, along = 2)
+```
+
+```{r}
+# repeat along the columns twice
+rep(D, 2, along = 1)
+```
+
+
+## which: returns matrix with positions that match a condition
+```{r}
+D
+which(D==5)
+# #   [,1] [,2] [,3]
+# b    2    3    2
+```
+
+
+```{r}
+# get values specified in the filter
+D[which(D==2)]
+```
+
+```{r}
+filter(D)
+```
+
