@@ -52,8 +52,9 @@ In conclusion,  I think,  using tensor arithmetic for multidimensional arrays lo
 
 
 ```{r}
-A <- to.tensor( 1:20, c(a=2,b=2,c=5) )
+A <- to.tensor( 1:20, c(r=2, c=2, s=5) )
 A
+ftable(A)
 ```
 
 ```{r}
@@ -157,6 +158,12 @@ names(A)
 dimnames(A)
 ftable(to.tensor(A))
 ftable(to.tensor(c(A),dim(A)))
+```
+
+
+```{r}
+# ones
+one.tensor(c(a=3,b=3,c=3))
 ```
 
 
