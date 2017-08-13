@@ -1,0 +1,46 @@
+---
+title: "creating empty arrays"
+output: html_notebook
+---
+
+https://stackoverflow.com/a/32023090/5270873
+
+```{r}
+# create empty array
+empty <- array(numeric(),c(2,3,0)) 
+empty
+```
+
+```{r}
+# attempt to add a matrix to the array
+empty[,,1] = matrix(1:6, nrow=2, ncol=3)   # error because 1st slice does not exist
+# Error in `[<-`(`*tmp*`, , , 1, value = 1:6) : subscript out of bounds
+```
+
+
+
+```{r}
+## using package abind
+## add 1st matrix
+library(abind)
+
+# create empty array
+empty <- array(numeric(),c(2,3,0)) 
+
+# add matrix
+empty = abind(empty, matrix(1:6, nrow=2, ncol=3))
+empty
+```
+
+```{r}
+## add second matrix, and so on
+empty = abind(empty, matrix(9:14, nrow=2, ncol=3))
+empty
+```
+
+
+```{r}
+## add second matrix, and so on
+empty = abind(empty, matrix(80:85, nrow=2, ncol=3))
+empty
+```
