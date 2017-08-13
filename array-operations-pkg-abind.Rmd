@@ -41,3 +41,43 @@ abind(x, y, along = 3)
 array(c(x, y), dim = c(2, 2, 2))
 ```
 
+
+
+```{r}
+library(abind)
+
+x<-array(1:36, c(2,9,2))
+x
+
+```
+
+```{r}
+# Extract 1st row:
+
+asub(x, idx = list(1), dims = 1)
+```
+
+
+
+
+```{r}
+# Extract second and third column:
+
+asub(x, idx = list(2:3), dims = 2)
+```
+
+
+```{r}
+# Remove the last item from dimension shortdim as the OP wanted:
+shortdim = 3
+asub(x, idx = list(1:(dim(x)[shortdim]-1)), dims = shortdim)
+# this is equivalent to removing the last slice of the array
+```
+
+
+```{r}
+# You can also use negative indexing so this will work too:
+
+asub(x, idx = list(-dim(x)[shortdim]), dims = shortdim)
+```
+
