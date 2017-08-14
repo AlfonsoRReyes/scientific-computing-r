@@ -1,0 +1,49 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+a <- array(1:20, c(2,2,5))
+a
+
+apply(a, 1, identity)
+
+apply(a, 2, identity)
+
+apply(a, 3, identity)
+```
+
+
+```{r}
+dim <- c(x=3, y=4, z=5)
+a <- array(1:60, dim)
+a
+```
+
+
+```{r}
+# by rows
+cat("\ by rows \n")
+vapply(1:dim(a)[1], function(i) identity(a[i, ,]), a[1, ,])
+
+cat("\n by columns \n")
+# by columns
+vapply(1:dim(a)[2], function(i) identity(a[, i,]), a[, 1,])
+
+# by slices
+cat("\n by slices (same as the original\n")
+vapply(1:dim(a)[3], function(i) identity(a[, ,i]), a[, ,1])
+```
+
+
+```{r}
+dim.n <- lapply(1:length(dim), function(x) paste(names(dim)[x], seq(len=dim[x]), sep="_"))
+vapply(dimnames(a)[[1]], function(i) identity(a[i, ,]), a[1, ,])
+```
+
+```{r}
+
+
+```
+
