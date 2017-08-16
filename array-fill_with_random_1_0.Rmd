@@ -135,7 +135,7 @@ res <- benchmark(scott(n, k, s), scottComp(n,k,s),
                  ted(n, k, s), david(n, k, s), luis(n, k, s),
                  arma(n, k, s), sugar(n,k,s),
                  armaFloor(n, k, s), sugarFloor(n, k, s),
-                 order="relative", replications=2)
+                 order="relative", replications=100)
 print(res[,1:4])
 
 # test                replications elapsed    relative
@@ -149,6 +149,21 @@ print(res[,1:4])
 # 1	scott(n, k, s)	    100	        366.03	1663.773
 # 2	scottComp(n, k, s)	100	        385.42	1751.909
 ```
+
+
+ 
+test             replications    elapsed     relative
+4	david(n, k, s)  	100	      0.21	       1.000
+7	sugar(n, k, s)	    100	      0.64	       3.048
+6	arma(n, k, s)	    100	      0.93	       4.429
+9	sugarFloor(n, k, s)	100	      1.15	       5.476
+8	armaFloor(n, k, s)	100	      1.37	       6.524
+3	ted(n, k, s)	    100	      2.60	      12.381
+5	luis(n, k, s)   	100	      4.01	      19.095
+2	scottComp(n, k, s)	100	    425.91	    2028.143
+1	scott(n, k, s)  	100	    426.84	    2032.571
+
+
 
 
 ```{r}
