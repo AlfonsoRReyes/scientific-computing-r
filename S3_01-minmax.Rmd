@@ -245,8 +245,9 @@ as.data.frame.minmax <- function(x, ...) {
     class = "data.frame")
 }
 
-df
+# df
 df <- data.frame(a = a)
 df[1:5, "a"]
+df
 ```
 
