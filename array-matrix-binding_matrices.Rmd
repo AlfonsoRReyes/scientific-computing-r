@@ -1,0 +1,25 @@
+---
+title: "binding matrices"
+output: html_notebook
+---
+
+
+https://stackoverflow.com/a/36440267/5270873
+```{r}
+x <- matrix( 1:9 , 3 , 3 )
+y <- matrix( 10:18 , 3 , 3 )
+
+sapply(list(x,y), identity, simplify="array")
+```
+
+```{r}
+# similarly to save a couple of keystrokes, the following is usually identical
+sapply(list(x,y), I, simplify="array")
+```
+
+
+```{r}
+#  retain the names of each original matrix in your new array as identifiers
+sapply(mget(c("x","y")), identity, simplify="array")
+```
+

@@ -1,0 +1,169 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+tensorA stands for "tensor arithmetic". A tensor is a mathematical generalization of vector and matrix with many applications in physics, geometry and in the statistics of vectors valued data. However the package is also useful in any case, where computations on sequences of matrices, vectors or even tensors is involved.
+
+
+Mathematical objects called tensors can be used to represent multidimensional objects. In reality a scalar is rank 0 tensor,  so scalar is the simplest tensor. Rank of a tensor can be thought as objects spatial dimension.  Let’s consider matrix multiplication, where there are two indices, tensor of rank 2. If we have two matrices $A_{ij}$ and $B_{ij}$. 
+
+```{r}
+# We can multiply them with index notation as follows using an obscure 
+# language R with a naive algorithm:
+
+set.seed(42)
+
+A <- matrix(rnorm(12), 3, 4)
+B <- matrix(rnorm(12), 4, 3)
+C <- matrix(0, dim(A)[1], dim(B)[2])
+
+for(i in 1:dim(A)[1]) {
+    for(j in 1:dim(A)[1]) {
+        for(k in 1:dim(A)[2]) {                # k is a dummy index to do the sum
+            C[i,j] = C[i,j] + A[i, k] * B[k,j]
+        }
+    }
+}
+C
+```
+
+```{r}
+A %*% B
+```
+
+You should have noticed that we introduce a third index. That is called a dummy index which we actually do the sum. This approach is technically called Einstein summation rule. So we represent the multiplication as follows: $C_{ij} = \sum_{k=1}^{m} A_{ik} B_{kj}$. Normally sum is dropped for short notation. It is quite intuitive from this notation that number of columns of A should be equal to number of rows in B to perform the sum consistently.
+
+
+```{r}
+library("tensorA")
+
+set.seed(42)
+
+At <- to.tensor(rnorm(4), c(i=2, k=2))
+Bt <- to.tensor(rnorm(4), c(k=2, j=2))
+At %e% Bt
+```
+
+Note that here $\%e\%$ implies tensor multiplication with Einstein summation rule. This is pretty trivial example but if you imagine higher dimensional objects, tracking indices would be cumbersome so multi-linear algebra makes life easy.
+
+In conclusion,  I think,  using tensor arithmetic for multidimensional arrays looks more compacts and efficient (~ 2-3 times).  A discussion related to this appeared in R help list.
+
+
+
+```{r}
+A <- to.tensor( 1:20, c(r=2, c=2, s=5) )
+A
+ftable(A)
+```
+
+```{r}
+# show tensor as a table in 2D
+ftable(A)
+```
+
+
+
+```{r}
+# Einstein summation rule
+B <- to.tensor( c(0,1,1,0) , c(a=2,"a'"=2))
+A %e% B
+```
+
+
+
+```{r}
+drag.tensor( A , B, c("a","b"))
+A %e% one.tensor(c(c=5))/5     # a mean of matrices
+reorder.tensor(A, c("c","b","a"))
+```
+
+
+```{r}
+A -  reorder.tensor(A,c("c","b","a"))  # =0 since sequence is irrelevant
+```
+
+```{r}
+inv.tensor(A,"a",by="c") 
+```
+
+## to.tensor
+
+```{r}
+A <- to.tensor(1:60,c(U=4,V=5,W=3))
+A
+```
+
+```{r}
+# add tensors
+add.tensor(A, A)
+```
+
+
+```{r}
+# divide and subtract
+add.tensor(A,A)/2 -A
+```
+
+
+```{r}
+(A+A)/2
+A/A
+A * 1/A
+
+
+```
+
+
+```{r}
+norm.tensor(reorder.tensor(A,c(2,3,1)) - A)
+```
+
+```{r}
+# convert matrix to tensor
+A <- diag(5)    # matrix
+as.tensor(A)    # tensor
+```
+
+
+
+```{r}
+A <- to.tensor(1:6, c(a=2,b=3))
+A
+cat("\n bind.tensor \n")
+bind.tensor(A, dA="a", A)
+```
+
+```{r}
+bind.tensor(A, "b", A)
+```
+
+
+```{r}
+# diagonals
+A <- to.tensor(1:4,c(a=2,b=2))
+A
+diag.tensor(A)
+diag.tensor(A,by="b")
+```
+
+
+
+```{r}
+## pretty printing of tensors
+A <- to.tensor(1:20,c(U=2,V=2,W=5))
+A
+dim(A)
+names(A)
+dimnames(A)
+ftable(to.tensor(A))
+ftable(to.tensor(c(A),dim(A)))
+```
+
+
+```{r}
+# ones
+one.tensor(c(a=3,b=3,c=3))
+```
+
+

@@ -1,0 +1,28 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+```{r}
+# the goal is to concatenate these 3D arrays into one.
+# All have the same dimensions
+a <- array(1:24,  dim=c(3,4,2))
+b <- array(25:48, dim=c(3,4,2))
+c <- array(26:72, dim=c(3,4,2))
+
+abc <- sapply(list(a,b,c), identity, simplify="array") # this is a 4D array
+abc
+dim(abc)    # [1] 3 4 2 3   4D array but we want 3D
+
+# reshape the 4D array to 3D array
+abc2 <- array(abc, dim=c(3,4,6))
+abc2
+```
+
+
+```{r}
+# reshape the 4D array to 3D array
+abc2 <- array(abc, dim=c(3,4,6))
+abc2
+```

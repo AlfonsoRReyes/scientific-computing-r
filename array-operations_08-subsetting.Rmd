@@ -1,0 +1,27 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+https://stackoverflow.com/questions/21443086/r-subsetting-n-dimensional-arrays
+
+```{r}
+set.seed(123)
+arr = array(sample(c(1:10)), dim=c(3,4,2))
+arr
+```
+
+```{r}
+# list of indices to extract from array
+ll = list(c(1,2), c(2,4), c(2))
+ll
+```
+
+
+
+```{r}
+do.call(`[`, c(list(arr), ll))
+```
+
+
+

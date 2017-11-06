@@ -1,0 +1,128 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+```{r}
+# Filtering out rows in a matrix containing only 0 in R
+# https://stackoverflow.com/a/11105314/5270873
+# https://stackoverflow.com/questions/11105234/filtering-out-rows-in-a-matrix-containing-only-0-in-r
+m <- matrix(c(1, 0, 3, 4, 0, 6), 3)
+m
+m[m[, 1] > 0 & m[, 2] > 0,]
+
+```
+
+
+
+```{r}
+a <- array(c(0, 0, 3, 0, 0, 7, 8, 9), dim = c(2, 2, 2))
+a
+cat("filtered \n")
+mask <- a[, 1,] > 0 || a[, 2,] > 0
+mask
+a[mask,,]
+```
+
+
+```{r}
+# https://stackoverflow.com/q/11514964/5270873
+
+a4d <- array(rnorm(10000), rep(10,4)) #x, y, z, t
+
+# arbitrary set of 3d spatial indices x, y, z (here, using high values at first timepoint)
+indices <- which(a4d[,,,1] > 2, arr.ind=TRUE)
+str(indices)
+
+# int [1:20, 1:3] 10 2 6 5 8 2 6 8 2 10 ...
+# - attr(*, "dimnames")=List of 2
+# ..$ : NULL
+# ..$ : chr [1:3] "dim1" "dim2" "dim3"
+
+#Now, I would like to use these indices to get data x, y, z for all t
+
+#Intuitive, but invalid, syntax (also not clear what the structure of the data would be)
+#a4d[indices,]
+
+#Ugly, but working, syntax
+library(pracma)
+
+#number of timepoints
+nt <- dim(a4d)[4]
+
+# create a 4d lookup matrix
+lookup <- cbind(repmat(indices, nt, 1), rep(1:nt, each=nrow(indices)))
+
+#obtain values at each timepoint for indices x, y, z
+result <- cbind(lookup, a4d[lookup])
+```
+
+
+```{r}
+# I think you are looking for:
+
+apply(a4d, 4, `[`, indices)
+
+# And to check that our results match:
+
+result1 <- matrix(result[,5], ncol = 10)
+result2 <- apply(a4d, 4, `[`, indices)
+identical(result1, result2)
+# [1] TRUE
+```
+
+
+
+
+```{r}
+# https://stackoverflow.com/a/14501461/5270873
+
+extract <- function(A, .dim, .value) {
+    val.idx  <- match(.value, dimnames(A)[[.dim]])
+    all.idx  <- arrayInd(seq_along(A), dim(A))
+    keep.idx <- all.idx[all.idx[, .dim] == val.idx, , drop = FALSE]
+    array(A[keep.idx], dim = dim(A)[-.dim], dimnames = dimnames(A)[-.dim])
+
+}
+#Example:
+
+A <- array(data=1:32, dim=c(2,4,4),
+           dimnames=list(c("x","y"), LETTERS[1:4], letters[1:4]))
+A
+cat("\n extract dimension 1x \n")
+extract(A, 1, "x")
+
+cat("\n extract dimension 2D \n")
+extract(A, 2, "D")
+
+cat("\n extract dimension 3b \n")
+extract(A, 3, "b")
+```
+
+
+
+
+
+```{r}
+# https://stackoverflow.com/a/17751172/5270873
+m <- array(1:24, c(2,3,4))
+ndims <- 3
+a <- rep(alist(,)[1], ndims)
+slice_num = 1
+
+for(i in seq_len(ndims)) {
+    cat(sprintf("\n Extracting on dimension %2d, slice #%2d \n", i, slice_num))
+    slice <- a
+    slice[[i]] <- slice_num
+    print(do.call(`[`, c(list(m), slice)))
+    
+}
+```
+
+
+```{r}
+m
+a
+```
+

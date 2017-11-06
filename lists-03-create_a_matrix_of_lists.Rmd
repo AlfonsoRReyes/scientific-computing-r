@@ -42,6 +42,7 @@ is.matrix(will.become.a.matrix)
 ```{r}
 dim(will.become.a.matrix) <- c(2,3)
 is.matrix(will.become.a.matrix)
+# now list is a matrix
 ```
 
 ```{r}
@@ -89,8 +90,6 @@ b
 
 
 
-
-
 ```{r}
 # print the contents of the matrix
 apply(b, c(1,2), function(x) paste(eval(parse(text=x)), collapse = " "))
@@ -107,6 +106,7 @@ apply(b, 1:length(dim(b)), function(x) paste(eval(parse(text=x)), collapse = " "
 apply(b, 1:length(dim(b)), function(x) eval(parse(text=x)))
 ```
 
+## array-lists
 
 ```{r}
 # array-list
@@ -139,7 +139,7 @@ cat("\n")
 
 # assign values to the matrix-list
 i = 1; j = 1
-# CD[i, j] <- c(1,2,3,4)    <- this will not work
+# CD[i, j] <- c(1,2,3,4)                                 <- this will not work
 CD[[i + nrow(CD)*(j-1)]] <- c(1,2,3,4)
 
 i = 3; j = 1

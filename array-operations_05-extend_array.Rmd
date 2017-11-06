@@ -1,0 +1,30 @@
+---
+title: "extend arrays"
+output: html_notebook
+---
+
+https://stackoverflow.com/a/22662963/5270873
+
+
+```{r}
+# extend the array 2x2x2x2 in the dimension #3
+## arr <- array(rep(1:4, each=4), dim=c(2, 2, 2, 2))     # toy array
+arr <- array(1:16, dim=c(2, 2, 2, 2))     # toy array
+arr
+```
+
+```{r}
+# create an array with the desired dimensions and fill it with NAs
+arr.new <- array(NA, dim=c(2, 2, 3, 2))               # increased dimension 3
+
+# assign the original array to the new array
+arr.new[,,-3,] <- arr
+arr.new
+```
+
+
+```{r}
+arr.new <- array(NA, dim=c(2, 2, 3, 2))               # increased dimension 3
+arr.new
+```
+

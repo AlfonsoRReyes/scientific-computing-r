@@ -1,0 +1,177 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+http://dirk.eddelbuettel.com/blog/2012/09/02/
+
+
+```{r}
+# sweeps the sample() function across all rows and columns which is 
+# probably going to be (relatively) expensive.
+library(compiler)
+
+scott <- function(N, K, S) {
+    aa <- array(0, dim = c(N, K, S))
+    apply(aa, c(1, 2, 3), function(x) sample(c(0, 1), 1))
+}
+
+scottComp <- cmpfun(scott)   #  byte-compiled version
+```
+
+
+```{r}
+# vectorises the approach, generating N times K elements at once which 
+# are then reshaped into a matrix.
+ted <- function(N, K, S) {
+    array(rbinom(N * K * S, 1, 0.5), dim = c(K, N, S))
+}
+```
+
+
+```{r}
+#  it uses sample() over zero and one rather than making (expensive) draws 
+#  from random number generator.
+david <- function(m, n, p) {
+    array(sample(0:1, m * n, replace = TRUE), dim = c(m,n,p))
+}
+```
+
+
+```{r}
+# draws from a random uniform and rounds to zero and one, rather than 
+# deploying the binomial.
+luis <- function(m, n, p) {
+     round(array(runif(m * n * p), dim = c(m, n, p)))
+}
+```
+
+
+
+```{r}
+# Thanks to inline we can write the C++ code as an R character string; inline takes care of everything and we end up with C++-based solution directly callable from R:
+
+library(inline)
+
+arma <- cxxfunction(signature(ns="integer", ks="integer", ss="integer"), 
+plugin = "RcppArmadillo", 
+body='
+   int n = Rcpp::as<int>(ns);
+   int k = Rcpp::as<int>(ks);
+   int s = Rcpp::as<int>(ss);
+   return wrap(arma::randu(n, k, s));
+')
+
+# This works, and is pretty fast. 
+# The only problem is that it answers the wrong question as it returns U(0,1) draws and not binomials. 
+```
+
+
+
+```{r}
+# We need to truncate or round. So a corrected version is
+
+armaFloor <- cxxfunction(signature(ns="integer", ks="integer", ss="integer"), 
+plugin = "RcppArmadillo", 
+body='
+   int n = Rcpp::as<int>(ns);
+   int k = Rcpp::as<int>(ks);
+   int s = Rcpp::as<int>(ss);
+   return wrap(arma::floor(arma::randu(n, k, s) + 0.5));
+')
+
+# which uses the the old rounding approximation of adding 1/2 before truncating.
+```
+
+
+```{r}
+# we do wonder how Rcpp sugar would do.
+#  it gives access to R's RNG functions using the exact same RNGs as R 
+# making the results directly substitutable (whereas Armadillo uses its own RNG).
+
+sugar <- cxxfunction(signature(ns="integer", ks="integer", ss="integer"), 
+plugin = "RcppArmadillo", 
+body='
+   int n = Rcpp::as<int>(ns);
+   int k = Rcpp::as<int>(ks);
+   int s = Rcpp::as<int>(ss);
+   Rcpp::RNGScope tmp;
+   Rcpp::NumericVector draws = Rcpp::runif(n*k*s);
+   return wrap( arma::cube(draws.begin(), n, k, s) );
+')
+
+# Here Rcpp::RNGScope deals with setting/resetting the R RNG state. This draws a vector of N time K uniforms similar to Luis' function -- and just like Luis' R function does so without looping -- and then shapes a matrix of dimension N by K from it.
+
+# And it does of course have the same problem as the RcppArmadillo approach earlier
+```
+
+
+```{r}
+# We need to truncate or round. So a corrected version is:
+
+sugarFloor <- cxxfunction(signature(ns="integer", ks="integer", ss="integer"), 
+plugin = "RcppArmadillo", 
+body='
+   int n = Rcpp::as<int>(ns);
+   int k = Rcpp::as<int>(ks);
+   int s = Rcpp::as<int>(ss);
+   Rcpp::RNGScope tmp;
+   Rcpp::NumericVector draws = Rcpp::floor(Rcpp::runif(n*k*s)+0.5);
+   return wrap( arma::cube(draws.begin(), n, k, s) );
+')
+
+# which uses the the old rounding approximation of adding 1/2 before truncating.
+```
+
+
+```{r}
+library(rbenchmark)
+
+n <- 500
+k <- 100
+s <- 10
+
+res <- benchmark(scott(n, k, s), scottComp(n,k,s),
+                 ted(n, k, s), david(n, k, s), luis(n, k, s),
+                 arma(n, k, s), sugar(n,k,s),
+                 armaFloor(n, k, s), sugarFloor(n, k, s),
+                 order="relative", replications=100)
+print(res[,1:4])
+
+# test                replications elapsed    relative
+# 4	david(n, k, s)	    100	          0.22	   1.000
+# 7	sugar(n, k, s)	    100	          0.69	   3.136
+# 6	arma(n, k, s)	    100	          0.73	   3.318
+# 9	sugarFloor(n, k, s)	100	          1.11	   5.045
+# 8	armaFloor(n, k, s)	100	          1.31	   5.955
+# 3	ted(n, k, s)	    100	          2.54	  11.545
+# 5	luis(n, k, s)	    100	          3.89	  17.682
+# 1	scott(n, k, s)	    100	        366.03	1663.773
+# 2	scottComp(n, k, s)	100	        385.42	1751.909
+```
+
+
+ 
+test             replications    elapsed     relative
+4	david(n, k, s)  	100	      0.21	       1.000
+7	sugar(n, k, s)	    100	      0.64	       3.048
+6	arma(n, k, s)	    100	      0.93	       4.429
+9	sugarFloor(n, k, s)	100	      1.15	       5.476
+8	armaFloor(n, k, s)	100	      1.37	       6.524
+3	ted(n, k, s)	    100	      2.60	      12.381
+5	luis(n, k, s)   	100	      4.01	      19.095
+2	scottComp(n, k, s)	100	    425.91	    2028.143
+1	scott(n, k, s)  	100	    426.84	    2032.571
+
+
+
+
+```{r}
+# fill an array with random zeros and ones
+r <- 10
+c <- 10
+s <- 3
+a0 <- array(0, dim = c(r, c, s))
+apply(a0, c(1,2,3), function(x) sample(c(0,1),1))
+```
+
