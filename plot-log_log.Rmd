@@ -1,0 +1,47 @@
+---
+title: "log-log plot of Euler ODE solver"
+output:
+  html_document:
+    df_print: paged
+---
+
+The table comes from the results of an Euler ODE solver in rODE package.
+We want to plot the error for each of the step sizes applied to the differential equation:
+
+$$ \frac {dy} {dx} = x + y $$
+
+```{r}
+a_table <- "step    error
+        1.0000	1.0000000000			
+        0.5000	0.6519472022			
+        0.2500	0.3854692789			
+        0.1000	0.1733851024			
+        0.0100	0.0187502990			
+        0.0010	0.0018904783			
+        0.0001	0.0001892038	
+"
+
+errors <- read.table(text = a_table, header = TRUE)
+```
+
+
+```{r}
+library(ggplot2)
+
+# http://ggplot2.tidyverse.org/reference/annotation_logticks.html
+# Make a log-log plot (without log ticks)
+a <- ggplot(errors, aes(step, error)) +
+ geom_point(na.rm = TRUE) +
+    geom_line()+
+ scale_x_log10(
+   breaks = scales::trans_breaks("log10", function(x) 10^x),
+   labels = scales::trans_format("log10", scales::math_format(10^.x))
+ ) +
+ scale_y_log10(
+   breaks = scales::trans_breaks("log10", function(x) 10^x),
+   labels = scales::trans_format("log10", scales::math_format(10^.x))
+ ) +
+ theme_bw()
+a + annotation_logticks(sides = "lrbt") + 
+    theme(panel.grid.minor = element_blank())   # hide the minor grids
+```
