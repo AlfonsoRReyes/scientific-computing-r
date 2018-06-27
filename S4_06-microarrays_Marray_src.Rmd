@@ -1,6 +1,8 @@
 ---
-title: "R Notebook"
-output: html_notebook
+title: "Micorarrays - Marray, sourcing"
+output:
+  pdf_document: default
+  html_notebook: default
 ---
 
 Source: https://github.com/lgatto/S4-tutorial

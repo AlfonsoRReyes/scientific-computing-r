@@ -1,0 +1,147 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+https://www.packtpub.com/mapt/book/big_data_and_business_intelligence/9781785889776/10/ch10lvl1sec56/working-with-r6
+
+
+The R6 class allows us to define classes that are even more like popular object-oriented programming languages. The following code is an example where we define the Vehicle class. It has some public fields and methods for users and some private fields and methods for internal use:
+
+
+```{r}
+library(R6) 
+Vehicle <- R6Class("Vehicle",  
+  public = list( 
+    name = NA, 
+    model = NA, 
+    initialize = function(name, model) { 
+      if (!missing(name)) self$name <- name 
+      if (!missing(model)) self$model <- model 
+    }, 
+    move = function(movement) { 
+      private$start() 
+      private$position <- private$position + movement 
+      private$stop() 
+    }, 
+    get_position = function() { 
+      private$position 
+    } 
+  ), 
+  private = list( 
+    position = 0, 
+    speed = 0, 
+    start = function() { 
+      cat(self$name, "is starting\n") 
+      private$speed <- 50 
+    }, 
+    stop = function() { 
+      cat(self$name, "is stopping\n") 
+      private$speed <- 0 
+    } 
+  )) 
+
+```
+
+
+From the user side, we can only access the public fields and methods. Only the class methods have access to the private fields and methods. Although the vehicle has a position, we don't want the user to modify its value. Therefore, we put it in the private part and expose its value through get_position() so that it is hard for users to modify the position from outside:
+
+
+```{r}
+car <- Vehicle$new(name = "Car", model = "A") 
+car 
+## <Vehicle> 
+##   Public: 
+##     clone: function (deep = FALSE)  
+##     get_position: function ()  
+##     initialize: function (name, model)  
+##     model: A 
+##     move: function (movement)  
+##     name: Car 
+##   Private: 
+##     position: 0 
+##     speed: 0 
+##     start: function ()  
+##     stop: function () 
+
+```
+
+When car is printed, all public and private fields and methods are displayed. Then, we will call the move() method, and we can find the position is changed with get_position():
+
+```{r}
+car$move(10) 
+## Car is starting 
+## Car is stopping 
+car$get_position() 
+## [1] 10 
+```
+
+To demonstrate the inheritance of R6 class, we define a new class named MeteredVehicle that records the sum of distance it moves in history. To define the class, we need to add a private field distance, a public override of move that first calls super$move() to move the vehicle to get the right position and then accumulates the distance resulted from the movement in absolute terms:
+
+```{r}
+MeteredVehicle <- R6Class("MeteredVehicle", 
+  inherit = Vehicle, 
+  public = list( 
+    move = function(movement) { 
+      super$move(movement) 
+      private$distance <<- private$distance + abs(movement) 
+    }, 
+    get_distance = function() { 
+      private$distance 
+    } 
+  ), 
+  private = list( 
+    distance = 0 
+  )) 
+```
+
+Now, we can do some experiments with MeteredVehicle. In the following code, we will create a bus:
+
+
+```{r}
+bus <- MeteredVehicle$new(name = "Bus", model = "B") 
+bus 
+## <MeteredVehicle> 
+##   Inherits from: <Vehicle> 
+##   Public: 
+##     clone: function (deep = FALSE)  
+##     get_distance: function ()  
+##     get_position: function ()  
+##     initialize: function (name, model)  
+##     model: B 
+##     move: function (movement)  
+##     name: Bus 
+##   Private: 
+##     distance: 0 
+##     position: 0 
+##     speed: 0 
+##     start: function ()  
+##     stop: function () 
+```
+
+First, let bus move 10 units forward, and then, the position is changed and the distance is accumulated:
+
+
+```{r}
+bus$move(10) 
+## Bus is starting 
+## Bus is stopping 
+bus$get_position() 
+## [1] 10 
+bus$get_distance() 
+## [1] 10 
+```
+
+Then, let bus move 5 units backward. The position is closer to the origin, while the distance that sums up all movements becomes greater:
+
+```{r}
+bus$move(-5) 
+## Bus is starting 
+## Bus is stopping 
+bus$get_position() 
+## [1] 5 
+bus$get_distance() 
+## [1] 15 
+
+```
+

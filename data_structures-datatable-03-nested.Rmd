@@ -1,0 +1,26 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+```{r}
+library(data.table)
+
+set.seed(7908)
+dt <- data.table(x=1:5)[,list(y=letters[1:x],z=sample(1:100,x)),by=x]
+dt
+```
+
+```{r}
+dt2 <- dt[, list(dt.yz = list(data.table(y, z))), by=x]
+dt2
+```
+```{r}
+dt2$dt.yz
+```
+
+
+
+
+

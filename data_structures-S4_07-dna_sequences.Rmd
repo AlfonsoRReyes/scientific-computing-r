@@ -1,6 +1,8 @@
 ---
 title: "S4 classes"
-output: html_notebook
+output:
+  pdf_document: default
+  html_notebook: default
 ---
 
 FUll example of using S4 to create a gene sequence class.

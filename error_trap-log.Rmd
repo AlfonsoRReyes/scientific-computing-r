@@ -1,0 +1,41 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(assertthat)
+
+my.log <- function(x) {
+    assert_that(is.numeric(x), length(x) > 0, all(!is.na(x)), all(x >= 0))
+}
+
+my.log(c(1, NA, 3))
+
+```
+
+```{r}
+# library(assertive)
+if (!require(assertive)) install.packages("assertive")
+
+my.log <- function(x) {
+    assert_is_numeric(x)
+    assert_is_non_empty(x)
+    assert_all_are_not_na(x)
+    assert_all_are_greater_than_or_equal_to(x, 0)
+}
+
+my.log(c(1, NA, 3))
+
+
+```
+
+```{r}
+x <- c(1, NA, 3)
+    assert_is_numeric(x)
+    assert_is_non_empty(x)
+    
+    assert_all_are_greater_than_or_equal_to(x, 0)
+    assert_all_are_not_na(x)
+```
+

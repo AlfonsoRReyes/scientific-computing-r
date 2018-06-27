@@ -1,6 +1,10 @@
 ---
-title: "R Notebook"
-output: html_notebook
+title: "Microarrays, Marray"
+output:
+  html_document:
+    df_print: paged
+  html_notebook: default
+  pdf_document: default
 ---
 
 Source: https://github.com/lgatto/S4-tutorial

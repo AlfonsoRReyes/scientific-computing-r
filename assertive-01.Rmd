@@ -1,0 +1,73 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+```{r}
+# library(assertive)
+if (!require(assertive)) install.packages("assertive")
+
+counts <- c(1, 2, 3, 4.5)
+assert_is_numeric(counts)
+assert_all_are_non_negative(counts)
+assert_all_are_whole_numbers(counts)
+
+```
+
+```{r}
+is_numeric(1:6)
+```
+
+
+```{r}
+is_numeric(letters)
+```
+
+```{r}
+is_non_negative(rnorm(6))
+```
+
+```{r}
+ls("package:assertive")
+```
+
+```{r}
+assert_is_vector(data.frame(a = c(1,2,3)))
+```
+
+```{r}
+is_vector(data.frame(a = c(1,2,3)))
+```
+
+```{r}
+assert_all_are_whole_numbers(c(1, 2, 3.5))
+```
+
+```{r}
+assertive::is_us_zip_code("77381")
+```
+
+
+```{r}
+assertive::is_equal_to(1, 1)
+```
+
+```{r}
+# using tolerance
+assertive::is_equal_to(1, 1.1, tol = 0.11)
+```
+
+
+```{r}
+assertive::are_identical(c(1,2,3), c(1,2,3))
+assertive::are_identical(c(1,2,3), c(3,2,1))
+assertive::are_same_length(c(1,2,3), c(3,2,1))
+assertive::assert_all_are_equal_to(c(1,2,3), c(1,2,3))
+```
+
+
+```{r}
+assertive::is_windows_10()
+```
+

@@ -1,0 +1,965 @@
+\documentclass[]{article}
+\usepackage{lmodern}
+\usepackage{amssymb,amsmath}
+\usepackage{ifxetex,ifluatex}
+\usepackage{fixltx2e} % provides \textsubscript
+\ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+\else % if luatex or xelatex
+  \ifxetex
+    \usepackage{mathspec}
+  \else
+    \usepackage{fontspec}
+  \fi
+  \defaultfontfeatures{Ligatures=TeX,Scale=MatchLowercase}
+\fi
+% use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+% use microtype if available
+\IfFileExists{microtype.sty}{%
+\usepackage{microtype}
+\UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\usepackage[margin=1in]{geometry}
+\usepackage{hyperref}
+\hypersetup{unicode=true,
+            pdftitle={Microarrays, Marray},
+            pdfborder={0 0 0},
+            breaklinks=true}
+\urlstyle{same}  % don't use monospace font for urls
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{248,248,248}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.94,0.16,0.16}{#1}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.77,0.63,0.00}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\BuiltInTok}[1]{#1}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.64,0.00,0.00}{\textbf{#1}}}
+\newcommand{\ExtensionTok}[1]{#1}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ImportTok}[1]{#1}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{#1}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\RegionMarkerTok}[1]{#1}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\usepackage{graphicx,grffile}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+\IfFileExists{parskip.sty}{%
+\usepackage{parskip}
+}{% else
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{6pt plus 2pt minus 1pt}
+}
+\setlength{\emergencystretch}{3em}  % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{0}
+% Redefines (sub)paragraphs to behave more like sections
+\ifx\paragraph\undefined\else
+\let\oldparagraph\paragraph
+\renewcommand{\paragraph}[1]{\oldparagraph{#1}\mbox{}}
+\fi
+\ifx\subparagraph\undefined\else
+\let\oldsubparagraph\subparagraph
+\renewcommand{\subparagraph}[1]{\oldsubparagraph{#1}\mbox{}}
+\fi
+
+%%% Use protect on footnotes to avoid problems with footnotes in titles
+\let\rmarkdownfootnote\footnote%
+\def\footnote{\protect\rmarkdownfootnote}
+
+%%% Change title format to be more compact
+\usepackage{titling}
+
+% Create subtitle command for use in maketitle
+\newcommand{\subtitle}[1]{
+  \posttitle{
+    \begin{center}\large#1\end{center}
+    }
+}
+
+\setlength{\droptitle}{-2em}
+
+  \title{Microarrays, Marray}
+    \pretitle{\vspace{\droptitle}\centering\huge}
+  \posttitle{\par}
+    \author{}
+    \preauthor{}\postauthor{}
+    \date{}
+    \predate{}\postdate{}
+  
+
+\begin{document}
+\maketitle
+
+Source: \url{https://github.com/lgatto/S4-tutorial}
+
+We choose to represent the microarray results as a matrix of size n×m,
+where n is the number of probes on the microarray and m is the number of
+samples. The matrix that stores the intensities (these could also be
+fold-changes) is named marray.
+
+The sample annotation (meta-data) is described using a data.frame with
+exactly m rows and any number of columns. It is named pmeta.
+
+The feature (probe) annotation (meta-data) is described using a
+data.frame with exactly n rows and any number of columns. Let's call it
+fmeta.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{n <-}\StringTok{ }\DecValTok{10}
+\NormalTok{m <-}\StringTok{ }\DecValTok{6}
+
+\NormalTok{marray <-}\StringTok{ }\KeywordTok{matrix}\NormalTok{(}\KeywordTok{rnorm}\NormalTok{(n }\OperatorTok{*}\StringTok{ }\NormalTok{m, }\DecValTok{10}\NormalTok{, }\DecValTok{5}\NormalTok{), }\DataTypeTok{ncol =}\NormalTok{ m)}
+
+\CommentTok{# add the row names and column names to the matrix}
+\KeywordTok{rownames}\NormalTok{(marray) <-}\StringTok{ }\KeywordTok{paste0}\NormalTok{(}\StringTok{"probe"}\NormalTok{, }\DecValTok{1}\OperatorTok{:}\NormalTok{n)}
+\KeywordTok{colnames}\NormalTok{(marray) <-}\StringTok{ }\NormalTok{LETTERS[}\DecValTok{1}\OperatorTok{:}\NormalTok{m]}
+
+\NormalTok{marray}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##                  A         B         C         D         E         F
+## probe1   6.1924076  7.217565  5.790635 11.995220 10.101586  9.303057
+## probe2  -0.1535608  7.009127 12.025718 14.221536  5.792542 12.385899
+## probe3  12.0588658  6.547206 11.572435 10.161414  5.708033  6.988485
+## probe4  17.2480906 15.162844 -1.348905 12.002849 14.989759 17.283304
+## probe5   4.8047558 11.811113  6.274948 17.640637  8.925632 14.956560
+## probe6   6.3817510 18.338020 18.249682 10.345714  6.816407 18.414272
+## probe7  12.3156504  8.491294  8.978839 12.917494  6.389150  5.198944
+## probe8  11.3835331  9.226863  9.309726 10.625132 11.226183  6.791711
+## probe9   5.1553924 12.231468 15.940840 13.348883  8.885494  1.235753
+## probe10 14.3927052 13.934608 13.744562  6.477938  6.546492 17.502218
+\end{verbatim}
+
+\hypertarget{create-dataframes-pmeta-and-fmeta}{%
+\subsubsection{create dataframes pmeta and
+fmeta}\label{create-dataframes-pmeta-and-fmeta}}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{# build the annotations dataframe for the samples}
+\NormalTok{pmeta <-}\StringTok{ }\KeywordTok{data.frame}\NormalTok{(}\DataTypeTok{sampleId =} \DecValTok{1}\OperatorTok{:}\NormalTok{m, }\DataTypeTok{condition =} \KeywordTok{rep}\NormalTok{(}\KeywordTok{c}\NormalTok{(}\StringTok{"WT"}\NormalTok{, }\StringTok{"MUT"}\NormalTok{), }\DataTypeTok{each =} \DecValTok{3}\NormalTok{))}
+\KeywordTok{rownames}\NormalTok{(pmeta) <-}\StringTok{ }\KeywordTok{colnames}\NormalTok{(marray)}
+
+\NormalTok{pmeta}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##   sampleId condition
+## A        1        WT
+## B        2        WT
+## C        3        WT
+## D        4       MUT
+## E        5       MUT
+## F        6       MUT
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{# build the annotations dataframe for the probes}
+\NormalTok{fmeta <-}\StringTok{ }\KeywordTok{data.frame}\NormalTok{(}\DataTypeTok{geneId =} \DecValTok{1}\OperatorTok{:}\NormalTok{n, }\DataTypeTok{pathway =} \KeywordTok{sample}\NormalTok{(LETTERS, n, }\DataTypeTok{replace =} \OtherTok{TRUE}\NormalTok{))}
+\KeywordTok{rownames}\NormalTok{(fmeta) <-}\StringTok{ }\KeywordTok{rownames}\NormalTok{(marray)}
+\NormalTok{fmeta}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##         geneId pathway
+## probe1       1       L
+## probe2       2       Z
+## probe3       3       A
+## probe4       4       D
+## probe5       5       Z
+## probe6       6       M
+## probe7       7       O
+## probe8       8       P
+## probe9       9       A
+## probe10     10       P
+\end{verbatim}
+
+Finally, to link these related pieces of information together, marray,
+pmeta and fmeta will all be combined into a list that will represent our
+microarray experiment.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{maexp <-}\StringTok{ }\KeywordTok{list}\NormalTok{(}\DataTypeTok{marray =}\NormalTok{ marray, }
+              \DataTypeTok{fmeta =}\NormalTok{ fmeta, }
+              \DataTypeTok{pmeta =}\NormalTok{ pmeta)}
+
+
+\KeywordTok{rm}\NormalTok{(marray, fmeta, pmeta) ## clean up}
+\KeywordTok{str}\NormalTok{(maexp)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## List of 3
+##  $ marray: num [1:10, 1:6] 6.192 -0.154 12.059 17.248 4.805 ...
+##   ..- attr(*, "dimnames")=List of 2
+##   .. ..$ : chr [1:10] "probe1" "probe2" "probe3" "probe4" ...
+##   .. ..$ : chr [1:6] "A" "B" "C" "D" ...
+##  $ fmeta :'data.frame':  10 obs. of  2 variables:
+##   ..$ geneId : int [1:10] 1 2 3 4 5 6 7 8 9 10
+##   ..$ pathway: Factor w/ 7 levels "A","D","L","M",..: 3 7 1 2 7 4 5 6 1 6
+##  $ pmeta :'data.frame':  6 obs. of  2 variables:
+##   ..$ sampleId : int [1:6] 1 2 3 4 5 6
+##   ..$ condition: Factor w/ 2 levels "MUT","WT": 2 2 2 1 1 1
+\end{verbatim}
+
+We can access and manipulate the respective elements of our microarray
+experi- ment with the \texttt{\$} operator.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{maexp}\OperatorTok{$}\NormalTok{pmeta}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##   sampleId condition
+## A        1        WT
+## B        2        WT
+## C        3        WT
+## D        4       MUT
+## E        5       MUT
+## F        6       MUT
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{# get the summary for column A in the array}
+\KeywordTok{summary}\NormalTok{(maexp}\OperatorTok{$}\NormalTok{marray[, }\StringTok{"A"}\NormalTok{])}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+## -0.1536  5.4146  8.8826  8.9780 12.2515 17.2481
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{# for the condition "WT" in the sample annotations, }
+\CommentTok{# get the array values for probe8}
+\NormalTok{wt <-}\StringTok{ }\NormalTok{maexp}\OperatorTok{$}\NormalTok{pmeta[, }\StringTok{"condition"}\NormalTok{] }\OperatorTok{==}\StringTok{ "WT"}
+\NormalTok{maexp}\OperatorTok{$}\NormalTok{marray[}\StringTok{"probe8"}\NormalTok{, wt]}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##         A         B         C 
+## 11.383533  9.226863  9.309726
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{# get values from probe3 for conditions different that "WT"}
+\NormalTok{ maexp[[}\StringTok{"marray"}\NormalTok{]][}\StringTok{"probe3"}\NormalTok{, }\OperatorTok{!}\NormalTok{wt] ## different syntax}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##         D         E         F 
+## 10.161414  5.708033  6.988485
+\end{verbatim}
+
+The above solution does not provide a clean syntax. As a user, we have
+to know the names or positions of the respective elements of the
+microarray list elements to directly access the parts of interest.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+ \KeywordTok{boxplot}\NormalTok{(maexp}\OperatorTok{$}\NormalTok{marray)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{S4_06-microarrays_Marray_files/figure-latex/unnamed-chunk-9-1.pdf}
+
+Figure 1: Boxplot representing the intensity distributions of the 10
+probes for the 6 samples.
+
+\hypertarget{challenge}{%
+\subsection{Challenge}\label{challenge}}
+
+But what if we want to subset the experiment. How would we extract the 5
+ﬁrst probes for the 3 ﬁrst samples?
+
+We have to manually subset the individual elements of our list, making
+sure that the number of rows of the marray and fmeta elements remain
+identical as well as the number of columns of marray and the number of
+columns of pmeta.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{x <-}\StringTok{ }\DecValTok{1}\OperatorTok{:}\DecValTok{5}
+\NormalTok{y <-}\StringTok{ }\DecValTok{1}\OperatorTok{:}\DecValTok{3}
+
+\NormalTok{marray2 <-}\StringTok{ }\NormalTok{maexp}\OperatorTok{$}\NormalTok{marray[x, y]}
+
+\NormalTok{fmeta2 <-}\StringTok{ }\NormalTok{maexp}\OperatorTok{$}\NormalTok{fmeta[x, ]}
+\NormalTok{pmeta2 <-}\StringTok{ }\NormalTok{maexp}\OperatorTok{$}\NormalTok{pmeta[y, ]}
+
+\NormalTok{maexp2 <-}\StringTok{ }\KeywordTok{list}\NormalTok{(}\DataTypeTok{marray =}\NormalTok{ marray2, }\DataTypeTok{fmeta =}\NormalTok{ fmeta2, }\DataTypeTok{pmeta =}\NormalTok{ pmeta2)}
+
+\KeywordTok{rm}\NormalTok{(marray2, fmeta2, pmeta2) ## clean up}
+\KeywordTok{str}\NormalTok{(maexp2)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## List of 3
+##  $ marray: num [1:5, 1:3] 6.192 -0.154 12.059 17.248 4.805 ...
+##   ..- attr(*, "dimnames")=List of 2
+##   .. ..$ : chr [1:5] "probe1" "probe2" "probe3" "probe4" ...
+##   .. ..$ : chr [1:3] "A" "B" "C"
+##  $ fmeta :'data.frame':  5 obs. of  2 variables:
+##   ..$ geneId : int [1:5] 1 2 3 4 5
+##   ..$ pathway: Factor w/ 7 levels "A","D","L","M",..: 3 7 1 2 7
+##  $ pmeta :'data.frame':  3 obs. of  2 variables:
+##   ..$ sampleId : int [1:3] 1 2 3
+##   ..$ condition: Factor w/ 2 levels "MUT","WT": 2 2 2
+\end{verbatim}
+
+A simple operation like sub-setting the microarray experiment is very
+cumbersome and prone to errors. If we were to use this implementation
+for further work, we would of course want to write a custom function to
+perform the above.
+
+\hypertarget{the-marray-class}{%
+\subsection{The MArray class}\label{the-marray-class}}
+
+We can deﬁne a class with the setClass function. Our class is deﬁned by
+a name, MArray, and a content structure. The diﬀerent elements/ﬁelds of
+an S4 class are called slots4. When deﬁning the slots, we provide their
+respective names and classes as a (named) vector or list. It will only
+be possible to create objects with exactly these types of slots.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{MArray <-}\StringTok{ }\KeywordTok{setClass}\NormalTok{(}\StringTok{"MArray"}\NormalTok{,}
+                   \DataTypeTok{slots =} \KeywordTok{c}\NormalTok{(}\DataTypeTok{marray =} \StringTok{"matrix"}\NormalTok{,}
+                             \DataTypeTok{fmeta =} \StringTok{"data.frame"}\NormalTok{,}
+                             \DataTypeTok{pmeta =} \StringTok{"data.frame"}\NormalTok{)}
+\NormalTok{                       )}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{quote}
+the representation function is deprecated from version 3.0.0 and should
+be avoided.
+\end{quote}
+
+The setClass function returns a special function called a constructor,
+that can be used to create an instance of the class.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{MArray}\NormalTok{() ## an empty object}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## An object of class "MArray"
+## Slot "marray":
+## <0 x 0 matrix>
+## 
+## Slot "fmeta":
+## data frame with 0 columns and 0 rows
+## 
+## Slot "pmeta":
+## data frame with 0 columns and 0 rows
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{# we use the previous list}
+\NormalTok{ma <-}\StringTok{ }\KeywordTok{MArray}\NormalTok{(}\DataTypeTok{marray =}\NormalTok{ maexp[[}\DecValTok{1}\NormalTok{]],}
+             \DataTypeTok{pmeta =}\NormalTok{ maexp[[}\StringTok{"pmeta"}\NormalTok{]],}
+             \DataTypeTok{fmeta =}\NormalTok{ maexp[[}\StringTok{"fmeta"}\NormalTok{]]}
+\NormalTok{             )}
+\NormalTok{ma}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## An object of class "MArray"
+## Slot "marray":
+##                  A         B         C         D         E         F
+## probe1   6.1924076  7.217565  5.790635 11.995220 10.101586  9.303057
+## probe2  -0.1535608  7.009127 12.025718 14.221536  5.792542 12.385899
+## probe3  12.0588658  6.547206 11.572435 10.161414  5.708033  6.988485
+## probe4  17.2480906 15.162844 -1.348905 12.002849 14.989759 17.283304
+## probe5   4.8047558 11.811113  6.274948 17.640637  8.925632 14.956560
+## probe6   6.3817510 18.338020 18.249682 10.345714  6.816407 18.414272
+## probe7  12.3156504  8.491294  8.978839 12.917494  6.389150  5.198944
+## probe8  11.3835331  9.226863  9.309726 10.625132 11.226183  6.791711
+## probe9   5.1553924 12.231468 15.940840 13.348883  8.885494  1.235753
+## probe10 14.3927052 13.934608 13.744562  6.477938  6.546492 17.502218
+## 
+## Slot "fmeta":
+##         geneId pathway
+## probe1       1       L
+## probe2       2       Z
+## probe3       3       A
+## probe4       4       D
+## probe5       5       Z
+## probe6       6       M
+## probe7       7       O
+## probe8       8       P
+## probe9       9       A
+## probe10     10       P
+## 
+## Slot "pmeta":
+##   sampleId condition
+## A        1        WT
+## B        2        WT
+## C        3        WT
+## D        4       MUT
+## E        5       MUT
+## F        6       MUT
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{class}\NormalTok{(ma)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "MArray"
+## attr(,"package")
+## [1] ".GlobalEnv"
+\end{verbatim}
+
+To access individual slots, we need to use the @. This is equivalent to
+using the \texttt{\$} for a list.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{ma}\OperatorTok{@}\NormalTok{pmeta}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##   sampleId condition
+## A        1        WT
+## B        2        WT
+## C        3        WT
+## D        4       MUT
+## E        5       MUT
+## F        6       MUT
+\end{verbatim}
+
+But this is something we do not want a user to do. To access a slot like
+this, one needs to know its name, i.e.~the underlying plumbing of the
+class. This breaks the notion of encapsulation. Instead, the developer
+will provide the user with speciﬁc accessor methods (see section 5.2) to
+extract (or update using a replace method, section 5.5) speciﬁc slots.
+
+\hypertarget{marray-methods}{%
+\subsection{MArray methods}\label{marray-methods}}
+
+Before proceeding, we need to explain the concept of generic function. A
+generic function, or generic for short, is a function that dispatches
+methods to their appro- priate class-speciﬁc implementation. A method do
+will implement behaviour for a speciﬁc class A, while another
+implementation of do, will deﬁne another behaviour for class B. The
+generic do is the link between the class and its dedicated implemen-
+tation. If we have do(a) (where a is of class A), than the generic will
+make sure that the A-speciﬁc code of do will be executed.
+
+Before we deﬁne a method with setMethod, we will always want to ﬁrst
+check if such a method does not exists (in which case there is already a
+generic function), as illustrated with the show method in section 5.1.
+If it is the case, we write our new methods. If not, we ﬁrst create the
+generic and then proceed with the method.
+
+\hypertarget{the-show-method}{%
+\subsection{The show method}\label{the-show-method}}
+
+The show method (it is a method, as it exhibits custom behaviour
+depending on the class of its argument) is a very helpful one. It allows
+to deﬁne custom summary view of an object when we type its name in the
+console, instead of having all its (possibly very long content)
+displayed.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{setMethod}\NormalTok{(}\StringTok{"show"}\NormalTok{, }
+          \DataTypeTok{signature =} \StringTok{"MArray"}\NormalTok{, }
+          \DataTypeTok{definition =} \ControlFlowTok{function}\NormalTok{(object) \{}
+            \KeywordTok{cat}\NormalTok{(}\StringTok{"An object of class "}\NormalTok{, }\KeywordTok{class}\NormalTok{(object), }\StringTok{"}\CharTok{\textbackslash{}n}\StringTok{"}\NormalTok{, }\DataTypeTok{sep =} \StringTok{""}\NormalTok{)}
+            \KeywordTok{cat}\NormalTok{(}\StringTok{" "}\NormalTok{, }\KeywordTok{nrow}\NormalTok{(object}\OperatorTok{@}\NormalTok{marray), }\StringTok{" features by "}\NormalTok{, }\KeywordTok{ncol}\NormalTok{(object}\OperatorTok{@}\NormalTok{marray), }
+                \StringTok{" samples.}\CharTok{\textbackslash{}n}\StringTok{"}\NormalTok{, }\DataTypeTok{sep =} \StringTok{""}\NormalTok{)}
+            \CommentTok{#invisible(NULL) }
+\NormalTok{            \})}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{ma}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## An object of class MArray
+##  10 features by 6 samples.
+\end{verbatim}
+
+\hypertarget{accessors}{%
+\subsection{5.2 Accessors}\label{accessors}}
+
+As mentioned above, we want to provide customised and controlled access
+to the class slots. This does not prevent us, as developers, to use the
+@ accessor, but does not force others to know the implementation
+details. Let's create an accessor for the marray slot and call the
+accessor marray. There is no harm in naming the slot and its accessor
+with the same name but there is no constrain in doing so. There is no
+such method or generic; just typing marray with tell you that no such
+object is found. Below, we create a new generic function with
+setGeneric. We deﬁne the name of our new generic as well as the name of
+the argument(s) that will have to be re-used when deﬁning class-speciﬁc
+method.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{setGeneric}\NormalTok{(}\StringTok{"marray"}\NormalTok{, }\ControlFlowTok{function}\NormalTok{(object) }\KeywordTok{standardGeneric}\NormalTok{(}\StringTok{"marray"}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "marray"
+\end{verbatim}
+
+In general, it is considered good practice to add a \ldots{} in the
+signature of a generic function. It provides the ﬂexibility for other
+methods to use more arguments.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{setGeneric}\NormalTok{(}\StringTok{"marray"}\NormalTok{, }\ControlFlowTok{function}\NormalTok{(object, ...) }\KeywordTok{standardGeneric}\NormalTok{(}\StringTok{"marray"}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "marray"
+\end{verbatim}
+
+We now proceed in the same way as above, using setMethod. The deﬁnition
+of our method (i.e.~the actual code that will be executed) is very short
+and of course uses @ to access (and return) the slot content.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{setMethod}\NormalTok{(}\StringTok{"marray"}\NormalTok{, }\StringTok{"MArray"}\NormalTok{, }\ControlFlowTok{function}\NormalTok{(object) object}\OperatorTok{@}\NormalTok{marray)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{marray}\NormalTok{(ma)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##                  A         B         C         D         E         F
+## probe1   6.1924076  7.217565  5.790635 11.995220 10.101586  9.303057
+## probe2  -0.1535608  7.009127 12.025718 14.221536  5.792542 12.385899
+## probe3  12.0588658  6.547206 11.572435 10.161414  5.708033  6.988485
+## probe4  17.2480906 15.162844 -1.348905 12.002849 14.989759 17.283304
+## probe5   4.8047558 11.811113  6.274948 17.640637  8.925632 14.956560
+## probe6   6.3817510 18.338020 18.249682 10.345714  6.816407 18.414272
+## probe7  12.3156504  8.491294  8.978839 12.917494  6.389150  5.198944
+## probe8  11.3835331  9.226863  9.309726 10.625132 11.226183  6.791711
+## probe9   5.1553924 12.231468 15.940840 13.348883  8.885494  1.235753
+## probe10 14.3927052 13.934608 13.744562  6.477938  6.546492 17.502218
+\end{verbatim}
+
+If we change the underlying implementation by changing the name of the
+slot or using an environment instead of a matrix, the
+\href{mailto:ma@marrayis}{\nolinkurl{ma@marrayis}} going to break.
+However, when providing accessors, we can echo the changes in the
+accessor implementation without aﬀecting the users' behaviour or
+existing scripts.
+
+\hypertarget{accessors-for-pmeta-and-fmeta}{%
+\subsection{Accessors for pmeta and
+fmeta}\label{accessors-for-pmeta-and-fmeta}}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{setGeneric}\NormalTok{(}\StringTok{"pmeta"}\NormalTok{, }\ControlFlowTok{function}\NormalTok{(object, ...) }\KeywordTok{standardGeneric}\NormalTok{(}\StringTok{"pmeta"}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "pmeta"
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{setMethod}\NormalTok{(}\StringTok{"pmeta"}\NormalTok{, }\StringTok{"MArray"}\NormalTok{, }\ControlFlowTok{function}\NormalTok{(object) object}\OperatorTok{@}\NormalTok{pmeta)}
+
+\KeywordTok{setGeneric}\NormalTok{(}\StringTok{"fmeta"}\NormalTok{, }\ControlFlowTok{function}\NormalTok{(object, ...) }\KeywordTok{standardGeneric}\NormalTok{(}\StringTok{"fmeta"}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "fmeta"
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{setMethod}\NormalTok{(}\StringTok{"fmeta"}\NormalTok{, }\StringTok{"MArray"}\NormalTok{, }\ControlFlowTok{function}\NormalTok{(object) object}\OperatorTok{@}\NormalTok{fmeta)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{pmeta}\NormalTok{(ma)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##   sampleId condition
+## A        1        WT
+## B        2        WT
+## C        3        WT
+## D        4       MUT
+## E        5       MUT
+## F        6       MUT
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{fmeta}\NormalTok{(ma)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##         geneId pathway
+## probe1       1       L
+## probe2       2       Z
+## probe3       3       A
+## probe4       4       D
+## probe5       5       Z
+## probe6       6       M
+## probe7       7       O
+## probe8       8       P
+## probe9       9       A
+## probe10     10       P
+\end{verbatim}
+
+\hypertarget{the-sub-setting-operation}{%
+\subsection{The sub-setting operation}\label{the-sub-setting-operation}}
+
+The documentation help(``{[}'') shows that, in addition to x, the object
+to be subset, we also have to take the i and j indices into account and
+the drop argument. When an argument is not relevant, we specify this by
+declaring that it is ``missing''.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{setMethod}\NormalTok{(}\StringTok{"["}\NormalTok{, }\StringTok{"MArray"}\NormalTok{, }
+          \ControlFlowTok{function}\NormalTok{(x, i, j, }\DataTypeTok{drop =} \StringTok{"missing"}\NormalTok{) \{ }
+\NormalTok{              .marray <-}\StringTok{ }\NormalTok{x}\OperatorTok{@}\NormalTok{marray[i, j] }
+\NormalTok{              .pmeta <-}\StringTok{ }\NormalTok{x}\OperatorTok{@}\NormalTok{pmeta[j, ] }
+\NormalTok{              .fmeta <-}\StringTok{ }\NormalTok{x}\OperatorTok{@}\NormalTok{fmeta[i, ]}
+                \KeywordTok{MArray}\NormalTok{(}\DataTypeTok{marray =}\NormalTok{ .marray,}
+                        \DataTypeTok{fmeta =}\NormalTok{ .fmeta,}
+                        \DataTypeTok{pmeta =}\NormalTok{ .pmeta)}
+\NormalTok{\})}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{ma[}\DecValTok{1}\OperatorTok{:}\DecValTok{5}\NormalTok{, }\DecValTok{1}\OperatorTok{:}\DecValTok{3}\NormalTok{]}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## An object of class MArray
+##  5 features by 3 samples.
+\end{verbatim}
+
+\hypertarget{implement-the-summary-of-a-sample}{%
+\subsection{Implement the summary of a
+sample}\label{implement-the-summary-of-a-sample}}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{isGeneric}\NormalTok{(}\StringTok{"summary"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] FALSE
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{setMethod}\NormalTok{(}\StringTok{"summary"}\NormalTok{, }\StringTok{"MArray"}\NormalTok{, }
+          \ControlFlowTok{function}\NormalTok{(object, sample) \{}
+              \KeywordTok{summary}\NormalTok{(object}\OperatorTok{@}\NormalTok{marray[, sample])}
+\NormalTok{          \}          )}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{# get the summary}
+\KeywordTok{summary}\NormalTok{(ma, }\StringTok{"D"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##   6.478  10.416  11.999  11.974  13.241  17.641
+\end{verbatim}
+
+\hypertarget{for-a-condition-in-probe-get-the-value-for-any-probe}{%
+\subsection{\texorpdfstring{For a condition in \texttt{probe} get the
+value for any
+probe}{For a condition in probe get the value for any probe}}\label{for-a-condition-in-probe-get-the-value-for-any-probe}}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{# for the condition "WT" in the sample annotations, }
+\CommentTok{# get the array values for probe8}
+\NormalTok{wt <-}\StringTok{ }\NormalTok{maexp}\OperatorTok{$}\NormalTok{pmeta[, }\StringTok{"condition"}\NormalTok{] }\OperatorTok{==}\StringTok{ "WT"}
+\NormalTok{maexp}\OperatorTok{$}\NormalTok{marray[}\StringTok{"probe8"}\NormalTok{, wt]}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##         A         B         C 
+## 11.383533  9.226863  9.309726
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{setGeneric}\NormalTok{(}\StringTok{"getValuesForProbeCondition"}\NormalTok{, }
+           \ControlFlowTok{function}\NormalTok{(object, ...) }\KeywordTok{standardGeneric}\NormalTok{(}\StringTok{"getValuesForProbeCondition"}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "getValuesForProbeCondition"
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{setMethod}\NormalTok{(}\StringTok{"getValuesForProbeCondition"}\NormalTok{, }\StringTok{"MArray"}\NormalTok{,}
+          \ControlFlowTok{function}\NormalTok{(object, probe, condition) \{}
+\NormalTok{              cond =}\StringTok{ }\NormalTok{object}\OperatorTok{@}\NormalTok{pmeta[, }\StringTok{"condition"}\NormalTok{] }\OperatorTok{==}\StringTok{ }\NormalTok{condition}
+              \KeywordTok{return}\NormalTok{(object}\OperatorTok{@}\NormalTok{marray[probe, cond])}
+\NormalTok{          \})}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{getValuesForProbeCondition}\NormalTok{(ma, }\StringTok{"probe3"}\NormalTok{, }\StringTok{"WT"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##         A         B         C 
+## 12.058866  6.547206 11.572435
+\end{verbatim}
+
+\hypertarget{get-type-of-conditions-in-the-samples}{%
+\subsection{Get type of conditions in the
+samples}\label{get-type-of-conditions-in-the-samples}}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{setGeneric}\NormalTok{(}\StringTok{"getSampleConditions"}\NormalTok{, }\ControlFlowTok{function}\NormalTok{(object, ...) }
+    \KeywordTok{standardGeneric}\NormalTok{(}\StringTok{"getSampleConditions"}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "getSampleConditions"
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{setMethod}\NormalTok{(}\StringTok{"getSampleConditions"}\NormalTok{, }\StringTok{"MArray"}\NormalTok{, }
+          \ControlFlowTok{function}\NormalTok{(object) \{}
+              \KeywordTok{unique}\NormalTok{(object}\OperatorTok{@}\NormalTok{pmeta}\OperatorTok{$}\NormalTok{condition)}
+\NormalTok{          \})}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{getSampleConditions}\NormalTok{(ma)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] WT  MUT
+## Levels: MUT WT
+\end{verbatim}
+
+\hypertarget{get-type-of-pathways-in-the-probes}{%
+\subsection{Get type of pathways in the
+probes}\label{get-type-of-pathways-in-the-probes}}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{setGeneric}\NormalTok{(}\StringTok{"getProbePathways"}\NormalTok{, }\ControlFlowTok{function}\NormalTok{(object, ...)}
+           \KeywordTok{standardGeneric}\NormalTok{(}\StringTok{"getProbePathways"}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "getProbePathways"
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{setMethod}\NormalTok{(}\StringTok{"getProbePathways"}\NormalTok{, }\StringTok{"MArray"}\NormalTok{, }
+          \ControlFlowTok{function}\NormalTok{(object) \{}
+              \KeywordTok{unique}\NormalTok{(object}\OperatorTok{@}\NormalTok{fmeta}\OperatorTok{$}\NormalTok{pathway)}
+\NormalTok{          \})}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{getProbePathways}\NormalTok{(ma)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] L Z A D M O P
+## Levels: A D L M O P Z
+\end{verbatim}
+
+\hypertarget{introspection}{%
+\subsection{Introspection}\label{introspection}}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{slotNames}\NormalTok{(ma)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "marray" "fmeta"  "pmeta"
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{getClass}\NormalTok{(}\StringTok{"MArray"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Class "MArray" [in ".GlobalEnv"]
+## 
+## Slots:
+##                                        
+## Name:      marray      fmeta      pmeta
+## Class:     matrix data.frame data.frame
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{showMethods}\NormalTok{(}\DataTypeTok{classes =} \StringTok{"MArray"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 
+## Function ".DollarNames":
+##  <not an S4 generic function>
+## Function: [ (package base)
+## x="MArray"
+## 
+## 
+## Function "complete":
+##  <not an S4 generic function>
+## Function: fmeta (package .GlobalEnv)
+## object="MArray"
+## 
+## 
+## Function "formals<-":
+##  <not an S4 generic function>
+## 
+## Function "functions":
+##  <not an S4 generic function>
+## Function: getProbePathways (package .GlobalEnv)
+## object="MArray"
+## 
+## Function: getSampleConditions (package .GlobalEnv)
+## object="MArray"
+## 
+## Function: getValuesForProbeCondition (package .GlobalEnv)
+## object="MArray"
+## 
+## Function: initialize (package methods)
+## .Object="MArray"
+##     (inherited from: .Object="ANY")
+## 
+## Function: marray (package .GlobalEnv)
+## object="MArray"
+## 
+## Function: pmeta (package .GlobalEnv)
+## object="MArray"
+## 
+## 
+## Function "prompt":
+##  <not an S4 generic function>
+## Function: show (package methods)
+## object="MArray"
+## 
+## Function: summary (package base)
+## object="MArray"
+\end{verbatim}
+
+
+\end{document}

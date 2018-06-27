@@ -1,6 +1,9 @@
 ---
 title: "S4 classes - Gene sequence class using slots"
-output: html_notebook
+output:
+  pdf_document: 
+    latex_engine: lualatex
+  html_notebook: default
 ---
 
 
