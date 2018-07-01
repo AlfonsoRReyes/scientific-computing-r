@@ -1,7 +1,15 @@
 ---
 title: "R Notebook"
-output: html_notebook
+output:
+  html_document:
+    df_print: paged
 ---
+
+```{r setup, include=FALSE, error=TRUE, message=FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo=TRUE, comment=NA, error=TRUE, warning=FALSE, message = FALSE,
+fig.align = 'center')
+```
+
 
 ### 1.4.1 Traditional programming
 Let’s take an example and compare traditional programming with object programming.

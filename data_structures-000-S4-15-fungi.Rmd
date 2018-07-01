@@ -3,6 +3,12 @@ title: "R Notebook"
 output: html_notebook
 ---
 
+```{r setup, include=FALSE, error=TRUE, message=FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo=TRUE, comment=NA, error=TRUE, warning=FALSE, message = FALSE,
+fig.align = 'center')
+```
+
+
 ```{r}
 # define the class
 setClass("xyloc", slots = c(
