@@ -5,7 +5,12 @@ output:
   html_notebook: default
 ---
 
-FUll example of using S4 to create a gene sequence class.
+```{r setup, include=FALSE, error=TRUE, message=FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo=TRUE, comment=NA, error=TRUE, warning=FALSE, message = FALSE,
+fig.align = 'center')
+```
+
+Full example of using S4 to create a gene sequence class.
 
 Let's start by loading the package and read a fasta sequence 
 

@@ -249,6 +249,7 @@ tryCatch(setMethod("[", signature("integer"),
 setClass("Myint", representation("integer"))
 setMethod("[", signature("Myint"), 
                    function(x, i, j, drop) print("howdy"))
+
 x = new("Myint", 4:5)
 x[3]
 ```
@@ -309,8 +310,10 @@ Slots can be accessed directly by the @ operator. However, it is convenient to p
 ### access
 ```{r}
 setClass("Foo", representation(a="ANY"))
+
 setGeneric("a", function(object) standardGeneric("a"))
 setMethod("a", "Foo", function(object) object@a)
+
 b = new("Foo", a=10)
 a(b)
 ```
@@ -328,6 +331,7 @@ getClass("mymatrix")
 ### useClass
 ```{r}
 setClass("myS4mat", representation(m = "mymatrix"))
+
 x=matrix(1:10, nc=2)
 class(x) = "mymatrix"
 m4 = new("myS4mat", m=x)
@@ -384,6 +388,7 @@ genSig(10)
 ### getGenericsEx
 ```{r}
 library("Biobase")
+
 allG = getGenerics()
 allGs = split(allG@.Data, allG@package)
 allGBB = allGs[["Biobase"]]

@@ -1,0 +1,129 @@
+---
+title: "R Notebook"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE, error=TRUE, message=FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo=TRUE, comment=NA, error=TRUE, warning=FALSE, 
+                      message = FALSE, fig.align = 'center')
+```
+
+# Define the class `Image`
+
+```{r}
+Grayscale = 0L
+Color     = 2L
+
+
+setClass ("Image",
+  representation (colormode="integer"),
+  prototype (colormode=Grayscale),
+  contains = "array"
+)
+
+
+Image = function(data = array(0, dim=c(1,1)), colormode = Grayscale) {
+  
+  return( new("Image", 
+    .Data = data,
+    colormode = colormode
+  ))    
+}
+
+is.Image <- function (x) is(x, "Image")
+
+# retrieve the data in the object
+imageData = function (y) {
+  if (is(y, 'Image')) y@.Data
+  else y
+}
+
+# this method to assign data tot the object
+`imageData<-` = function (y, value) {
+  if (is(y, 'Image')) {
+    y@.Data = value
+    validObject(y)
+    y
+  } 
+  else value
+}
+```
+
+
+
+
+```{r}
+img <- Image()
+img
+```
+
+```{r}
+is.Image(img)
+```
+
+```{r}
+imageData(img)
+```
+
+
+```{r}
+# assign matrix data using a method
+imageData(img) <-  matrix(runif(25), nrow =5, ncol=5, byrow=TRUE)
+img
+```
+
+```{r}
+img <- Image(data = matrix(runif(36), nrow =6, ncol=6, byrow=TRUE))
+img
+```
+
+```{r}
+# get the data
+imageData(img)
+```
+
+# Assigning a matrix of list 
+
+## a list of integers
+
+```{r}
+img <- Image(data = matrix(list(1,2,3,5,6), nrow =2, ncol=3, byrow=TRUE))
+img
+```
+
+## a list of dataframes
+
+```{r}
+img <- Image(data = matrix(list(data.frame(), data.frame(), data.frame()), nrow =3, ncol=1, byrow=TRUE))
+img
+```
+
+```{r}
+img[1]
+```
+
+
+## 
+
+```{r}
+a <- data.frame(unif = runif(36), unif2 = runif(36) * 2)
+b <- data.frame(norm = rnorm(10), norm2 = rnorm(10) * 2)
+c <- data.frame(weib = rweibull(5, 1), weib2 = rweibull(5,1) * 2)
+```
+
+
+```{r}
+dists <- Image(data = matrix(list(a, b, c), nrow =3, ncol=1, byrow=TRUE))
+dists
+```
+
+```{r}
+dists[2]
+```
+
+```{r}
+dist[4] <- a
+```
+

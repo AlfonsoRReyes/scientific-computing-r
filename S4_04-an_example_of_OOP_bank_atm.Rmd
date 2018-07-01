@@ -1,7 +1,17 @@
 ---
 title: "R Notebook"
-output: html_notebook
+output:
+  html_document:
+    df_print: paged
 ---
+
+```{r setup, include=FALSE, error=TRUE, message=FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo=TRUE, comment=NA, error=TRUE, warning=FALSE, message = FALSE,
+fig.align = 'center')
+```
+
+
+http://rsnippets.blogspot.com/2012/08/an-example-of-oop-in-gnu-r-using-s4.html
 
 ## The problem
 Every commercial bank needs to provide its customers with access to cash via hundreds of cash access points like ATMs or branches. Bank managers facing this problem have to handle three conflicting objectives: 
@@ -12,9 +22,11 @@ Every commercial bank needs to provide its customers with access to cash via hun
 
 (3) they want to minimize transportation costs from central vault to access points. 
 
+
 This is a complex optimization problem which in particular involves the need to predict cash balance in access point every day using historic data.
 
 When designing a solution providing forecasts of cash balances in access points a case for typical application of object oriented approach arises. 
+
 
 For each `cash point` we supply historical data having the same structure and want to obtain a balance prediction. However different access points have different customer usage characteristics and will require different statistical forecasting models. For example in an ATM one can only withdraw the money but in a branch you can as well make a deposit. Therefore we model the bank using S4 classes. 
 
@@ -48,6 +60,40 @@ The constructor of Bank class reads the bank structure data from the `bank_model
         CashPoint_4;Branch
         CashPoint_5;ATM
 
+
+    # Branch or ATM get balance by id
+    # Example: new("ATM",    "CashPoint_x1")
+    #          new("Branch", "CashPoint_x2")
+
+```{r}
+# ensure the files exist
+file.exists("inst/extdata/bank_model.csv")
+file.exists("inst/extdata/branch_balances_data.csv")
+```
+
+```{r}
+# utility functions
+
+read_bank_data <- function() {
+  read.table(file = "inst/extdata/bank_model.csv",
+                    sep = ";", header = TRUE, stringsAsFactors = FALSE)
+}
+
+read_balances <- function() {
+  read.table(file = "inst/extdata/branch_balances_data.csv",
+                            sep = ";", header = TRUE)
+}
+
+cash_point <- function(cp) {
+    # cp[2]: ATM or Branch; cp[1]: id
+    cat(sprintf("%-8s %-14s \n", cp[2], cp[1]))
+    
+    # create class instance on the go. 
+    new(cp[2], cp[1]) 
+}
+```
+
+
 ```{r}
 setClass("Bank", slots = c(
              cashPoints = "list"))
@@ -55,21 +101,18 @@ setClass("Bank", slots = c(
 # the Bank constructor reads a CSV file with the ATM id's and the
 # type of CashPoint
 setMethod("initialize", "Bank", function(.Object) { 
-      # The Bank Model is a dataframe of cash points id and type
-      BankModel <<- read.table(file = "./inst/extdata/bank_model.csv",
-                    sep = ";", header = TRUE, stringsAsFactors = FALSE)
-    .Object@cashPoints <- apply(BankModel, 1, 
-                function(cp) {
-                    # cp[2]: ATM or Branch; cp[1]: id
-                    cat(sprintf("%-8s %-14s \n", cp[2], cp[1]))
-                    # create class instance on the go
-                    new(cp[2], cp[1]) })  # Branch or ATM get balance by id
-                    # Example: new("ATM",    "CashPoint_x")
-                    #          new("Branch", "CashPoint_x")
-    # add a name to each list adding chaspoint type 
+  
+    # The Bank Model is a dataframe of cash points id and type
+    BankModel <- read_bank_data()
+    
+    # get cash point instances
+    .Object@cashPoints <- apply(BankModel, 1, cash_point)
+    
+    # add a name to each list adding cash point type 
     names(.Object@cashPoints) <- apply(BankModel, 1, paste, collapse = "_")
-    # "CashPoint_1_ATM"     "CashPoint_2_Branch" "CashPoint_3_ATM"
-    # "CashPoint_4_Branch"  "CashPoint_5_ATM" 
+    # Example:
+      # "CashPoint_1_ATM"     "CashPoint_2_Branch" "CashPoint_3_ATM"
+      # "CashPoint_4_Branch"  "CashPoint_5_ATM" 
     return(.Object)
 })
 
@@ -79,17 +122,7 @@ setMethod("givePrediction", "Bank", function(object){
 })
 ```
 
-```{r}
-# test how class Bank works
-bank <- new("Bank")
-# ATM      CashPoint_1    
-# Branch   CashPoint_2    
-# ATM      CashPoint_3    
-# Branch   CashPoint_4    
-# ATM      CashPoint_5    
-# [1] "CashPoint_1_ATM"    "CashPoint_2_Branch" "CashPoint_3_ATM"    "CashPoint_4_Branch"
-# [5] "CashPoint_5_ATM" 
-```
+
 
 
 ```{r}
@@ -128,23 +161,25 @@ After the creation of an object of type `Bank,` its `givePrediction()` method is
         CashPoint_5;2012-12-04;133000
 
 ```{r}
+# Virtual class
 # CashPoint has two slots: id and balances
+# cannot be called with new()
 setClass("CashPoint", slots = c(
-    id = "character", 
-    balances = "data.frame"), 
-    contains = "VIRTUAL")
+                        id       = "character", 
+                        balances = "data.frame"), 
+                      contains = "VIRTUAL")
+
 
 # CashPoint doesn't do anything; only lends structure to ATM or Branch
-setMethod("initialize", "CashPoint", function(.Object, cashPointId){ 
-              .Object@id <- cashPointId 
-              balances <- read.table(file = "./inst/extdata/branch_balances_data.csv",
-                                        sep = ";", header = TRUE)
-              # bal <<- balances
-              .Object@balances <- subset(balances, # get balance by id
-                                         balances$BranchId == .Object@id, -BranchId) 
-              # obal <<-  .Object@balances
-              .Object@balances$Date <- as.Date(.Object@balances$Date) # convert to date
-              return(.Object)
+setMethod("initialize", "CashPoint", function(.Object, cashPointId) { 
+    .Object@id <- cashPointId 
+    balances <- read_balances()  # it has three variables: BranchId, Date and Balance
+    
+    .Object@balances <- subset(balances,                     # get balance by id
+                             balances$BranchId == .Object@id, -BranchId) 
+    .Object@balances$Date <- as.Date(.Object@balances$Date) # convert to date
+    
+    return(.Object)   # returns two slots: character and a dataframe
 })
 
 setMethod("givePrediction", "CashPoint", function(object){
@@ -152,16 +187,18 @@ setMethod("givePrediction", "CashPoint", function(object){
 })
 ```
 
-## The branch
+
+## The Branch
 For Branches we use the simple mean as balance predictor. 
 ```{r}
 setClass("Branch", contains = "CashPoint")
 
 setMethod("givePrediction", "Branch", function(object){
-            # for Branch only take the mean
-            return(mean(object@balances$Balance))
+    # for Branch only take the mean
+    return(mean(object@balances$Balance))
 })
 ```
+
 
 ## The ATM
 For the ATMs we use linear regression.
@@ -170,15 +207,82 @@ For the ATMs we use linear regression.
 setClass("ATM", contains = "CashPoint")
 
 setMethod("givePrediction", "ATM", function(object) { 
-              LM <- lm(Balance ~ as.numeric(Date), data = object@balances) 
-              prediction <- predict(LM, data.frame(Date = 1 + max(object@balances$Date)))
-              return(unname(prediction))
+    LM <- lm(Balance ~ as.numeric(Date), data = object@balances) 
+    prediction <- predict(LM, data.frame(Date = 1 + max(object@balances$Date)))
+    return(unname(prediction))
 })
-
 ```
 
 ```{r}
 # this starts the prediction process
 print(givePrediction(new("Bank"))) 
+```
+
+
+
+# sandbox
+
+```{r}
+# test how class Bank works
+bank <- new("Bank")
+# ATM      CashPoint_1    
+# Branch   CashPoint_2    
+# ATM      CashPoint_3    
+# Branch   CashPoint_4    
+# ATM      CashPoint_5 
+
+# [1] "CashPoint_1_ATM"    "CashPoint_2_Branch" "CashPoint_3_ATM"    "CashPoint_4_Branch"
+# [5] "CashPoint_5_ATM" 
+```
+
+```{r}
+new("ATM", "CashPoint_3")
+```
+
+```{r}
+new("Branch", "CashPoint_2")
+```
+
+```{r}
+# weird! CashPoint_2 belongs to a Branch but still shows up.
+# we need some validation
+new("ATM", "CashPoint_2")
+```
+
+
+```{r}
+bank_model <- read_bank_data()
+bank_model
+```
+
+
+```{r}
+balances <- read_balances()
+balances
+```
+
+```{r}
+cash_point_show <- function(cp) {
+    # cp[2]: ATM or Branch; cp[1]: id
+    cat(sprintf("%-8s %-14s \n", cp[2], cp[1]))
+    c(cp[2], cp[1])  # return two vectors
+}
+
+# show the cash point and id
+cash_points <- apply(bank_model, 1, cash_point_show) 
+class(cash_points)  # a matrix
+cash_points
+```
+
+```{r}
+# form an identifier to name the members of the list
+apply(bank_model, 1, paste, collapse = "_")
+```
+
+
+```{r}
+# get balance for a cashpoint id
+id <- "CashPoint_3"
+subset(balances, balances$BranchId == id, -BranchId) 
 ```
 

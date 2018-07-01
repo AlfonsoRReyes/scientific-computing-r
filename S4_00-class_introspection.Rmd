@@ -121,3 +121,12 @@ extends("array", "vector")
 extends("structure", "vector")
 ```
 
+
+```{r}
+stats4::isS4("Image")
+```
+
+```{r}
+# showMethods(class= "stats4") 
+```
+

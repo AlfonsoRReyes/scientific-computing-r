@@ -1,0 +1,91 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r setup, include=FALSE, error=TRUE, message=FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo=TRUE, comment=NA, error=TRUE, warning=FALSE, message = FALSE,
+fig.align = 'center')
+```
+
+https://stackoverflow.com/a/11866615/5270873
+
+Not really answering the question, but...
+
+Usually it pays to think in terms of vectors, so instead of 'cell' maybe 'Cell' that represents the entire matrix. Here's an implementation. The idea is that Cell extends matrix, with vectors that contain additional values.
+
+# Define the class `Cell`
+
+```{r}
+# old way
+# setClass("Cell", representation("matrix", A="numeric", B="numeric"))
+```
+
+```{r}
+# use this instead of representation
+
+setClass("Cell", slots = c(
+                A = "numeric", 
+                B = "numeric"
+            ),
+         contains = "matrix"
+)             
+```
+
+## Validity
+
+We constrain A and B to have the same length with a validity function
+
+```{r}
+setValidity("Cell", function(object) {
+    msg <- NULL
+    if (length(object@A) != length(object@B))
+        msg <- c(msg, "'A' and 'B' must be the same length")
+    if (is.null(msg)) TRUE else msg
+})
+```
+
+## Constructor
+and make a constructor that initialized the matrix of Cell with indicies into A and B.
+
+```{r}
+Cell <- function(A, B, ...)
+    new("Cell", matrix(seq_along(A), ...), A = A, B = B)
+```
+
+The ... arguments are the non-data arguments (nrow, ncol, dimnames, etc) of matrix().
+
+
+# Subsetting
+
+We get some functionality for free (e.g., dim, nrow, ncol, length, ...) but need to implement sub-setting and, presumably, other operations. For single-bracket sub-setting, we pass the operation down to the underlying matrix, and then use the resulting indicies to sub-set A and B, creating a new Cell instance with the updated values
+
+```{r}
+setMethod("[", "Cell", function(x, i, j, ..., drop=TRUE) {
+    m <- callNextMethod()
+    initialize(x, m, A = x@A[m], B = x@B[m])
+})
+```
+
+
+# Show
+
+Finally, implement a show method
+
+```{r}
+setMethod(show, "Cell", function(object) {
+    cat("class:", class(object), "\n")
+    cat("dim:", dim(object), "\n")
+    m <- object@.Data
+    m[] <- object@A
+    cat("A:\n"); print(m)
+    m[] <- object@B
+    cat("B:\n"); print(m)
+})
+```
+
+
+```{r}
+Cell(1:6, 6:1, 3, 2)[c(3, 1), 2:1]
+```
+

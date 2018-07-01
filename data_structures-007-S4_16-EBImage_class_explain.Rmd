@@ -86,6 +86,8 @@ Image = function(data = array(0, dim=c(1,1)), dim, colormode) {
 
 is.Image <- function (x) is(x, "Image")
 
+
+
 imageData = function (y) {
   if (is(y, 'Image')) y@.Data
   else y
@@ -99,6 +101,9 @@ imageData = function (y) {
   } 
   else value
 }
+
+
+
 
 colorMode = function (y) {
   if (is(y, 'Image')) y@colormode
@@ -143,15 +148,20 @@ showImage = function (object, short=FALSE) {
   }
   invisible()
 }
+
+# replace show() by showImage()
 setMethod ("show", signature(object = "Image"), function(object) showImage(object))
 ```
 
 ```{r}
+# initialization
 img <- Image()
 img
 ```
 
 ```{r}
+# add data
+# image data must be a matrix
 imageData(img) <-  matrix(runif(25), nrow =5, ncol=5, byrow=TRUE)
 img
 # display(img, interpolate = FALSE, method = "raster")

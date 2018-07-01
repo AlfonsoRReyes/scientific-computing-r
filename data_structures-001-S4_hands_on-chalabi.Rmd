@@ -1,0 +1,319 @@
+---
+title: "Hands on S4 Classes"
+output:
+  html_document:
+    df_print: paged
+---
+
+
+```{r setup, include=FALSE, error=TRUE, message=FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo=TRUE, comment=NA, error=TRUE, warning=FALSE, message = FALSE,
+fig.align = 'center')
+```
+
+
+    Yohan Chalabi
+    
+    ITP ETH, Zurich
+    Rmetrics Association, Zurich
+    Finance Online, Zurich
+    
+    R/Rmetrics Workshop
+    Meielisalp
+    June 2009
+
+
+
+# S4 Classes
+
+* A new class can be created with the function setClass().
+
+* It deﬁnes metadata with information about the new classes.
+
+* setClass() requires the type of all components of the class. It
+ensure the consistency of the class.
+
+As an example we will implement a class which could represent a
+time series. This object will hold a data part (matrix), timestamps
+(timeDate) and additional information in the form of data.frame’s
+that we will call flag’s.
+
+
+```{r}
+library(timeDate)
+
+time <- as.character(timeSequence(length.out=4))
+data <- matrix(round(rnorm(8), 3), ncol = 2)
+colnames(data) <- c("col1", "col2")
+flag <- data.frame(flag = sample(c("M", "F"), 4, replace = TRUE))
+```
+
+
+# Define the class
+
+```{r}
+setClass("Cow", 
+         slots = c( data = "matrix",
+                    time = "character",
+                    flag = "data.frame")
+)
+```
+
+
+
+
+```{r}
+# class metadata
+.__C__Cow
+```
+
+### New instance of classes can be created with the function new().
+
+```{r}
+cow <- new("Cow", data = data, time = time, flag = flag)
+cow
+```
+
+### The structure of the class can be inspected with the str() function.
+
+```{r}
+str(cow)
+```
+
+# S4 slots
+
+### A class representation is organized in slots which can be accessed by the operator @
+
+```{r}
+cow@data    # this won't work
+```
+
+```{r}
+cow@data <- data
+```
+
+
+
+```{r}
+cow@time
+```
+
+
+```{r}
+cow@.data    # this won't work
+cow@.Data   # this will work
+```
+
+
+# Validity
+
+## restriction on the type of object in slots
+
+
+When a slot is assigned, the object is automatically checked for a valid
+slot type. For instance, if we try to assign a character vector to our
+@flag slot which is of type data.frame, we get an error.
+
+```{r}
+cow@flag <- "bad"
+```
+
+
+# Inheritance
+
+In our definition of the Cow class, there is no inheritance method. Trying
+to use a generic function like ’+’ will throw an error.
+
+```{r}
+cow + 1
+```
+
+## Redefining the class: inherit `matrix`
+
+But we could have defined the class with the contains argument in
+`setClass()`. Let’s redefine our class such that it inherits from the class
+`matrix`.
+
+```{r}
+setClass("Cow", 
+         slots = c(
+            time = "character",
+            flag = "data.frame"), 
+         contains = "matrix")
+```
+
+
+
+```{r}
+cow <- new("Cow", data, time = time, flag = flag)
+cow + 1
+```
+
+
+> Note
+* a class inheriting from another class must have all slots from its
+superclass, and may deﬁne additional slots.
+* S4 classes cannot inherits from S3 classes unless they have been
+redeﬁned with the setOldClass() function.
+
+
+```{r}
+getClass("Cow")
+```
+
+
+# S4 Validity Checks
+
+```{r}
+validityCow <- function(object) {
+    if (nrow(object@flag) != nrow(object))
+        return("length of '@flag' not equal to '@.Data' extent")
+    TRUE
+}
+
+setValidity("Cow", validityCow)
+```
+
+
+Now we deﬁne our own initialize() method to ensure that objects
+created with new() are valid.
+
+```{r}
+setMethod("initialize", "Cow", function(.Object, ...)
+    {
+    value <- callNextMethod()
+    validObject(value)
+    value
+})
+```
+
+
+```{r}
+# this will fail because of diferent dimensions
+new("Cow", data, flag = data.frame(flag[1:3,]))
+```
+
+# S4 Methods
+
+```{r}
+setMethod("show", "Cow", function(object) {
+    value <- getDataPart(object)                           # get the data
+    rownames(value) <- as.character(slot(object, "time"))  # time as row name
+    flag <- as.matrix(slot(object, "flag"))                # convert flag to matrix
+    colnames(flag) <- paste(colnames(flag), "*", sep ="")  # add start to variable name
+    cat("Meielisalp\n")
+    # pretty printing
+    # justify right, remove quotes
+    print(cbind(value, flag), right = TRUE, quote = FALSE) # bind the columns
+    # print(cbind(value, flag)) # bind the columns
+})
+```
+
+
+```{r}
+cow
+```
+
+
+
+# S4 Generic
+
+* S4 generics are deﬁned with setGeneric() and standardGeneric().
+
+```{r}
+setGeneric("cowSeries", function(x, time, flag, ...)
+    standardGeneric("cowSeries"))
+```
+
+
+* Unlike S3 methods, the S4 setMethod() can turn any existing
+function to a generic, except primitive functions.
+
+* Dispatch on primitive functions is implemented in C level and most
+of the primitive functions in R have it.
+
+* One can also define group generics with setGroupGeneric() or use
+the predeﬁned groups : Arith, Compare, Ops, Logic, Math, Math2,
+Summary, Complex.
+
+
+# Multiple dispatch
+
+With S4 methods you can deﬁne the type of all argument and also the
+special types ’ANY’ and ’missing’.
+
+```{r}
+setMethod("cowSeries", signature("matrix", "character", "data.frame"),
+    function(x, time, flag, ...)
+    new("Cow", x, time = time, flag = flag))
+```
+
+
+```{r}
+cowSeries(data, time, flag)
+```
+
+
+```{r}
+# flag is being called as character
+setMethod("cowSeries", signature("matrix", "POSIXct", "character"),
+    function(x, time, flag, ...)
+    {
+    time <- as(time, "character")
+    flag <- as.data.frame(flag)
+    callGeneric(x, time, flag, ...)
+})
+```
+
+
+```{r}
+timeCt <- seq(from = Sys.time(), to = (Sys.time() + 4*3600), length.out = 4)
+flagStr <- as.character(flag[[1]])
+
+cowSeries(data, timeCt, flagStr)
+```
+
+# Object Conversion
+
+as() can be used to convert an object to another class
+
+```{r}
+as(cow, "matrix")
+```
+
+## Define a conversion method
+
+and one can deﬁned conversion methods with setAs(). Let’s deﬁne
+a more appropriate as() method for our class :
+
+```{r}
+setAs("Cow", "matrix", function(from) {
+    value <- getDataPart(from)
+    rownames(value) <- as.character(slot(from, "time"))
+    value
+})
+```
+
+
+```{r}
+as(cow, "matrix")
+```
+
+# What is an S4 class in R ?
+S4 slots are actually attributes and, in low level, S4 objects has a special
+S4 bit
+
+```{r}
+attrsCow <- attributes(cow)
+madcow <- data
+attributes(madcow) <- attrsCow
+asS4(madcow)
+```
+
+
+> BUT !
+> You have to promise that you will never use such a trick !
+
+
+
+

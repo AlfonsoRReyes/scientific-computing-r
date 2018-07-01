@@ -4,18 +4,36 @@ output: html_notebook
 ---
 
 ```{r}
-setClass("xyloc", representation(x="numeric", y="numeric"))
-setClass("fungi", representation("xyloc", species="character"))
+# define the class
+setClass("xyloc", slots = c(
+                    x="numeric", 
+                    y="numeric"))
 
+# Creation can use existing classes:
+setClass("fungi", slots = c(
+                  species = "character"),
+         contains = "xyloc"
+)
+```
+
+
+```{r}
+# direction implementation
 field1 <- new("fungi", x = runif(25), y = runif(25),
               species = sample(letters[1:5], 25, rep=T))
+```
 
-# constructor
+
+```{r}
+# using a constructor
 fungi <- function(x, y, species)
   new("fungi", x=x, y=y, species=species)
+```
 
-validFungi <- function(object)
-{
+
+```{r}
+# validity
+validFungi <- function(object) {
   len <- length(object@x)
   if(length(object@y) != len || length(object@species) != len)
     return("mismatch in lengths of slots")
@@ -26,11 +44,18 @@ setValidity("fungi", validFungi)
 
 # dumpClass("fungi")
 # !cat fungi.class.q
+```
 
+
+```{r}
 getSlots("fungi")
 slotNames("fungi")
 # hasSlot(field1, "x")
+```
 
+
+```{r}
+# implement using the constructor
 # new("fungi")
 field2 <- fungi(x = runif(25), y = runif(25),
               species = sample(letters[1:5], 25, rep=T))
@@ -38,7 +63,7 @@ field2 <- fungi(x = runif(25), y = runif(25),
 
 
 ```{r}
-
+# the show method
 show.fungi <- function(object) {
   tmp <- rbind(x = format(round(object@x, 2)),
                y = format(round(object@y, 2)),
@@ -50,7 +75,9 @@ show.fungi <- function(object) {
 setMethod("show", "fungi", show.fungi)
 
 removeMethod("show", "fungi")
+```
 
+```{r}
 print.fungi <- function(x, digits=2) {
   tmp <- rbind(x = format(round(x@x, digits)),
                y = format(round(x@y, digits)),
@@ -61,7 +88,11 @@ print.fungi <- function(x, digits=2) {
   } else cat("empty object of class fungi\n")
   invisible(x)
 }
+```
 
+
+
+```{r}
 setMethod("show", "fungi", function(object) print.fungi(object))
 
 show(field1)

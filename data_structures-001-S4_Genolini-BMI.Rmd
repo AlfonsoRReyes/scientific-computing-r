@@ -1,0 +1,128 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+### 1.4.1 Traditional programming
+Let’s take an example and compare traditional programming with object programming.
+The BMI, Body Mass Index, is a measurement of thinness or obesity. Is is calculated by
+dividing the weight (in kilos) by the square size (in centimeters). Then, one concludes:
+
+* 20 < BMI < 25: Everything is fine
+* 25 < BMI < 30: Teddy bear
+* 30 < BMI < 40: Comfortable Teddy bear
+* 40 < BMI: Huge Teddy bear, with double softness effect, but who should go to see
+a doctor very quickly...
+* 18 < BMI < 20: Barbie
+* 16 < BMI < 18: Barbie model
+* BMI < 16: Barbie skeleton, same diagnosis as the huge Teddy bear, be careful...
+So we wish to calculate the BMI. In traditional programming, nothing simpler:
+
+
+
+### 1.4.2 Object programming
+In object language, the method is different. It is necessary to begin by defining an object
+BMI which will contain two values, weight and size. Then, it is necessary to define the
+function show which will indicate the BMI
+
+
+```{r}
+### Definition of an object BMI
+setClass("BMI", representation(weight="numeric", size="numeric"))
+
+setMethod("show", "BMI",
+ function(object){cat("BMI=",object@weight/(object@size^2)," \n ")}
+ )
+
+```
+
+```{r}
+### Creation of an object for me, and posting of my BMI
+(myBMI <- new("BMI",weight=85,size=1.84))
+
+```
+
+```{r}
+### Creation of an object for her, and posting of her BMI
+(herBMI <- new("BMI",weight=62,size=1.60))
+
+```
+
+When initialization is correct (a problem which was also occurs in the traditional
+programming), no more error will be possible. Here lays the strength of object: the
+design of the program prevents from a certain number of bugs.
+
+**Type**: the object also protects from type errors. A type errors consist in using a type
+where another type would be necessary. For example, adding a characterto a numeric.
+This is more or less like adding apples and kilometers instead of adding apples and
+apples. Oriented object programmation prevent that:
+
+```{r}
+### traditional programming, no type
+(weight <- "Hello")
+
+```
+
+```{r}
+new("BMI",weight="Hello",size=1.84)
+```
+
+**Validity checking**: Object enables to use “coherence inspectors” to check if the object
+follow some rules. For example, one might want to prohibit negative sizes:
+
+```{r}
+### Traditional programming, without control
+(SizeMe <- -1.84)
+
+```
+
+```{r}
+### Object programming, control
+setValidity("BMI", function(object) { 
+    if(object@size<0) { 
+        return("negative Size") 
+        } else { 
+        return(TRUE)
+}} )
+```
+
+```{r}
+new("BMI",weight=85,size=-1.84)
+
+```
+
+**Inheritance**: object programming enables to define one object like Inherit from the
+properties of another object, thus becoming its son. The son object thus profits from all
+that exists for the father object. For example, one wishes to refine a little our diagnoses
+according to the sex of the person. We will thus define a new object, BMIplus, which
+will contain three values: weight, size and sex. The first two variables are the same
+ones as that of the object BMI. We will thus define the object BMIplus as heir of the
+object BMI. It will thus be able to profit from the function show such as we defined it for BMI and it will do so without any additional work, since BMIplus inherits BMI:
+
+```{r}
+### Definition of the heir
+setClass("BMIplus",representation(sex="character"),contains="BMI")
+
+```
+
+
+```{r}
+he <- new("BMIplus",size=1.76,weight=84,sex="Male")
+### Posting which uses what was defined for "BMI"
+he
+
+```
+
+The power of this characteristic will appear more clearly in section 42.
+
+**Encapsulation**: finally, object programming enables to define all the tools concerning
+an object and to lock them up in blocks, without having to look after them anymore.
+That is called encapsulation. Cars provide a good example of encapsulation: once the
+hood closed, one does not need to know anymore about the details of the mechanics
+to drive. Similarly, once the object finished and closed, a user does not have to worry
+about its working procedure. Even better, concerning the cars, it is not possible to be
+mistaken and to put gasoline in the radiator since the radiator is not accessible anymore.
+
+In the same way, encapsulation enables to protect what must be protected, and to give
+access only to what is not at risk.
+

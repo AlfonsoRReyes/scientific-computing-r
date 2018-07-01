@@ -1,0 +1,183 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r setup, include=FALSE, error=TRUE, message=FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo=TRUE, comment=NA, error=TRUE, warning=FALSE, message = FALSE,
+fig.align = 'center')
+```
+
+# Define the class
+
+```{r}
+setClass("cell", slots = c(       
+        A="numeric",  # a field
+        B="numeric")) # another one
+```
+
+
+# Initialize class
+
+```{r}
+# initialize the cell
+setMethod("initialize", "cell", function(.Object, a, b) {
+    .Object@A <- a;
+    .Object@B <- b;
+    .Object 
+})
+```
+
+
+# Load the class with data
+
+```{r}
+createGrid <- function(a, b) {
+    grid <- matrix(list(), 3, 3)  # note initialization to list()
+    for (i in 1:3 )
+        for (j in 1:3)
+            grid[[i, j]] <- new("cell", j, i);
+    grid}
+```
+
+
+```{r}
+createGrid(1, 2)
+```
+
+## Another way to load data
+
+```{r}
+grid <- createGrid(1,2)
+
+```
+
+## Retrieve the data
+
+```{r}
+grid[[1, 3]]
+```
+
+## Load the data with `sapply`
+
+### You can have list entries in a matrix. The print method hasn't yet been defined.
+
+```{r}
+# You can have list entries in a matrix. The print method hasn't yet been defined.
+
+dat <- sapply(1:9, function(x) {new("cell", x, x*2) })  # generate the data
+
+length(dat)
+class(dat)
+```
+
+```{r}
+summary(dat)
+```
+
+Nine list objects that we need to load into the matrix
+
+## Load list objects into the matrix
+
+```{r}
+grid <- matrix(dat, 3, 3)
+grid
+```
+
+
+## List assignment using a for-loop
+```{r}
+dat <- NULL
+for (i in 1:9) {
+    dat <- c(dat, new("cell", i, i*2))
+}
+dat
+```
+
+
+```{r}
+grid[1,1]
+```
+
+```{r}
+grid[3,3]
+```
+
+
+# Another solution using outer
+
+```{r}
+createGrid <- function(a, b) { 
+    grid <- outer(1:3, 1:3, FUN = Vectorize(function(x, y) new("cell", x, y)));
+    grid}
+
+
+grid <- createGrid(1, 2)
+grid[[2, 3]]
+```
+
+## Same as above but split in parts
+
+```{r}
+f <- function(x, y) {
+    Vectorize(function(x, y) new("cell", x, y))
+}
+
+
+createGrid <- function(a, b) { 
+    grid <- outer(1:3, 1:3, FUN = f(x, y));
+    grid}
+
+
+grid <- createGrid(1, 2)
+grid[[2, 3]]
+```
+
+
+
+
+
+# Using a constructor
+
+```{r}
+setClass("Cell", slots = c(       
+        A = "numeric",  # a field
+        B = "numeric")
+) # another one
+
+# initialize the cell
+setMethod("initialize", "Cell", function(.Object, a, b) {
+    .Object@A <- a;
+    .Object@B <- b;
+    .Object 
+})
+
+# constructor
+Cell <- function(a, b) {
+    new("Cell", a = a, b = b)
+}
+
+```
+
+
+```{r}
+# generate the data
+dat <- NULL
+for (i in 1:9) {
+    dat <- c(dat, Cell(i, i*2))
+}
+length(dat)
+dat
+```
+
+```{r}
+# assigning the data list to a matrix
+# there are 9 objects inside the list
+grid <- matrix(dat, 3, 3)
+grid
+```
+
+```{r}
+grid[1,1]
+```
+
