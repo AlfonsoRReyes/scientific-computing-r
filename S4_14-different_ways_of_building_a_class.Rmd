@@ -3,6 +3,11 @@ title: "R Notebook"
 output: html_notebook
 ---
 
+```{r setup, include=FALSE, error=TRUE, message=FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo=TRUE, comment=NA, error=TRUE, warning=FALSE, message = FALSE,
+fig.align = 'center')
+```
+
 Published: https://stackoverflow.com/a/45217493/5270873
 
          class MyClass:
@@ -19,9 +24,9 @@ Published: https://stackoverflow.com/a/45217493/5270873
               def ohDear(self):
                    return "Have no clue"
 
-```{r}
 setClass("MyClass", slots = c(
     A = "numeric",
+```{r}
     B = "numeric"
     ),
     prototype = prototype(

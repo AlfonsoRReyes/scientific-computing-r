@@ -1,6 +1,7 @@
 ---
-title: "R Notebook"
+title: "Bank, CashPoint, ATM, Branch S4 classes"
 output:
+  pdf_document: default
   html_document:
     df_print: paged
 ---
