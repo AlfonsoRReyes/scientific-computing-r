@@ -1,0 +1,39 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+```{r}
+setClass("newMatrix", representation(history = "character"),  
+         contains = "matrix")
+
+m <- new("newMatrix", 1:4, 2, 2, history = "ipsum")
+
+setMethod("show",
+          "newMatrix",
+          function(object){
+            show(object@.Data)
+          })
+```
+
+
+```{r}
+m
+```
+
+```{r}
+print.newMatrix <- function(x, ...){
+ print(x@.Data)
+
+}
+
+setMethod("print",
+          "newMatrix",
+          print.newMatrix)
+```
+
+```{r}
+m
+```
+
