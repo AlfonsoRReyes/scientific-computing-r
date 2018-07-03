@@ -140,7 +140,7 @@ morpheus@time
 # now, the data is stored in the .Data part of the matrix container
 ```
 
-### The slots are more now
+### The slots are more numerous now
     .Data: holds the dataframe data without column names
     row.names: is a sequence from 1:4, the row names of the original matrix
     names: contains the names of the converted matrix
