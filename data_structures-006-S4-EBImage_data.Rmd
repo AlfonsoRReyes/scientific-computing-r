@@ -115,15 +115,86 @@ c <- data.frame(weib = rweibull(5, 1), weib2 = rweibull(5,1) * 2)
 
 
 ```{r}
-dists <- Image(data = matrix(list(a, b, c), nrow =3, ncol=1, byrow=TRUE))
+data_list <- matrix(list(a, b, c, nrow = 3, ncol = 1, byrow=TRUE))
+```
+
+
+```{r}
+dists <- Image(data = data_list)
 dists
 ```
+
+```{r}
+dists[1]
+```
+
 
 ```{r}
 dists[2]
 ```
 
 ```{r}
-dist[4] <- a
+dists[4, 1] <- 2
+dists
+```
+
+```{r}
+slotNames("Image")
+```
+
+
+
+# Add a show method
+
+```{r}
+
+# utility functions
+colorMode = function (y) {
+  if (is(y, 'Image')) y@colormode
+  else Grayscale
+}
+
+numberOfFrames = function(y, type = c('total', 'render')) {
+    type = match.arg(type)
+    type = switch(type, total = 0L, render = 1L)
+    # .Call(C_numberOfFrames, y, type)
+}
+
+showImage = function (object, short=FALSE) {
+  nd = dim(object)
+  ld = length(nd)
+  dimorder = names(dimnames(object))
+  
+  cat(class(object)[1],'\n')
+  
+  cat('  colorMode    :',c('Grayscale', NA, 'Color')[1+colorMode(object)],'\n')
+  cat('  storage.mode :',typeof(object),'\n')
+  cat('  dim          :',nd,'\n')
+  if ( !is.null(dimorder) )
+  cat('  dimorder     :',dimorder,'\n')
+  cat('  frames.total :',numberOfFrames(object,'total'),'\n')
+  cat('  frames.render:',numberOfFrames(object,'render'),'\n')
+  
+  if ( !isTRUE(short) ) {
+    if (nd[1]>5) nd[1] = 5
+    if (nd[2]>6) nd[2] = 6
+    if (ld>2) nd[3:ld] = 1
+    
+    ndl = lapply(nd, seq_len)
+    
+    nds = paste0('[1:',nd[1],',1:',nd[2],paste(rep(',1',ld-2),collapse=''),']')
+    
+    cat('\nimageData(object)', nds, '\n', sep='')
+    # print.default(asub(object@.Data, ndl))
+  }
+  invisible()
+}
+
+# replace show() by showImage()
+setMethod ("show", signature(object = "Image"), function(object) showImage(object))
+```
+
+```{r}
+Image()
 ```
 
