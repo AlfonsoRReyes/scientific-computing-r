@@ -28,10 +28,10 @@ fig.align = 'center')
 
 * A new class can be created with the function setClass().
 
-* It deﬁnes metadata with information about the new classes.
+* It defines metadata with information about the new classes.
 
 * setClass() requires the type of all components of the class. It
-ensure the consistency of the class.
+ensures the consistency of the class.
 
 As an example we will implement a class which could represent a
 time series. This object will hold a data part (matrix), timestamps
@@ -85,7 +85,7 @@ str(cow)
 ### A class representation is organized in slots which can be accessed by the operator @
 
 ```{r}
-cow@data    # this won't work
+cow@data    
 ```
 
 ```{r}
@@ -98,10 +98,68 @@ cow@data <- data
 cow@time
 ```
 
+### the hidden .Data slot
 
 ```{r}
-cow@.data    # this won't work
+cow@.data   # this won't work
 cow@.Data   # this will work
+```
+
+The `.Data` slot will not work because it does not inherit from a container object such a matrix or a dataframe.
+
+```{r}
+setClass("Neo", 
+         slots = c(
+            time = "character",
+            flag = "data.frame"), 
+         contains = "matrix")
+
+neo <- new("Neo", data, time = time, flag = flag)
+neo@.Data
+neo@flag
+neo@time
+
+# now, the data is stored in the .Data part of the matrix container
+```
+
+## A class inheriting from a data.frame
+
+```{r}
+setClass("Morpheus", 
+         slots = c(
+            time = "character",
+            flag = "data.frame"), 
+         contains = "data.frame")
+
+# we have to convert data to a dataframe
+morpheus <- new("Morpheus", as.data.frame(data), time = time, flag = flag)
+morpheus@.Data
+morpheus@flag
+morpheus@time
+
+# now, the data is stored in the .Data part of the matrix container
+```
+
+### The slots are more now
+    .Data: holds the dataframe data without column names
+    row.names: is a sequence from 1:4, the row names of the original matrix
+    names: contains the names of the converted matrix
+
+```{r}
+slotNames("Morpheus")
+# [1] ".Data"     "time"      "flag"      "names"     "row.names" ".S3Class" 
+```
+
+###let's have the data matrix with row names
+
+```{r}
+row.names(data) <- LETTERS[1:4]
+
+morpheus <- new("Morpheus", as.data.frame(data), time = time, flag = flag)
+morpheus@row.names
+# [1] "A" "B" "C" "D"
+
+# <- now, we get the row names from the original data matrix
 ```
 
 
@@ -127,6 +185,7 @@ to use a generic function like ’+’ will throw an error.
 ```{r}
 cow + 1
 ```
+
 
 ## Redefining the class: inherit `matrix`
 
