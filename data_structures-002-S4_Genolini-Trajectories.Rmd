@@ -15,11 +15,11 @@ fig.align = 'center')
 ## Basis of object programming
 
 ```{r}
-setClass(Class="Trajectories",
- representation=representation(
- times = "numeric",
- traj = "matrix"
- ) )
+setClass(Class = "Trajectories",
+           representation=representation(
+           times = "numeric",
+           traj  = "matrix"
+))
 
 ```
 
@@ -35,7 +35,7 @@ It is possible to define an object by specifying the values of its slots (all of
 partly). We must each time specify it name of the concerning field:
 
 ```{r}
-new(Class="Trajectories",times=c(1,3,4))
+new(Class="Trajectories", times=c(1,3,4))
 ```
 
 
@@ -92,7 +92,9 @@ It is also possible to use the functions attr or attributes, but it is even
 worse: if one makes a simple typographic error, one modifies the structure of
 the object. And that is very very very bad!
 
+
 ## 4.4 Default values
+
 ```{r}
 setClass(Class = "TrajectoriesBis", 
          representation=representation(

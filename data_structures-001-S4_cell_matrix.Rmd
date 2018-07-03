@@ -21,51 +21,139 @@ Usually it pays to think in terms of vectors, so instead of 'cell' maybe 'Cell' 
 # setClass("Cell", representation("matrix", A="numeric", B="numeric"))
 ```
 
+
+## Class without inheritance
+
+```{r}
+# use slots instead of representation
+
+setClass("Cell", slots = c(
+                A = "numeric",         
+                B = "numeric"
+            )
+)   
+
+slotNames("Cell")
+```
+
+### The matrix is homogeneous
+Keep in mind that the matrix is uniform in the sense that all its inherited object wil need to have the same number of rows and columns.
+
+## Class with inheritance
+
 ```{r}
 # use this instead of representation
 
 setClass("Cell", slots = c(
-                A = "numeric", 
+                A = "numeric",         
                 B = "numeric"
             ),
-         contains = "matrix"
+         contains = "matrix"     # .Data is the hidden slot of the matrix object
+)        
+
+slotNames("Cell")
+```
+
+
+### No matrix data supplied, only slots A and B
+
+```{r}
+new("Cell", A = 1, B = 2)
+```
+
+### matrix data supplied
+
+```{r}
+new("Cell", matrix(1:36, nrow = 4, ncol = 4), A = 1, B = 2)
+```
+
+
+### Now, we are storing explicitely to `.Data` area of the object 
+
+```{r}
+new("Cell", .Data = matrix(1:36, nrow = 4, ncol = 4), A = 1, B = 2)
+```
+
+## Typical behavior without constructor or `initialize` method
+
+```{r}
+# same data supplied in the complex example below
+new("Cell", 1:6, 6:1, 3, 2)
+```
+
+
+
+
+```{r}
+# select part of the Cell object
+(aCell <- Cell(1:6, 6:1, 3, 2)[c(3, 1), 2:1])
+```
+
+```{r}
+aCell[1, 1]
+```
+
+```{r}
+aCell[c(3, 1)]
+```
+
+```{r}
+aCell[c(1, 3)]
+```
+
+```{r}
+aCell[c(1)]
+```
+
+
+# Making the class more complex and useful
+
+```{r}
+# use slots instead of representation
+setClass("Cell", slots = c(
+                A = "numeric",         
+                B = "numeric"
+            ),
+         contains = "matrix"     # .Data is the hidden slot of the matrix object
 )             
 ```
 
-## Validity
-
-We constrain A and B to have the same length with a validity function
-
-```{r}
-setValidity("Cell", function(object) {
-    msg <- NULL
-    if (length(object@A) != length(object@B))
-        msg <- c(msg, "'A' and 'B' must be the same length")
-    if (is.null(msg)) TRUE else msg
-})
-```
 
 ## Constructor
 and make a constructor that initialized the matrix of Cell with indicies into A and B.
 
 ```{r}
+# constructor for class Cell
+# the first two parameters correspond to A and B.
+# third parameter is for ..., the matrix extra parameters
 Cell <- function(A, B, ...)
+    # build the Cell object
+    # the order of the parameters is not necessarily the same as in the constructor
     new("Cell", matrix(seq_along(A), ...), A = A, B = B)
 ```
 
-The ... arguments are the non-data arguments (nrow, ncol, dimnames, etc) of matrix().
+The `...` arguments are the non-data arguments (nrow, ncol, dimnames, etc) of matrix().
+The dot-dot-dot will enable us to enter more parameters for the matrix part.
 
 
-# Subsetting
-
-We get some functionality for free (e.g., dim, nrow, ncol, length, ...) but need to implement sub-setting and, presumably, other operations. For single-bracket sub-setting, we pass the operation down to the underlying matrix, and then use the resulting indicies to sub-set A and B, creating a new Cell instance with the updated values
+### Does the matrix have to be the first parameter?
 
 ```{r}
-setMethod("[", "Cell", function(x, i, j, ..., drop=TRUE) {
-    m <- callNextMethod()
-    initialize(x, m, A = x@A[m], B = x@B[m])
-})
+Cell <- function(A, B, ...)
+    new("Cell",  A = A, B = B, matrix(seq_along(A), ...))
+
+Cell(1:6, 6:1, 3,  2) 
 ```
+
+> It is not working as intended. We don't get two matrices but two sequences.
+
+```{r}
+Cell <- function(A, B, ...)
+    new("Cell", matrix(seq_along(A), ...), A = A, B = B)
+
+Cell(1:6, 6:1, 3,  2) 
+```
+
 
 
 # Show
@@ -75,17 +163,89 @@ Finally, implement a show method
 ```{r}
 setMethod(show, "Cell", function(object) {
     cat("class:", class(object), "\n")
-    cat("dim:", dim(object), "\n")
-    m <- object@.Data
-    m[] <- object@A
+    cat("dim:", dim(object), "\n")      # dimension of the object
+    
+    m    <- object@.Data     # get what is in .Data
+    m[]  <- object@A         # fill .Data with what is in the slot A
+    m[]  <- object@B         # fill .Data with what is in the slot B
+    
     cat("A:\n"); print(m)
-    m[] <- object@B
     cat("B:\n"); print(m)
+})
+
+Cell(1:6, 6:1, 3,  2) 
+```
+
+
+### entering the data to the class object, explicitely
+
+```{r}
+# show the two matrices in Cell
+Cell(A = 1:6, B = 6:1, nrow = 3, ncol = 2)              # entering four parameters
+```
+
+### But happens if we enter two different sizes for A and B
+
+```{r}
+# show the two matrices in Cell
+Cell(A = 1:6, B = 10:1, nrow = 3, ncol = 2)           # entering four parameters
+```
+
+This is not what we are expecting. We have to add some constraints and validation.
+
+
+## Validity
+
+We constrain A and B to have the same length with a validity function
+
+```{r}
+# just sending a message that the parameters are not valid
+setValidity("Cell", function(object) {
+    msg <- NULL
+    if (length(object@A) != length(object@B))
+        msg <- c(msg, "'A' and 'B' must be the same length")
+    if (is.null(msg)) TRUE else msg
 })
 ```
 
 
+### Testing the validity
+
 ```{r}
-Cell(1:6, 6:1, 3, 2)[c(3, 1), 2:1]
+# show the two matrices in Cell
+Cell(A = 1:6, B = 10:1, nrow = 3, ncol = 2)              # entering four parameters
+```
+
+```{r}
+# show the two matrices in Cell
+Cell(A = 1:6, B = 6:1, nrow = 3, ncol = 2)              # entering four parameters
+```
+
+
+# Subsetting
+
+We get some functionality for free (e.g., dim, nrow, ncol, length, ...) but need to implement sub-setting and, presumably, other operations. 
+
+For single-bracket sub-setting, we pass the operation down to the underlying matrix, and then use the resulting indicies to sub-set A and B, creating a new Cell instance with the updated values.
+
+```{r}
+setMethod("[", "Cell", function(x, i, j, ..., drop=TRUE) {
+    m <- callNextMethod()
+    initialize(x, m, A = x@A[m], B = x@B[m])
+})
+```
+
+
+### entering the data to the class object, explicitely
+
+```{r}
+# show the two matrices in Cell
+Cell(A = 1:6, B = 6:1, nrow = 3, ncol = 2)              # entering four parameters
+```
+
+### entering the data to the class object, implicitely
+
+```{r}
+Cell(1:6, 6:1, 3,  2) 
 ```
 

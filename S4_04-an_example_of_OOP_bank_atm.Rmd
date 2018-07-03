@@ -85,7 +85,7 @@ read_balances <- function() {
                             sep = ";", header = TRUE)
 }
 
-cash_point <- function(cp) {
+create_cashpoint_class <- function(cp) {
     # cp[2]: ATM or Branch; cp[1]: id
     cat(sprintf("%-8s %-14s \n", cp[2], cp[1]))
     
@@ -106,8 +106,8 @@ setMethod("initialize", "Bank", function(.Object) {
     # The Bank Model is a dataframe of cash points id and type
     BankModel <- read_bank_data()
     
-    # get cash point instances
-    .Object@cashPoints <- apply(BankModel, 1, cash_point)
+    # get cash point instances by row
+    .Object@cashPoints <- apply(BankModel, 1, create_cashpoint_class)
     
     # add a name to each list adding cash point type 
     names(.Object@cashPoints) <- apply(BankModel, 1, paste, collapse = "_")
