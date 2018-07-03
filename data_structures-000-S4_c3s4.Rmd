@@ -25,6 +25,7 @@ The function **new** creates instances of the class and default values specified
 ```{r}
 setClass("A", representation(s1="numeric"), 
           prototype=prototype(s1=0))
+
 myA = new("A")
 myA
 
@@ -78,6 +79,7 @@ The last two functions are self descriptive and are from the `RBioinf` package.
 
 **getClass** and **extends** also show information about builtin classess (converted by **setOldClass**).
 
+
 #### simpleUseShow
 ```{r}
 getClass("matrix")
@@ -97,6 +99,7 @@ myb = new("B")
 as(myb, "A")
 ```
 In the assignment case, only part of the object is coerced.
+
 #### replacementcoerce
 ```{r}
 mya = new("A", s1 = 20)
@@ -194,16 +197,19 @@ new("XX", b1="yowser")
  setClass("Capital",
           representation=representation(
             string="character"))
+
  setClass("CountedCapital",
           contains="Capital",
           representation=representation(
             length="numeric"))
+
  setMethod("initialize",
            "Capital", 
            function(.Object, ..., string=character(0)) {
              string <- toupper(string)
              callNextMethod(.Object, ..., string=string)
            })
+
  setMethod("initialize",
            "CountedCapital",
            function(.Object, ...) {
@@ -211,6 +217,7 @@ new("XX", b1="yowser")
              .Object@length <- nchar(.Object@string)
              .Object
            })
+
  new("Capital", string="MiXeD")
  new("CountedCapital", string="MiXeD")
  new("CountedCapital", string=c("MiXeD", "MeSsaGe"))
