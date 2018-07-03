@@ -6,11 +6,12 @@ output: html_notebook
 ```{r}
 setClass("xyloc", representation(x="numeric", y="numeric"))
 setClass("population", representation(n="numeric"))
+
 setClass("fungi", representation(
-    "xyloc", 
-    "population", 
-    species="character")
-    )
+          "xyloc", 
+          "population", 
+          species="character")
+          )
 
 setMethod("initialize", "fungi", function(.Object, n) {
     .Object@n <- n 
