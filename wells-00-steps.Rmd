@@ -1,0 +1,324 @@
+---
+title: "Steps for creating MultiWell object"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE, error=TRUE, message=FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo=TRUE, comment=NA, error=TRUE, warning=FALSE, message = FALSE,
+fig.align = 'center')
+```
+
+
+
+# Structure we want for the wells
+    matrix
+    ------
+    id-obs  well_name   well_object     num_wt  matched
+    1       A1          obj_1           3       TRUE
+    2       A2          obj_2           1       FALSE
+    3       A3          obj_3           7       FALSE
+    
+    
+# Steps for multiwell list object
+
+1. Get the names of the multiwell object.
+
+2. Get the data in the slots of multiwell:
+
+        multiwell$`BO-104L`@well_name
+        multiwell$`BO-104L`@well_type
+        multiwell$`BO-104L`@lift_method
+
+3. multiwell has a number of objects. Store these objects as a matrix
+
+        grid <- matrix(multiwell, 9, 1)
+        
+4. get the well names and put them in a matrix of nrow equal to the length of multiwell.
+
+    well_name_all <- matrix(names(multiwell), nrow = 9, ncol = 1)
+        
+5. get the well codes description for well_type and lift_method. 
+Put them into vectors.
+
+    (well_type_all   <- unlist(lapply(multiwell, function(x) x@well_type), use.names = FALSE))
+    (lift_method_all <- unlist(lapply(multiwell, function(x) x@lift_method), use.names = FALSE))
+        
+        
+6. Bind all the objects as columns into a matrix `multi_obj`
+
+    (multi_obj <- cbind(well_name_all, well_type_all, lift_method_all, grid))
+    
+7. Now we can refer to individual components of the matrix using [row, col]
+
+        multi_obj[1, 1]
+        multi_obj[1, 3]
+        multi_obj[2, 4]
+
+
+## load a scanned results list object
+
+```{r}
+library(rProsper)
+
+load(file = "data/multiwell_010.rda")
+length(multiwell_010)
+names(multiwell_010)
+
+multiwell <- multiwell_010
+```
+
+## get the scalars dataframe from multiwell
+
+```{r}
+multiwell[[1]]@scalars
+multiwell[[2]]@scalars
+```
+
+## create a matrix from the list
+
+```{r}
+grid <- matrix(multiwell, length(multiwell), 1)
+grid
+```
+
+
+## length of the list element inside the matrix
+
+```{r}
+class(grid[10, 1])
+length(grid[10, 1])
+
+cat("\n")
+grid[10, 1]
+
+cat("\n")
+grid[10, 1][[1]]
+```
+
+### these two are not the same
+
+```{r}
+identical(grid[10, 1], grid[10, 1][[1]])
+```
+
+### this will give error because the list element has one member only
+
+```{r}
+grid[10, 1][[2]]
+# Error in grid[10, 1][[2]] : subscript out of bounds
+```
+
+
+## get scalars for well #1 and well #2
+```{r}
+grid[1, 1][[1]]@scalars
+grid[3, 1][[1]]@scalars
+```
+
+
+## get tables for well #9  #10
+```{r}
+grid[9,  1][[1]]@tables
+grid[10, 1][[1]]@tables
+```
+
+## WellObject requires parameters
+
+```{r}
+# WellObject()
+
+# Error in new("WellObject", well_name = well_name, scalars = scalars, tables = tables) : argument "well_name" is missing, with no default
+```
+
+# Create a simple MultiWell class
+
+## Create the MultiWell class inheriting matrix
+
+```{r}
+setClass ("MultiWell",
+          contains = "matrix"
+)
+
+mwm <- new("MultiWell")
+mwm
+```
+
+## initialize
+
+Now we define our own initialize() method 
+
+### initializing with a preset matrix inside the method
+
+```{r}
+setMethod("initialize", "MultiWell", function(.Object, ...) {
+    .Object@.Data <- matrix(1:6, nrow = 3, ncol =2)
+    .Object
+})
+```
+
+
+```{r}
+new("MultiWell")
+```
+
+### initializing with a matrix as a parameter
+
+```{r}
+setMethod("initialize", "MultiWell", function(.Object, dat, ...) {
+    .Object@.Data <- dat
+    .Object
+})
+
+new("MultiWell", dat = matrix(1:12, nrow = 4, ncol = 3))
+
+```
+
+# Create a MultiWell object with list as a parameter
+
+
+## Entering the list object `multiwell`
+
+This requires a slot as a list and mdification of the original class
+
+```{r}
+setClass("MultiWell_1", slots = c(
+            input = "list"     
+        ), 
+        contains = "matrix"
+)
+
+setMethod("initialize", "MultiWell_1", function(.Object, aList, ...) {
+    # find the length of the list. this is the same as the number of wells
+    list_len <- length(aList)
+    
+    # store the multiwell list in the slot input
+    .Object@input <- aList
+    
+    # get the well names from the names of the list. this is the direct way
+    # because the list was named from the loop
+    well_names <- names(aList)
+    
+    # fill the matrix container with a matrix created from the list
+    .Object@.Data <- matrix(multiwell, list_len, 1)
+    .Object
+})
+
+mw_1 <- new("MultiWell_1", multiwell)
+mw_1
+```
+
+# MultiWell object with transformation to a matrix
+
+```{r}
+setClass("MultiWell_2", slots = c(
+            input = "list"     
+        ), 
+        contains = "matrix"
+)
+
+setMethod("initialize", "MultiWell_2", function(.Object, aList, ...) {
+    # find the length of the list. this is the same as the number of wells
+    list_len <- length(aList)
+    
+    # store the multiwell list in the slot input
+    .Object@input <- aList
+    
+    # get the well names from the names of the list. this is the direct way
+    # because the list was named from the loop
+    well_names <- names(aList)
+    
+    # fill the matrix container with a matrix created from the list
+    well_type   <- unlist(lapply(.Object@input, function(x) x@well_type), use.names = FALSE)
+    lift_method <- unlist(lapply(.Object@input, function(x) x@lift_method), use.names = FALSE)
+    mat_list    <- matrix(.Object@input, list_len, 1)
+    
+    # bind all object to create the matrix
+    .Object@.Data <- cbind(well_names, well_type, lift_method, mat_list)
+    .Object
+})
+
+mw_2 <- new("MultiWell_2", multiwell)
+mw_2
+```
+
+### get the WellObject list for well #2
+```{r}
+# second row, 4th column
+mw_2[2, 4]
+```
+
+### get the scalars from the MultiWell class
+
+```{r}
+mw_2[2, 4][[1]]@scalars
+```
+
+> Note. Only the index `[[1]]` would work for the matrix element that is being extracted.
+
+### the matrix form of the list
+
+```{r}
+mat_list    <- matrix(multiwell, length(multiwell), 1)
+mat_list
+```
+
+### access to well scalars (well #10) from the matrix
+
+```{r}
+mat_list[10, 1][[1]]@scalars
+```
+
+
+
+### access to well tables/dataframes (well #10) from the matrix
+
+```{r}
+mat_list[10, 1][[1]]@tables
+```
+
+
+
+
+--------------------------------------------------------------------------------
+
+# sandbox
+This code from the original data_structures.R
+
+    # Grayscale = 0L
+    # Color     = 2L
+    
+    setClass ("MultiWell",
+              representation (wellname="character"),
+              prototype (wellname="B001"),
+              contains = "array"
+    )
+    
+    
+    
+    #' anyNumber = 1
+    #'
+    #' setClass ("MultiWell",
+    #'                    representation (colormode="integer"),
+    #'                    prototype (colormode=anyNumber),
+    #'                    contains = "array"
+    #' )
+    
+    
+    # constructors for MultiWell
+    #' @export
+    MultiWell <- function(wellname) {
+        return(new("MultiWell", wellname))
+    }
+    
+    # setMethod("show",
+    #           signature = "MultiWell",
+    #           definition = function(object) {
+    #               cat("An object of class ", class(object), "\n", sep = "")
+    #               cat(sprintf("Well: \n", object@name))
+    #               # cat(" ", nrow(object@name), " features by ", ncol(object@name),
+    #               #     " samples.\n", sep = "")
+    #               #invisible(NULL)
+    #           })
+
