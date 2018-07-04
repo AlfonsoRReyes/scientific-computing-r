@@ -1,0 +1,35 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+load(file = "data/multiwell_006.rda")
+length(multiwell_006)
+multiwell_006
+```
+
+# Load 10 wells object
+
+```{r}
+load(file = "data/multiwell_010.rda")
+length(multiwell_010)
+names(multiwell_010)
+```
+
+
+```{r}
+setClass("MultiWell")
+```
+
+
+
+```{r}
+length(multiwell_359)
+load(file = "data/multiwell_359.rda")
+head(multiwell_359, 10)
+```
+
+
+
+
