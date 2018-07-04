@@ -422,6 +422,7 @@ mw4
 
 ```{r}
 library(rProsper)
+library(dplyr)
 
 load(file = "data/multiwell_010.rda")
 multiwell <- multiwell_010
@@ -497,10 +498,33 @@ setMethod("summaryScalars", "MultiWell_4", function(object) {
     print(scalars)
 })    
 
+setGeneric("summaryWellTests", function(object) standardGeneric("summaryWellTests"))
+setMethod("summaryWellTests", "MultiWell_4", function(object) {
+    data <- getDataPart(object) 
 
-mw3 <- new("MultiWell_4", multiwell)
-# mw3
+    scalars <- do.call(rbind, c(
+        lapply(1:nrow(data), function(x) data[x, object@wo_col][[1]]@scalars), 
+        stringsAsFactors  = FALSE)
+        )
+    
+    scalars %>% 
+      select(well, wt_count, wt_enabled, wt_disabled)
+}) 
+
+mw4 <- new("MultiWell_4", multiwell)
+summaryWellTests(mw4)
 ```
+
+```{r}
+summaryScalars(mw4)
+```
+
+
+
+
+
+
+
 
 
 
