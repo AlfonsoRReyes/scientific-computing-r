@@ -323,9 +323,16 @@ mat_list[10, 1][[1]]@scalars
 mat_list[10, 1][[1]]@tables
 ```
 
+# Do not make changes to the 
 
 ```{r}
-setClass("MultiWell_3", slots = c(
+library(rProsper)
+
+load(file = "data/multiwell_010.rda")
+multiwell <- multiwell_010
+
+
+setClass("MultiWell_4", slots = c(
             input = "list",
             well_names  = "character",
             well_object = "matrix",
@@ -335,7 +342,7 @@ setClass("MultiWell_3", slots = c(
         contains = "matrix"
 )
 
-setMethod("initialize", "MultiWell_3", function(.Object, aList, ...) {
+setMethod("initialize", "MultiWell_4", function(.Object, aList, ...) {
     # the column index for the well_object
     .Object@wo_col <- 4L
     
@@ -368,7 +375,102 @@ setMethod("initialize", "MultiWell_3", function(.Object, aList, ...) {
     .Object
 })
 
-setMethod("show", "MultiWell_3", function(object) {
+setMethod("show", "MultiWell_4", function(object) {
+    data_part <- getDataPart(object)                           # get the data
+    rownames(data_part) <- as.character(slot(object, "well_names"))  # well name as row name
+    
+    # the well object is column #4
+    # add start ro well object
+    colnames(data_part)[4] <- paste(colnames(data_part)[4], "*", sep = "")  
+    cat("MultiWell \n")   # table name
+    
+    # pretty printing, justify right, remove quotes
+    print(data_part, right = TRUE, quote = FALSE)
+    # print(data)
+})
+
+setGeneric("summaryScalars", function(object) standardGeneric("summaryScalars"))
+setMethod("summaryScalars", "MultiWell_4", function(object) {
+    data <- getDataPart(object) 
+
+    # get a dataframe of all the scalars
+    # using c() for extra arguments make the strange characters dissapear
+    # the extra argument is stringsAsFactors
+    scalars <- do.call(rbind, c(
+        lapply(1:nrow(data), function(x) data[x, object@wo_col][[1]]@scalars), 
+        stringsAsFactors  = FALSE)
+        )
+    print(scalars)
+})    
+
+
+mw4 <- new("MultiWell_4", multiwell)
+# mw3
+```
+
+
+```{r}
+summaryScalars(mw4)
+```
+
+
+```{r}
+mw4
+```
+
+# 
+
+```{r}
+library(rProsper)
+
+load(file = "data/multiwell_010.rda")
+multiwell <- multiwell_010
+
+
+setClass("MultiWell_4", slots = c(
+            input = "list",
+            well_names  = "character",
+            well_object = "matrix",
+            wo_col      = "integer"
+            
+        ), 
+        contains = "matrix"
+)
+
+setMethod("initialize", "MultiWell_4", function(.Object, aList, ...) {
+    # the column index for the well_object
+    .Object@wo_col <- 4L
+    
+    # find the length of the list. this is the same as the number of wells
+    list_len <- length(aList)
+    
+    # store the multiwell list in the slot input
+    .Object@input <- aList
+    
+    # .Object@well_object_column <- which(grepl("well_object", colnames(mw3)))
+    # .Object@wo_col <- 4
+    
+    # get the well names from the names of the list. this is the direct way
+    # because the list was named from the loop
+    well_names <- names(aList)
+    .Object@well_names <- well_names
+    
+    # fill the matrix container with a matrix created from the list
+    well_type   <- unlist(lapply(.Object@input, function(x) x@well_type), use.names = FALSE)
+    lift_method <- unlist(lapply(.Object@input, function(x) x@lift_method), use.names = FALSE)
+    
+    # convert the well object list to a matrix
+    # mat_list    <- matrix(.Object@input, list_len, 1)
+    mat_list    <- matrix(.Object@input, nrow = length(.Object@input), byrow = TRUE)
+    colnames(mat_list) <- "well_object"
+    .Object@well_object <- mat_list
+    
+    # bind all object to create the matrix
+    .Object@.Data <- cbind(well_names, well_type, lift_method, .Object@well_object)
+    .Object
+})
+
+setMethod("show", "MultiWell_4", function(object) {
     data <- getDataPart(object)                           # get the data
     rownames(data) <- as.character(slot(object, "well_names"))  # well name as row name
     
@@ -378,32 +480,27 @@ setMethod("show", "MultiWell_3", function(object) {
     
     # pretty printing, justify right, remove quotes
     print(data, right = TRUE, quote = FALSE)
+    # print(data)
 })
 
 setGeneric("summaryScalars", function(object) standardGeneric("summaryScalars"))
-setMethod("summaryScalars", "MultiWell_3", function(object) {
+setMethod("summaryScalars", "MultiWell_4", function(object) {
     data <- getDataPart(object) 
 
     # get a dataframe of all the scalars
-    scalars <- do.call(rbind, lapply(1:nrow(data), 
-                                     function(x) data[x, object@wo_col][[1]]@scalars))
+    # using c() for extra arguments make the strange characters dissapear
+    # the extra argument is stringsAsFactors
+    scalars <- do.call(rbind, c(
+        lapply(1:nrow(data), function(x) data[x, object@wo_col][[1]]@scalars), 
+        stringsAsFactors  = FALSE)
+        )
     print(scalars)
 })    
 
 
-mw3 <- new("MultiWell_3", multiwell)
-mw3
+mw3 <- new("MultiWell_4", multiwell)
+# mw3
 ```
-
-
-```{r}
-summaryScalars(mw3)
-```
-
-
-
-
-
 
 
 
