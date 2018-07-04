@@ -69,6 +69,33 @@ names(multiwell_010)
 multiwell <- multiwell_010
 ```
 
+```{r}
+# https://stackoverflow.com/a/1329946/5270873
+# this will not work 
+do.call(rbind, multiwell)
+```
+
+### make a matrix from a list
+
+```{r}
+# transpose twice to have rows > columns
+t(t(sapply(multiwell, unlist)))
+```
+
+### this will not work
+```{r}
+library(plyr)
+as.matrix(ldply(multiwell))
+```
+
+### An explicit method to convert a list to matrix
+
+```{r}
+mat_3 <- matrix(unlist(multiwell), byrow = TRUE, nrow=length(multiwell))
+mat_3[1, 1][[1]]@scalars
+```
+
+
 ## get the scalars dataframe from multiwell
 
 ```{r}
@@ -232,7 +259,11 @@ setMethod("initialize", "MultiWell_2", function(.Object, aList, ...) {
     # fill the matrix container with a matrix created from the list
     well_type   <- unlist(lapply(.Object@input, function(x) x@well_type), use.names = FALSE)
     lift_method <- unlist(lapply(.Object@input, function(x) x@lift_method), use.names = FALSE)
-    mat_list    <- matrix(.Object@input, list_len, 1)
+    
+    # convert the well object list to a matrix
+    # mat_list    <- matrix(.Object@input, list_len, 1)
+    mat_list    <- matrix(.Object@input, nrow = length(.Object@input), byrow = TRUE)
+    colnames(mat_list) <- "well_object"
     
     # bind all object to create the matrix
     .Object@.Data <- cbind(well_names, well_type, lift_method, mat_list)
@@ -277,6 +308,66 @@ mat_list[10, 1][[1]]@scalars
 ```{r}
 mat_list[10, 1][[1]]@tables
 ```
+
+
+```{r}
+setClass("MultiWell_3", slots = c(
+            input = "list",
+            well_names = "character",
+            well_object = "matrix"
+        ), 
+        contains = "matrix"
+)
+
+setMethod("initialize", "MultiWell_3", function(.Object, aList, ...) {
+    # find the length of the list. this is the same as the number of wells
+    list_len <- length(aList)
+    
+    # store the multiwell list in the slot input
+    .Object@input <- aList
+    
+    # get the well names from the names of the list. this is the direct way
+    # because the list was named from the loop
+    well_names <- names(aList)
+    .Object@well_names <- well_names
+    
+    # fill the matrix container with a matrix created from the list
+    well_type   <- unlist(lapply(.Object@input, function(x) x@well_type), use.names = FALSE)
+    lift_method <- unlist(lapply(.Object@input, function(x) x@lift_method), use.names = FALSE)
+    
+    # convert the well object list to a matrix
+    # mat_list    <- matrix(.Object@input, list_len, 1)
+    mat_list    <- matrix(.Object@input, nrow = length(.Object@input), byrow = TRUE)
+    colnames(mat_list) <- "well_object"
+    .Object@well_object <- mat_list
+    
+    # bind all object to create the matrix
+    .Object@.Data <- cbind(well_names, well_type, lift_method, .Object@well_object)
+    .Object
+})
+
+setMethod("show", "MultiWell_3", function(object) {
+    data <- getDataPart(object)                           # get the data
+    rownames(data) <- as.character(slot(object, "well_names"))  # well name as row name
+    
+    # the well object is column #4
+    colnames(data)[4] <- paste(colnames(data)[4], "*", sep = "")  # add start ro well object
+    cat("MultiWell \n")   # table name
+    
+    # pretty printing, justify right, remove quotes
+    print(data, right = TRUE, quote = FALSE) 
+})
+
+mw3 <- new("MultiWell_3", multiwell)
+mw3
+```
+
+
+
+
+
+
+
 
 
 
