@@ -283,8 +283,22 @@ mw_2[2, 4]
 ### get the scalars from the MultiWell class
 
 ```{r}
-mw_2[2, 4][[1]]@scalars
+mw_2[1, 4][[1]]@scalars
 ```
+
+```{r}
+for (i in 1:nrow(mw_2)) {
+    print(mw_2[i, 4][[1]]@scalars)
+}
+```
+
+### extract the scalars dataframes
+
+```{r}
+do.call(rbind, lapply(1:nrow(mw_2), function(x) mw_2[x, 4][[1]]@scalars))
+```
+
+
 
 > Note. Only the index `[[1]]` would work for the matrix element that is being extracted.
 
@@ -313,18 +327,26 @@ mat_list[10, 1][[1]]@tables
 ```{r}
 setClass("MultiWell_3", slots = c(
             input = "list",
-            well_names = "character",
-            well_object = "matrix"
+            well_names  = "character",
+            well_object = "matrix",
+            wo_col      = "integer"
+            
         ), 
         contains = "matrix"
 )
 
 setMethod("initialize", "MultiWell_3", function(.Object, aList, ...) {
+    # the column index for the well_object
+    .Object@wo_col <- 4L
+    
     # find the length of the list. this is the same as the number of wells
     list_len <- length(aList)
     
     # store the multiwell list in the slot input
     .Object@input <- aList
+    
+    # .Object@well_object_column <- which(grepl("well_object", colnames(mw3)))
+    # .Object@wo_col <- 4
     
     # get the well names from the names of the list. this is the direct way
     # because the list was named from the loop
@@ -355,14 +377,28 @@ setMethod("show", "MultiWell_3", function(object) {
     cat("MultiWell \n")   # table name
     
     # pretty printing, justify right, remove quotes
-    print(data, right = TRUE, quote = FALSE) 
+    print(data, right = TRUE, quote = FALSE)
 })
+
+setGeneric("summaryScalars", function(object) standardGeneric("summaryScalars"))
+setMethod("summaryScalars", "MultiWell_3", function(object) {
+    data <- getDataPart(object) 
+
+    # get a dataframe of all the scalars
+    scalars <- do.call(rbind, lapply(1:nrow(data), 
+                                     function(x) data[x, object@wo_col][[1]]@scalars))
+    print(scalars)
+})    
+
 
 mw3 <- new("MultiWell_3", multiwell)
 mw3
 ```
 
 
+```{r}
+summaryScalars(mw3)
+```
 
 
 
