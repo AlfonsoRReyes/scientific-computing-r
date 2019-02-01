@@ -1,0 +1,70 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+https://stat.ethz.ch/pipermail/r-help/2010-August/249374.html
+
+From: r-help-bounces at r-project.org [mailto:r-help-bounces at r-project.org] On Behalf Of Sadz A
+Sent: Tuesday, 17 August 2010 9:28 AM
+To: r-help at r-project.org
+Subject: [R] Converting degree: minute: second data to decimal degree data, should be simple
+
+Hi All, 
+
+I have location data set up as degrees: minutes: seconds (for example, 
+122:45:45) I need to get this data into decimal degree form (122.7625). 
+
+I know that I need to use the formula
+
+Decimal degrees = Degrees + (Minutes/60) + (Seconds/3600)
+
+Does anyone know how I can get R to do this?
+The original data is all in one column (called 'lat') and the degrees, mins and 
+secs are divided by ':'
+There are some values that are negative (eg -69:38:27)
+I have R version 2.10.1 on a windows vista computer. 
+
+I could do it manually but I have like 20,000 entries and would really like a 
+little code to automate the conversion. 
+
+I have tried Microsoft Access and Excel, but because the data is not stored in 
+3 columns I cannot get it to work, I figured R was my best option but I cant get 
+it to work. It should be really simple but I'm new to R so would 
+really appreciate help.
+
+ Thank you for reading my plea, 
+Any and all help is greatly appreciated,
+sadz 
+
+```{r}
+
+```
+
+
+I take it you have the data in character form.  If the DMS data is already in a data frame it is probably in factor form, so you will need to coerce it to character first.  Here is how you could do it with the DMS data in a data frame:
+
+
+```{r eval=FALSE}
+# m  ## an example with 3 entries
+#         DMS
+# 1 122:45:45
+# 2 122:45:45
+# 3 122:45:45
+```
+
+```{r}
+m <- data.frame(DMS = c("122:45:45", "122:45:45", "122:45:45"), stringsAsFactors = FALSE)
+m
+```
+
+```{r}
+m <- within(m, { 
+    dms <- do.call(rbind, strsplit(as.character(DMS), ":"))
+    dec <- as.numeric(dms[,1]) + (as.numeric(dms[,2]) + as.numeric(dms[,3])/60)/60
+    rm(dms)
+})
+
+m
+```
+
