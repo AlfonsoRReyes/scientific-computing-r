@@ -21,11 +21,10 @@ of the arguments, including validity checks, then we need to add a speciﬁc
 initialize function, which will be called by new.
 
 ```{r}
-setMethod("initialize", "trapTransect", 
-          function(.Object, 
-                   distances = numeric(0), 
-                   seed.counts = numeric(0), 
-                   trap.area = numeric(0)) {
+setMethod("initialize", "trapTransect", function(.Object, 
+                                                 distances = numeric(0), 
+                                                 seed.counts = numeric(0), 
+                                                 trap.area = numeric(0)) {
                 if (length(distances) != length(seed.counts))
                     stop("Lengths of distances and counts differ.")
                 if (length(trap.area) != 1)

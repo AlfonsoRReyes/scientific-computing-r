@@ -34,11 +34,29 @@ setReplaceMethod("names", signature(x = "testClass", value = "ANY"), definition 
 
 
 tc.a <- new("testClass", a = list(m = "abc", n = 100))
-
+tc.a
+names(tc.a)
 ```
 
 ```{r}
 tc.a["m"]
 tc.a["n"]
+```
+
+```{r}
+tc.a["m", 1, 1]
+```
+
+```{r}
+names(tc.a) <- "mm"
+```
+
+```{r}
+tc.a
+```
+
+```{r}
+names(tc.a) <- "mm"
+tc.a
 ```
 

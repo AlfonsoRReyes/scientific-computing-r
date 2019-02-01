@@ -70,6 +70,17 @@ multiwell <- multiwell_010
 ```
 
 ```{r}
+library(rProsper)
+
+load(file = "data/BYAN-S-7.rda")
+length(multiwell)
+names(multiwell)
+# 
+# multiwell <- multiwell_010
+```
+
+
+```{r}
 # https://stackoverflow.com/a/1329946/5270873
 # this will not work 
 do.call(rbind, multiwell)
