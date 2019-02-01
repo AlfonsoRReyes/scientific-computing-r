@@ -1,0 +1,55 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+https://gis.stackexchange.com/questions/18940/converting-point-to-lat-lon
+
+
+## Projecting sp objects in R 2 answers
+I have received a shapefile with measurement points to be analyzed, but no matter how I try, I can't find how to convert to lat lon. I suppose it would be good to know the projection but when I look into the file (with R and summary()) it says "Is projected: NA" and "proj4string : [NA]".
+
+One measurement-point I know is close to the border Peru-Chile has x,y = 354521, 7997417.8.
+
+How can I find out how to convert this point (and many others) to lat lon?
+
+I tried to follow the instructions of similar questions here, but to no avail.
+
+
+
+```{r}
+library(proj4)
+proj4string <- "+proj=utm +zone=19 +south +ellps=WGS84 +datum=WGS84 +units=m +no_defs "
+
+# Source data
+xy <- data.frame(x=354521, y=7997417.8)
+
+# Transformed data
+pj <- project(xy, proj4string, inverse=TRUE)
+latlon <- data.frame(lat=pj$y, lon=pj$x)
+print(latlon)
+
+# -18.10714	-70.37495	
+```
+
+```{r}
+# Malaysian coordinates
+
+library(proj4)
+proj4string <- "+proj=utm +zone=47 +north +ellps=WGS84 +datum=WGS84 +units=m +no_defs "
+
+# Source data
+xy <- data.frame(x = 801553.296, y = 349423.677)
+
+# Transformed data
+pj <- project(xy, proj4string, inverse=TRUE)
+latlon <- data.frame(lat=pj$y, lon=pj$x)
+print(latlon)
+
+# -18.10714	-70.37495	
+```
+
+```{r}
+latlon$lat
+```
+

@@ -1,0 +1,61 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+# How to transform Longitude/Latitude degree to UTM? R. rgdal, sp
+
+https://stackoverflow.com/questions/30429384/how-to-transform-longitude-latitude-degree-to-utm-r-rgdal-sp
+
+```{r}
+library(sp)
+
+pasaporte <- structure(list(Latitud = c(13.84778, 13.01667, 13.15722), 
+                            Longitud = c(73.75333, 75.08333, 74.22278)),
+                       .Names = c("Latitud", "Longitud"), class = "data.frame", 
+                       row.names = c("4", "36", "46"))
+
+pasaporte <- pasaporte * -1
+
+pasaporte
+#      Latitud  Longitud
+# 4  -13.84778 -73.75333
+# 36 -13.01667 -75.08333
+# 46 -13.15722 -74.22278
+
+
+```
+
+```{r}
+# Conversion into SpatialPoints
+coordinates(pasaporte) <- ~Longitud+Latitud
+
+# Setting default projection
+proj4string(pasaporte) <- CRS('+init=epsg:4326')
+
+pasaporte
+# SpatialPoints:
+#     Longitud   Latitud
+# 4  -73.75333 -13.84778
+# 36 -75.08333 -13.01667
+# 46 -74.22278 -13.15722
+# Coordinate Reference System (CRS) arguments: +init=epsg:4326
+# +proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0 
+
+```
+
+```{r}
+# Projection
+# Be sure to have rgdal first installed.
+xy_utm <- spTransform(pasaporte, CRS('+init=epsg:32718'))
+xy_utm
+# SpatialPoints:
+#    Longitud Latitud
+# 4  634726.5 8468758
+# 36 490964.2 8561019
+# 46 584231.8 8545348
+# Coordinate Reference System (CRS) arguments: +init=epsg:32718 +proj=utm
+# +zone=18 +south +datum=WGS84 +units=m +no_defs +ellps=WGS84
+# +towgs84=0,0,0 
+```
+

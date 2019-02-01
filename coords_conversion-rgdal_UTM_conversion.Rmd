@@ -1,0 +1,111 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+# R - Problems with converting UTM coordinates with the rgdal package
+
+https://stackoverflow.com/questions/41870522/r-problems-with-converting-utm-coordinates-with-the-rgdal-package
+
+## Question
+
+I have been given the task to convert a large set of UTM coordinates (Zone 33) to lat-long (WGS84) coordinates. The positions are supposed to be located near the Norwegian border. I have tried to convert the coordinates in R using the rgdal package.
+
+```{r}
+#extracting some examples from data set
+
+lat <- c(7790281, 7726438, 7266202, 7259480, 7271802)
+long <- c(1053817, 1054025, 451754, 475228, 462235)
+df <- data.frame(lat, long)
+
+#converting from UTM33 to WGS84
+
+library(rgdal)
+tmp <- data.frame(coords.x = df$lat, coords.y = df$long)
+coordinates(tmp) <-c("coords.x","coords.y")
+proj4string(tmp) <- CRS("+proj=utm +zone=33 ellps=WGS84") #UTM zone 33
+CRS.new <- CRS("+init=epsg:4326") # WGS84
+coords <- spTransform(tmp,CRS.new)
+
+#making a dataframe out of coordinates
+coords <- data.frame(lat=coords@coords[,1], long=coords@coords[,2])
+
+coords
+```
+
+This yields
+
+
+           lat     long
+    1 69.19936 5.840162
+    2 68.92219 5.857922
+    3 66.55129 2.585804
+    4 66.52160 2.721701
+    5 66.58242 2.644578
+    
+    
+However, when transforming the coordinates with an online converting tool (http://www.rcn.montana.edu/resources/converter.aspx) I get the following different results
+
+      lat.corr long.corr
+    1 69.63112  29.37223
+    2 69.07562  29.00514
+    3 65.51455  13.95675
+    4 65.45688  14.46554
+    5 65.56618  14.18178
+
+When plotting both data sets in the same map, one can clearly see that the points converted with rgdal are misplaced.    
+
+## Answer
+
+I guess you mixed latitude and longitude in
+
+```
+tmp <- data.frame(coords.x = df$lat, coords.y = df$long)
+```
+
+It should be :
+
+```
+tmp <- data.frame(coords.x = df$lon, coords.y = df$lat)
+```
+
+And you get :
+
+    > (coords <- data.frame(lon=coords@coords[,1], lat=coords@coords[,2]))
+       lon     lat
+    1 29.37172 69.63114
+    2 29.00472 69.07564
+    3 13.95675 65.51455
+    4 14.46554 65.45688
+    5 14.18178 65.56618
+
+
+```{r}
+#extracting some examples from data set
+
+lat  <- c(7790281, 7726438, 7266202, 7259480, 7271802)
+long <- c(1053817, 1054025, 451754, 475228, 462235)
+df <- data.frame(lat, long)
+
+#converting from UTM33 to WGS84
+
+library(rgdal)
+
+# it was
+# tmp <- data.frame(coords.x = df$lat, coords.y = df$long)
+
+# it should be
+tmp <- data.frame(coords.x = df$lon, coords.y = df$lat)
+
+coordinates(tmp) <- c("coords.x","coords.y")
+proj4string(tmp) <- CRS("+proj=utm +zone=33 ellps=WGS84") #UTM zone 33
+
+CRS.new <- CRS("+init=epsg:4326") # WGS84
+coords <- spTransform(tmp,CRS.new)
+
+#making a dataframe out of coordinates
+coords_df <- data.frame(lat=coords@coords[,1], long=coords@coords[,2])
+
+coords_df
+```
+

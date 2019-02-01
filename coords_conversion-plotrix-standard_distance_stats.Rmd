@@ -1,0 +1,32 @@
+---
+title: "Is there R method similar to ArcGIS StandardDistance_stats?"
+output: html_notebook
+---
+
+```{r}
+x = c(203595.92857397342, 203711.9297397244, 203992.57772137996, 203756.83341678928, 203610.89646632838, 203393.86202718143, 203524.83108528735, 203696.96184736944, 203363.9262424715, 203887.8024748952, 204018.77153300116, 204131.03072566338, 204426.6465996739)
+y = c(89463.34428931243, 89343.60115047272, 89246.30985016546, 89152.76052294695, 89253.79379634294, 89343.60115047272, 89122.82473823702, 88991.85568013109, 89609.28123977332, 89687.86267463688, 89556.89361653096, 89901.15514069512, 89833.79962509777)
+
+mean_centerX <- mean(x)
+mean_centerY <- mean(y)
+standard_deviationX = sd(x)
+standard_deviationY = sd(y)
+```
+
+```{r}
+# xmcX <- (x -mean_centerX)^2
+# ymcY <- (y-mean_centerY)^2
+
+
+standard_distance <- sqrt(sum(((x -mean_centerX)^2 + (y-mean_centerY)^2)) / (length(x)))
+
+standard_distance <- sqrt(sum((x - mean_centerX)^2) / length(x) + 
+                          sum((y - mean_centerY)^2) / length(y))
+
+library(plotrix)
+plot(x,y)
+points(mean_centerX, mean_centerY, col ="red", pch=16)
+draw.circle(mean_centerX, mean_centerY, radius = standard_distance, 
+            border = "red", lwd =2)
+```
+
