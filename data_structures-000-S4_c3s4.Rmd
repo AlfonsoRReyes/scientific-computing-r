@@ -21,6 +21,11 @@ A class is defined by a call to **setClass**, an instance of *classRepresentatio
 
 The function **new** creates instances of the class and default values specified in *prototype* can be overridden.
 
+```{r}
+library(RBioinf)
+```
+
+
 #### setClass
 ```{r}
 setClass("A", representation(s1="numeric"), 

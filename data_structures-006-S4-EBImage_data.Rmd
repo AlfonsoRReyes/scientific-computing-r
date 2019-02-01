@@ -23,7 +23,7 @@ setClass ("Image",
   contains = "array"
 )
 
-
+# constructor
 Image = function(data = array(0, dim=c(1,1)), colormode = Grayscale) {
   
   return( new("Image", 

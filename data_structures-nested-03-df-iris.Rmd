@@ -105,7 +105,7 @@ m_iris
 
 There is an additional list column `model`.
 
-## 3. Simplify the lsit column
+## 3. Simplify the list column
 
 ```{r}
 b_fun <- function(mod)  
@@ -124,10 +124,11 @@ m_iris %>%
 
 ```{r}
 library(tibble)
-df <- tribble( ~max, ~seq, 
-                          3,    1:3, 
-                          4,    1:4, 
-                          5,    1:5)
+df <- tribble(
+  ~max, ~seq, 
+  3,    1:3, 
+  4,    1:4, 
+  5,    1:5)
 df
 ```
 

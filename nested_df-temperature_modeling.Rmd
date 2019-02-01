@@ -1,5 +1,19 @@
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(comment = "", echo = TRUE)
+---
+title: "Temperature modeling using nested dataframes"
+output:
+  pdf_document: default
+  html_notebook: default
+---
+
+# Prepare the data
+
+```{r setup, include = FALSE, error=TRUE, message=FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo = TRUE, 
+                      comment = NA, 
+                      error = TRUE, 
+                      warning = FALSE, 
+                      message = FALSE, 
+                      fig.align = 'center')
 ```
 
 http://ijlyttle.github.io/isugg_purrr/presentation.html#(1)
@@ -81,7 +95,7 @@ temperature_tall %>%
   geom_line()
 ```
 
-## Rearrange a bit more
+## Calculate delta time ($\Delta t$) and delta temperature ($\Delta T$)
 
 **`delta_time`** $\Delta t$ 
 
@@ -106,29 +120,31 @@ delta <-
 ## Let's have a look
 
 ```{r}
+# plot delta time vs delta temperature, by sensor
 delta %>%
   ggplot(aes(x = delta_time, y = delta_temperature, color = id_sensor)) +
   geom_line()  
 ```
 
-## Curve-fitting
+# Define the models
 
 We want to see how three different curve-fits might perform on these three data-sets:
 
 ### Newtonian cooling
 
-\[\Delta T = \Delta {T_0} \left[ 1 - \exp \left( { - \frac}} \right) \right] \]
+$$\Delta T = \Delta {T_0} * (1 - e^{-\frac{\delta t}{\tau_0}})$$
 
+    
 ### Semi-infinite solid
 
-\[\Delta T = \Delta {T_0}\operatorname{erfc} \left( {\sqrt {\frac}} } \right)\]
+    
+$$\Delta T = \Delta T_0 * erfc(\sqrt{\frac{\tau_0}{\delta t}}))$$
 
 ### Semi-infinite solid with convection
 
-\[\Delta T = \Delta {T_0}\left[ {\operatorname{erfc} \left( {\sqrt {\frac}} } \right) - \exp \left( {B{i_0} + \frac{4}\frac}} \right)\operatorname{erfc} \left( {\sqrt {\frac}}  + \frac}{2}\sqrt {\frac}} } \right)} \right]\]
+$$\Delta T = \Delta T_0 * \big [ \operatorname erfc(\sqrt{\frac{\tau_0}{\delta t}}) - e^ {Bi_0 + (\frac {Bi_0}{2})^2 \frac {\delta t}{\tau_0}} * \operatorname erfc (\sqrt \frac{\tau_0}{\delta t} + \frac {Bi_0}{2} * \sqrt \frac{\delta t }{\tau_0} \big]$$
 
-## Some definitions
-
+### `erf` and `erfc` functions
 ```{r}
 # reference: http://stackoverflow.com/questions/29067916/r-error-function-erfz
 # (see Abramowitz and Stegun 29.2.29)
@@ -136,22 +152,23 @@ erf <- function(x) 2 * pnorm(x * sqrt(2)) - 1
 erfc <- function(x) 2 * pnorm(x * sqrt(2), lower = FALSE)
 ```
 
+
+### Newton cooling equation
 ```{r}
 newton_cooling <- function(x) {
   nls(
-    delta_temperature ~ delta_temperature_0*(1 - exp(-delta_time/tau_0)),
+    delta_temperature ~ delta_temperature_0 * (1 - exp(-delta_time/tau_0)),
     start = list(delta_temperature_0 = -10, tau_0 = 50),
     data = x
   )
 }
 ```
 
-## More math
-
+### Temperature models: simple and convection
 ```{r}
 semi_infinite_simple <- function(x) {
   nls(
-    delta_temperature ~ delta_temperature_0*erfc(sqrt(tau_0/delta_time)),
+    delta_temperature ~ delta_temperature_0 * erfc(sqrt(tau_0 / delta_time)),
     start = list(delta_temperature_0 = -10, tau_0 = 50),
     data = x
   )    
@@ -160,11 +177,11 @@ semi_infinite_simple <- function(x) {
 semi_infinite_convection <- function(x){
   nls(
     delta_temperature ~
-      delta_temperature_0*(
-        erfc(sqrt(tau_0/delta_time)) -
-        exp(Bi_0 + (Bi_0/2)^2*delta_time/tau_0)*
-          erfc(sqrt(tau_0/delta_time) + 
-        (Bi_0/2)*sqrt(delta_time/tau_0))
+      delta_temperature_0 * (
+        erfc(sqrt(tau_0 / delta_time)) -
+        exp(Bi_0 + (Bi_0/2)^2 * delta_time / tau_0) *
+          erfc(sqrt(tau_0 / delta_time) + 
+        (Bi_0/2) * sqrt(delta_time / tau_0))
       ),
     start = list(delta_temperature_0 = -5, tau_0 = 50, Bi_0 = 1.e6),
     data = x
@@ -172,11 +189,15 @@ semi_infinite_convection <- function(x){
 }
 ```
 
-## Before we get into purrr
+
+# Test modeling on one dataset
+
+## Before going into `purrr`
 
 Before doing anything, we want to show that we can do something with one dataset and one model-function:
 
 ```{r}
+# only one sensor; it is a test
 tmp_data <- delta %>% filter(id_sensor == "a")
 
 tmp_model <- newton_cooling(tmp_data)
@@ -187,6 +208,7 @@ summary(tmp_model)
 ## Look at predictions
 
 ```{r}
+# apply prediction and make it tidy
 tmp_pred <- 
   tmp_data %>%
   mutate(modeled = predict(tmp_model, data = .)) %>%
@@ -195,21 +217,24 @@ tmp_pred <-
   print()
 ```
 
-## A more-useful look
+## Plot Newton model
 
 ```{r}
 tmp_pred %>%
   ggplot(aes(x = delta_time, y = delta_temperature, linetype = type)) +
-  geom_line()
+  geom_line() +
+  labs(title = "Newton temperature model", subtitle = "One sensor: a")
 ```
 
-## "Regular" data-frame
+## "Regular" data-frame (deltas)
 
 ```{r}
 print(delta)
 ```
 
 Each column of the dataframe is a vector - in this case, a character vector and two doubles
+
+# Making a nested dataframe
 
 ## How to make a weird data-frame
 
@@ -220,13 +245,14 @@ Here's where the fun starts - a column of a data-frame can be a list.
 - this seems like a stronger expression of the `dplyr::group_by()` idea 
 
 ```{r}
+# nest delta_time and delta_temperature variables
 delta_nested <- 
   delta %>%
   nest(-id_sensor) %>%
   print()
 ```
 
-## Map data-frames to the modeling function
+## Map dataframes to a modeling function (Newton)
 
 - `map()` is like `lapply()`
 
@@ -238,6 +264,8 @@ model_nested <-
   mutate(model = map(data, newton_cooling)) %>%
   print()
 ```
+
+> We get an additional list-column `model`.
 
 ## We can use `map2()` to make the predictions
 
@@ -251,6 +279,8 @@ predict_nested <-
   mutate(pred = map2(model, data, predict)) %>%
   print()
 ```
+
+> Another list-column `pred` for the prediction results.
 
 ## We need to get out of the weirdness
 
@@ -280,10 +310,14 @@ predict_tall <-
 ```{r}
 predict_tall %>%
   ggplot(aes(x = delta_time, y = delta_temperature)) +
-  geom_line(aes(color = id_sensor, linetype = type))
+  geom_line(aes(color = id_sensor, linetype = type)) +
+  labs(title = "Newton temperature modeling", 
+       subtitle = "Three sensors: a, b, c")
 ```
 
-## Now we want to look at a selection of models
+# Apply multiple models on a nested structure
+
+## Step 1: Selection of models
 
 Make a list of functions to model:
 
@@ -296,10 +330,13 @@ list_model <-
   )
 ```
 
-## Step: write a function to define the "inner" loop 
+## Step 2: write a function to define the "inner" loop 
 
 ```{r}
-fn_model <- function(.model, df){
+# add additional variable with the model name
+
+fn_model <- function(.model, df) {
+  # one parameter for the model in the list, the second for the data
   # safer to avoid non-standard evaluation
   # df %>% mutate(model = map(data, .model)) 
   
@@ -312,9 +349,17 @@ fn_model <- function(.model, df){
 
 - the purrr functions `safely()` and `possibly()` are **very** interesting. I think they could be useful outside of purrr as a friendlier way to do error-handling.
 
-## Step: `map_df()` to define the "outer" loop
+## Step 3: Use `map_df()` to define the "outer" loop
 
 ```{r}
+# this dataframe will be the second input of fn_model
+delta_nested %>% 
+  print()
+```
+
+
+```{r}
+# fn_model is receiving two inputs: one from list_model and from delta_nested
 model_nested_new <-
   list_model %>%
   map_df(fn_model, delta_nested, .id = "id_model") %>%
@@ -326,7 +371,7 @@ model_nested_new <-
 - we want to discard the rows where the model failed
 - we also want to investigate why they failed, but that's a different talk
 
-## Step: `map()` to identify the null models
+## Step 4: Use `map()` to identify the null models
 
 ```{r}
 model_nested_new <-
@@ -339,7 +384,7 @@ model_nested_new <-
 - using `map(model, is.null)` returns a list column
 - to use `filter()`, we have to escape the weirdness
 
-## Step: `map_lgl()` to identify nulls and get out of the weirdness
+## Step 5: `map_lgl()` to identify nulls and get out of the weirdness
 
 ```{r}
 model_nested_new <-
@@ -351,7 +396,7 @@ model_nested_new <-
 
 - using `map_lgl(model, is.null)` returns a vector column
 
-## Step: `filter()` and `select()` to clean up
+## Step 6: `filter()` nulls and `select()` variables to clean up
 
 ```{r}
 model_nested_new <-
@@ -363,7 +408,7 @@ model_nested_new <-
   print()
 ```
 
-## Let's get predictions
+## Step 7: Calculate predictions on nested dataframe
 
 ```{r}
 predict_nested <- 
@@ -372,7 +417,7 @@ predict_nested <-
   print()
 ```
 
-## `unnest()`, make it tall
+## `unnest()`, make it tall and tidy
 
 ```{r}
 predict_tall <-
@@ -383,13 +428,15 @@ predict_tall <-
   print()
 ```
 
-##  We can visualize the predictions
+##  Visualize the predictions
 
 ```{r}
 predict_tall %>%
   ggplot(aes(x = delta_time, y = delta_temperature)) +
   geom_line(aes(color = id_sensor, linetype = type)) +
-  facet_grid(id_model ~ .)
+  facet_grid(id_model ~ .) +
+  labs(title = "Newton and Semi-infinite temperature modeling", 
+       subtitle = "Three sensors: a, b, c")
 ```
 
 ## Let's get the residuals
@@ -408,14 +455,24 @@ resid <-
 resid %>%
   ggplot(aes(x = delta_time, y = resid)) +
   geom_line(aes(color = id_sensor)) +
-  facet_grid(id_model ~ .)
+  facet_grid(id_model ~ .) +
+  labs(title = "Residuals for Newton and Semi-infinite models")
 ```
 
 ## Using broom package to look at model-statistics
 
-The `tidy()` function extracts statistics from a model
+We will use a previous defined dataframe with the model and data:
 
 ```{r}
+model_nested_new %>% 
+  print()
+```
+
+
+The `tidy()` function extracts statistics from a model.
+
+```{r}
+# apply over model_nested_new but only three variables
 model_parameters <- 
   model_nested_new %>%
   select(id_model, id_sensor, model) %>%

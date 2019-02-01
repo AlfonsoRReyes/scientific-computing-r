@@ -1,0 +1,97 @@
+---
+title: "R Notebook"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+  html_notebook: default
+---
+
+```{r setup, include = FALSE, error=TRUE, message=FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo = TRUE, 
+                      comment = "#>", 
+                      error = TRUE, 
+                      warning = FALSE, 
+                      message = FALSE, 
+                      fig.align = 'center')
+```
+
+Source: https://gist.github.com/andrewheiss/faadbc3e737547961d6e16e2c2512867
+
+```{r eval=FALSE}
+devtools::install_github("seankross/lego")
+```
+
+```{r}
+library(tidyverse)
+library(lego)  # https://github.com/seankross/lego
+library(broom)
+library(glue)
+library(pander)
+
+# Shrink and clean this dataset
+lego_clean <- legosets %>% 
+  filter(Year > 2011) %>% 
+  mutate(Boxed = ifelse(Packaging == "Box", "Boxed", "Not boxed"))
+```
+
+```{r}
+# Just as a toy example, check if there are differences in prices between boxed
+# and non-boxed LEGO sets in 2012-2015
+lego_tests <- lego_clean %>% 
+  group_by(Year) %>% 
+  nest() %>% 
+  # This runs a t-test
+  mutate(t_test = data %>% map(~ t.test(USD_MSRP ~ Boxed, data = .)),
+         # This converts the t-test to a tibble
+         t_test_tidy = t_test %>% map(tidy))
+lego_tests
+```
+
+```{r}
+# unnest the tibble list-column
+lego_tests %>% unnest(data)
+```
+
+
+```{r}
+# unnest the tibble list-column
+# Unnest so that we can verify that there's a row of test results for each year
+lego_tests %>% unnest(t_test_tidy)
+```
+
+```{r}
+# Now we can use pandoc to make a nice table of these results
+#
+# Little helper function for formatting the results of a t-test:
+#
+# diff
+# (upper, lower)
+# p = p_value
+#
+# The "\\ \n" sequence will add a Markdown line break
+format_t_test <- function(x) {
+  glue("{diff}\\ \n({upper}, {lower})\\ \np = {p_value}",
+       diff = round(x$estimate, 2),
+       upper = round(x$conf.high, 2),
+       lower = round(x$conf.low, 2),
+       p_value = round(x$p.value, 3))
+}
+```
+
+```{r}
+# Make the table!
+lego_tests %>% 
+  # Format the tidied t-test into a fancy character string with format_t_test()
+  mutate(clean_results = t_test_tidy %>% map_chr(format_t_test)) %>% 
+  # Only choose two columns. Add a fancy two-line header with LaTeX in it, just for fun
+  select(Year, `Difference in average price\\ \n$\\Delta_{\\text{Boxed} - \\text{Not boxed}}$` = clean_results) %>% 
+  pandoc.table(split.table = Inf,  # Make sure the table isn't split horizontally
+               justify = "lc",  # Align the columns left and centered
+               style = "multiline",  # Allow for multiple lines in cells
+               # Keep any existing line breaks (like the \\ \n) we created
+               keep.line.breaks = TRUE, 
+               # Add a caption
+               caption = "Difference in means, 95% confidence interval, and p-value shown")
+```
+
