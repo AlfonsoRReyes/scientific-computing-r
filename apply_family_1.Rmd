@@ -135,11 +135,11 @@ for (i in 2:dim(treeg)[1]) {
       #add previous tree to list of trees
       n <- n + 1
       trees[[n]] <- list(tree.ID = current.ID,
-      forest = treeg$forest[i-1],
-      habitat = treeg$habitat[i-1],
-      age = current.age,
-      dbh.in = current.dbh,
-      height.ft = current.height)
+                        forest = treeg$forest[i-1],
+                        habitat = treeg$habitat[i-1],
+                        age = current.age,
+                        dbh.in = current.dbh,
+                        height.ft = current.height)
       #start collecting information on current tree
       current.ID <- treeg$tree.ID[i]
       current.age <- treeg$age[i]
