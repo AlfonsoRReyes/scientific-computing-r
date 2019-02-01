@@ -1,0 +1,49 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+https://stackoverflow.com/questions/21029508/using-a-counter-inside-an-apply-structured-loop-in-r
+
+```{r}
+par(mfrow=c(3,3),pty="s")             # a 3 by 3 graphic
+set.seed(1001)
+x <- 1:10                             # with 1 to 54 along the x axis
+dims <- c(10,6,3,2)
+y <- array(rexp(prod(dims)), dim=c(10,6,3,2)) # and the y axis coming 
+ymax <- c(1,0.1,0.3)
+
+lapply(1:3, function(counter, arr) {
+  apply(
+    arr[ ,counter + 2, , ], 2, 
+    function(ii) {
+      plot(x, ii[,1], col="blue", ylim=c(0,ymax[counter]))
+      points(x, ii[,2], col="red") 
+    } )
+  },
+  arr=y
+)
+```
+
+https://stackoverflow.com/questions/12344982/r-lapply-statement-with-index
+
+The function mapply works like lapply but allows you to supply multiple vectors or lists.
+
+In your case you can create a second vector, the same length of the list, just counting up:
+
+```{r}
+myfunction<- function(values, index){ 
+  cat("Adding values (", index, "): ", values[1], "...", values[2], " = ", sum(values), "\n" )
+  invisible(values[1] + values[2])
+}
+
+mylist <- list(c(5, 4), c(3, 2), c(1, 3))
+
+mapply(myfunction, mylist, seq_along(mylist))
+```
+
+```{r}
+mapply(function(x, y) seq_len(x) + y,
+       c(a =  1, b = 2, c = 3),  # names from first
+       c(A = 10, B = 0, C = -10))
+```
+

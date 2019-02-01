@@ -1,0 +1,56 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+https://stackoverflow.com/questions/9950144/access-lapply-index-names-inside-fun
+
+```{r}
+x <- list(a=11, b=12, c=13) # Changed to list to address concerns in commments
+lapply(seq_along(x), function(y, n, i) { paste(n[[i]], y[[i]]) }, y=x, n=names(x))
+```
+
+https://stackoverflow.com/a/18513978/5270873
+
+Disclaimer: this is a hacky trick, and may stop working in the the next releases.
+You can get the index using this:
+
+```{r}
+lapply(list(a=10, b=20, c = 30), function(x) { parent.frame()$i[]} )
+```
+
+
+```{r}
+x <- list(a=11, b=12, c=13)
+Map(function(x, i) paste(i, x), x, names(x))
+```
+
+```{r}
+mapply(function(x, i) paste(i, x), x, names(x))
+```
+https://stackoverflow.com/a/26731898/5270873
+
+```{r}
+lapply(seq(3), function(i, y) { paste(names(y)[[i]], y[[i]]) }, y=list(a=14,b=15,c=16))
+
+```
+
+
+```{r}
+mylist <- list(a=14,b=15,c=16)
+n = names(mylist)
+mapply(function(list.elem, names) { }, list.elem = mylist, names = n)
+
+```
+
+```{r}
+doSomething <- function(x) cat(length(x))
+
+mylist <- list(a=14,b=15,c=16)
+sapply(names(mylist), function(n) { 
+    doSomething(mylist[[n]])
+    # cat(n, '\n')
+    cat("\n")
+})
+```
+
