@@ -1,0 +1,104 @@
+---
+title: "Loop through data frame and variable names"
+output: html_notebook
+---
+
+https://stackoverflow.com/a/16729038/5270873
+
+To further add to Beasterfield's answer, it seems like you want to do some number of complex operations on each of the data frames.
+
+It is possible to have complex functions within an apply statement. So where you now have:
+
+```{r}
+unique(round(mtcars$hp, -2) / 100)
+```
+
+```{r}
+for (i in unique(f())) {
+    # print(f())
+    print(subset(mtcars, f() == i))
+}
+```
+
+```{r rows.print=25}
+mtcars %>% 
+    mutate(hp_class = trunc(signif(hp, 2) / 100) ) %>% 
+    select(mpg, hp, hp_class) %>% 
+    print()
+```
+
+```{r}
+# split dataframe by condition on cars hp
+f <- function() trunc(signif(mtcars$hp, 2) / 100)
+dflist <- lapply(unique(f()), function(x) subset(mtcars, f() == x ))
+```
+
+
+
+
+
+
+```{r}
+library(dplyr)
+
+df1 <- mtcars %>% 
+    filter(hp < 100) %>% 
+    print()
+
+df2 <- mtcars %>% 
+    filter(hp >= 100 & hp < 200) %>% 
+    print()
+
+df3 <- mtcars %>% 
+    filter(hp >= 200 & hp < 300) %>% 
+    print()
+
+dflist <- list(hp100 = df1, hp200 = df2, hp300 = df3)
+```
+
+
+```{r}
+for (i in dflist) {
+  # Do some complex things
+    
+}
+```
+
+This can be translated to:
+
+```{r}
+lapply(dflist, function(df) {
+  # Do some complex operations on each data frame, df
+  # More steps
+
+  # Make sure the last thing is NULL. 
+  # The last statement within the function will be
+  # returned to lapply, which will try to combine these as a list across all 
+  # data frames.
+  # You don't actually care about this, you just want to run the function.
+  NULL
+})
+```
+
+Simple example:
+
+```{r}
+lapply(dflist, function(df) {
+    cat(nrow(df), "\n")
+    NULL
+})
+```
+
+A more concrete example using plot:
+
+```{r}
+# use invisible to prevent the feedback message from lapply
+invisible(
+    lapply(dflist, function(df) {
+    x2 <- df$mpg^2
+    log_y <- log(df$hp)
+    plot(x2, log_y)
+    NULL
+}))
+```
+

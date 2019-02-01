@@ -1,0 +1,77 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+Source: http://brooksandrew.github.io/simpleblog/articles/advanced-data-table/#fast-looping-with-set
+
+# Fast looping with set
+I still haven’t worked much with the loop + set framework. I’ve been able to achieve pretty much everything with `:=` which is more flexible and powerful. However, if you must loop, `set` is orders of magnitude faster than native R assignments within loops. Here’s a snippet from data.table news a while back:
+
+New function `set(DT, i, j, value)` allows fast assignment to elements
+of DT. Similar to := but avoids the overhead of [.data.table, so is
+much faster inside a loop. Less flexible than :=, but as flexible
+as matrix sub-assignment. Similar in spirit to setnames(), setcolorder(),
+setkey() and setattr(); i.e., assigns by reference with no copy at all.
+
+```{r}
+library(data.table)
+
+M = matrix(1, nrow = 1000000, ncol = 100)
+DF = as.data.frame(M)
+DT = as.data.table(M)
+
+system.time(for (i in 1:10000) DF[i, 1L] <- i)      # 591.000s
+system.time(for (i in 1:10000) DT[i, V1 := i])      #   1.158s
+system.time(for (i in 1:10000) M[i, 1L] <- i)       #   0.016s
+system.time(for (i in 1:10000) set(DT, i, 1L, i))   #   0.027s
+```
+
+
+```{r}
+dt <- data.table(mtcars)[,1:5, with=F]
+dt
+```
+
+```{r}
+# integers using 'L' passed for efficiency
+# columns 1, 2 and 4
+for (j in c(1L,2L,4L)) set(dt, j=j, value = -dt[[j]]) 
+head(dt)
+```
+
+```{r}
+dt <- data.table(mtcars)[,1:5, with=F]
+# assign new values to columns 3 and 5
+for (j in c(3L,5L)) set(dt, j=j, value = paste0(dt[[j]], '!!'))
+head(dt)
+```
+
+```{r}
+# change only columns 1, 3 and 5
+dt <- data.table(mtcars)[,1:5, with=F]
+for (j in c(1L, 3L, 5L)) set(dt, j=j, value = -dt[[j]]) 
+head(dt)
+```
+
+```{r}
+# change only columns 1, 3 and 5
+# this time using the name of the columns
+
+dt <- data.table(mtcars)[,1:5, with=F]
+
+for (j in c("mpg", "cyl")) set(dt, j=j, value = -dt[[j]]) 
+head(dt)
+```
+
+```{r}
+dt[["cyl"]]
+```
+
+```{r}
+# this will give an error
+dt["cyl"]
+
+# Error in `[.data.table`(dt, "cyl") : When i is a data.table (or character vector), the columns to join by must be specified either using 'on=' argument (see ?data.table) or by keying x (i.e. sorted, and, marked as sorted, see ?setkey). Keyed joins might have further speed benefits on very large data due to x being sorted in RAM.
+```
+
