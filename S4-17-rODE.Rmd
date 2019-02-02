@@ -1,0 +1,766 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+setClass("ODE", slots = c(
+    state = "numeric",              # variables
+    rate  = "numeric"               # derivatives
+))
+
+ODE <- function() {
+    ode <- new("ODE")
+    ode
+}
+
+setGeneric("getState", function(object, ...) standardGeneric("getState"))
+setMethod("getState", "ODE", function(object, ...) {
+    # Gets the state variables.
+    return(object@state)
+})
+
+setGeneric("getRate", function(object, state, ...) standardGeneric("getRate"))
+setMethod("getRate", "ODE", function(object, state, ...) {
+    # Gets the rate of change using the argument's state variables.
+    return(object@rate)
+})
+```
+
+```{r}
+ode <- ODE()
+ode
+```
+
+```{r}
+
+#' ODESolver virtual class
+#' A virtual class inherited by AbstractODESolver
+.ODESolver <- setClass("ODESolver")
+
+#' ODESolver constructor
+ODESolver <- function(object, stepSize, ...) {
+    .ODESolver
+}
+
+setGeneric("init", function(object, ...) standardGeneric("init"))
+
+#' Set initial values and get ready to start the solver
+setMethod("init", "ODESolver", function(object, stepSize, ...) {
+    NULL
+})
+
+setMethod("step", "ODESolver", function(object, ...) {
+    object
+})
+
+setGeneric("getODE", function(object, ...) standardGeneric("getODE"))
+setMethod("getODE", "ODESolver", function(object, ...) {
+    object@ode
+})
+
+setGeneric("setStepSize", function(object, ...) standardGeneric("setStepSize"))
+#' Set the size of the step
+setMethod("setStepSize", "ODESolver", function(object, stepSize, ...) {
+    # set the current value of the step
+    object@stepSize = stepSize
+    object
+})
+
+setGeneric("getStepSize", function(object, ...) standardGeneric("getStepSize"))
+setMethod("getStepSize", "ODESolver", function(object, ...) {
+    # get the current value of the step
+    object@stepSize
+})
+
+```
+
+```{r}
+ode_solver <- ODESolver()
+ode_solver()
+
+# Error in new("ODESolver", ...) : trying to generate an object from a virtual class ("ODESolver")
+```
+
+
+```{r}
+#' AbstractODESolver class
+.AbstractODESolver <- setClass("AbstractODESolver",
+                        slots = c(
+                            stepSize = "numeric",
+                            numEqn   = "numeric",
+                            ode      = "ODE"),
+                        prototype = prototype(
+                            stepSize = 0.1,
+                            numEqn = 0),
+                    contains = c("ODESolver")
+                    )
+
+#' AbstractODESolver generic
+setGeneric("AbstractODESolver", function(ode, ...)  standardGeneric("AbstractODESolver"))
+
+
+setMethod("initialize", "AbstractODESolver", function(.Object, .ode, ...) {
+    .Object <- init(.Object, 0.1)                   # default value for stepSize
+    return(.Object)
+})
+
+
+setMethod("step", "AbstractODESolver", function(object, ...) {
+    object
+})
+
+
+setMethod("getODE", "AbstractODESolver", function(object, ...) {
+    object@ode
+})
+
+# planet@odeSolver <- setStepSize(planet@odeSolver, dt)
+
+setMethod("setStepSize", "AbstractODESolver", function(object, stepSize, ...) {
+    object@stepSize = stepSize
+    object
+})
+
+
+setMethod("init", "AbstractODESolver", function(object, stepSize, ...) {
+    object@stepSize <- stepSize
+    state <- getState(object@ode)
+    if (is.null(state)) {
+        object@numEqn <-  0
+    } else {
+        object@numEqn = length(state)
+    }
+    object
+})
+
+
+# object@odeSolver <- init(object@odeSolver, getStepSize(object@odeSolver))
+setGeneric("init<-", function(object, ..., value) standardGeneric("init<-"))
+
+setReplaceMethod("init", "AbstractODESolver", function(object, ..., value) {
+    stepSize <- value
+    object@stepSize <- stepSize
+    state <- getState(object@ode)
+    if (is.null(state)) {
+        object@numEqn <-  0
+    } else {
+        object@numEqn = length(state)
+    }
+    object
+})
+
+
+setGeneric("setOdeSolver<-", function(object, ..., value) standardGeneric("setOdeSolver<-"))
+
+setReplaceMethod("setOdeSolver", "AbstractODESolver", function(object, ..., value) {
+    object@ode <- value
+    object
+})    
+
+
+
+setMethod("getStepSize", "AbstractODESolver", function(object, ...) {
+    return(object@stepSize)
+})
+
+
+
+#' AbstractODESolver constructor missing
+setMethod("AbstractODESolver", signature(ode = "missing"), function(ode, ...) {
+    # use this method when no ODE object is passed
+    if (missing(ode)) {
+        ode <- new("ODE")
+        warning("No ODE supplied. Using an empty one!")
+    }
+    odesolver <- .AbstractODESolver(ode = ode)
+    odesolver@ode <- ode
+    odesolver
+})
+
+
+#' AbstractODESolver
+#'
+#' AbstractODESolver constructor ODE. Uses this constructor when ODE object is passed
+#'
+setMethod("AbstractODESolver", signature(ode = "ODE"), function(ode, ...) {
+    odesolver <- .AbstractODESolver(ode = ode)
+    odesolver@ode <- ode
+    odesolver
+})
+
+```
+
+### Without providing parameters
+
+```{r}
+abstract <- AbstractODESolver()
+abstract
+```
+
+### Providing parameters
+
+```{r}
+abstract_1 <- AbstractODESolver(ode)
+abstract_1
+```
+
+
+This is how we start defining a new ODE solver: Euler
+ 
+ .Euler <- setClass("Euler",              # Euler solver very simple; no slots
+      contains = c("AbstractODESolver"))
+
+
+
+Here we define the ODE solver Verlet
+
+ .Verlet <- setClass("Verlet", slots = c(
+     rate1 = "numeric",                          # Verlet calculates two rates
+     rate2 = "numeric",
+     rateCounter = "numeric"),
+ contains = c("AbstractODESolver"))
+
+
+
+This is the definition of the ODE solver Runge-Kutta 4
+
+ .RK4 <- setClass("RK4", slots = c(       # On the other hand RK4 uses 4 rates
+    rate1 = "numeric",
+    rate2 = "numeric",
+    rate3 = "numeric",
+    rate4 = "numeric",
+    estimated_state = "numeric"),         # and estimates another state
+ contains = c("AbstractODESolver"))
+
+
+
+```{r}
+.Euler <- setClass("Euler",              # Euler solver very simple; no slots
+      contains = c("AbstractODESolver"))
+
+.Euler()
+```
+
+```{r}
+.Verlet <- setClass("Verlet", slots = c(
+     rate1 = "numeric",                          # Verlet calculates two rates
+     rate2 = "numeric",
+     rateCounter = "numeric"),
+ contains = c("AbstractODESolver"))
+
+.Verlet()
+```
+
+```{r}
+ .RK4 <- setClass("RK4", slots = c(       # On the other hand RK4 uses 4 rates
+    rate1 = "numeric",
+    rate2 = "numeric",
+    rate3 = "numeric",
+    rate4 = "numeric",
+    estimated_state = "numeric"),         # and estimates another state
+ contains = c("AbstractODESolver"))
+
+
+.RK4()
+```
+
+# The Euler class
+
+```{r}
+#' Euler ODE solver class
+.Euler <- setClass("Euler",
+            contains = c("AbstractODESolver")
+        )
+
+#' Euler generic
+#'
+setGeneric("Euler", function(ode, ...)   standardGeneric("Euler"))
+
+setMethod("initialize", "Euler", function(.Object, ode, ...) {
+    tryCatch({
+        if (missing(ode)) stop("ode param not supplied")
+    }, error = "No ode param")
+
+    # initialized the Euler ODE solver
+    .Object@ode <- ode                          # set the ode to ODESolver slot
+    .Object@ode@rate <- vector("numeric")       # create vector for the rate
+    return(.Object)
+})
+
+
+setMethod("init", "Euler", function(object, stepSize, ...) {
+    object <- callNextMethod(object, stepSize)           # call superclass init
+    object@ode@rate <- vector("numeric", object@numEqn)  # make the rate vector
+    invisible(object)                                               #   right dimensions
+})
+
+
+setMethod("step", signature(object = "Euler"), function(object, ...) {
+    # step through the differential equation
+    state <- getState(object@ode)                         # get the state
+    rate  <- getRate(object@ode, state)  # get the rate
+
+    for (i in 1:object@numEqn) {
+        state[i] <- state[i] + object@stepSize * rate[i]  # calc the new state
+    }
+    object@ode@state <- state              # return state and rate for new iter
+    object@ode@rate  <- rate
+    invisible(object)                      # use this object to ressign in R
+
+})
+
+setMethod("setStepSize", "Euler", function(object, stepSize, ...) {
+    # set the time step
+    object@stepSize <-  stepSize
+    invisible(object)
+})
+
+setMethod("getStepSize", "Euler", function(object, ...) {
+    return(object@stepSize)
+})
+
+
+#' Euler constructor when `ODE` passed
+#'
+setMethod("Euler", signature(ode = "ODE"), function(ode, ...) {
+    .euler <- .Euler(ode = ode)
+    .euler <- init(.euler, .euler@stepSize)
+    return(.euler)
+})
+
+#' Euler constructor `missing` is passed
+
+setMethod("Euler", signature(ode = "missing"), function(ode, ...) {
+    # use this constructor when no ODE object is passed
+    if (missing(ode)) {
+        ode <- new("ODE")
+        warning("No ODE supplied. Using an empty one!")
+    }
+    .euler <- .Euler(ode = ode)
+    .euler <- init(.euler, .euler@stepSize)
+    return(.euler)
+})
+
+```
+
+
+```{r}
+euler <- Euler()
+euler
+```
+
+# Example FallingParticleODEApp.R
+
+## Class `FallingParticleODE`
+
+```{r}
+# Class definition for application FallingParticleODEApp.R
+
+setClass("FallingParticleODE", slots = c(
+        g = "numeric"
+        ),
+        prototype = prototype(
+            g = 9.8
+        ),
+        contains = c("ODE")
+        )
+
+
+setMethod("initialize", "FallingParticleODE", function(.Object, ...) {
+    .Object@state <- vector("numeric", 3)
+    return(.Object)
+})
+
+setMethod("getState", "FallingParticleODE", function(object, ...) {
+    # Gets the state variables.
+    return(object@state)
+})
+
+setMethod("getRate", "FallingParticleODE", function(object, state, ...) {
+    # Gets the rate of change using the argument's state variables.
+    object@rate[1] <- state[2]
+    object@rate[2] <- - object@g
+    object@rate[3] <- 1
+
+    object@rate
+})
+
+# constructor
+FallingParticleODE <- function(y, v) {
+    .FallingParticleODE <- new("FallingParticleODE")
+    .FallingParticleODE@state[1] <- y
+    .FallingParticleODE@state[2] <- v
+    .FallingParticleODE@state[3] <- 0
+    .FallingParticleODE
+}
+
+```
+
+
+## Application `FallingParticleODEApp`
+
+```{r}
+FallingParticleODEApp <- function(verbose = FALSE) {
+    # initial values
+    initial_y <- 10
+    initial_v <- 0
+    dt <- 0.01
+    ball   <- FallingParticleODE(initial_y, initial_v)
+    solver <- Euler(ball)                        # set the ODE solver
+    solver <- setStepSize(solver, dt)            # set the step
+    rowVector <- vector("list")
+    i <- 1
+    # stop loop when the ball hits the ground, state[1] is the vertical position
+    while (getState(ball)[1] > 0) {
+        rowVector[[i]] <- list(t  = getState(ball)[3],
+                               y  = getState(ball)[1],
+                               vy = getState(ball)[2])
+        solver <- step(solver)                   # move one step at a time
+        ball   <- getODE(solver)                       # update the ball state
+        i <- i + 1
+    }
+    DT <- data.table::rbindlist(rowVector)
+    return(DT)
+}
+# show solution
+solution <- FallingParticleODEApp()
+plot(solution)
+```
+
+# Example `KeplerEulerApp`
+
+## Class `Kepler`
+
+```{r}
+# KeplerVerlet.R
+
+setClass("Kepler", slots = c(
+    GM = "numeric",
+    odeSolver = "Euler",
+    counter = "numeric"
+    ),
+    contains = c("ODE")
+)
+
+setMethod("initialize", "Kepler", function(.Object, ...) {
+    .Object@GM <- 4 * pi * pi                # gravitation constant times combined mass
+    .Object@state <- vector("numeric", 5)  # x, vx, y, vy, t
+    .Object@odeSolver <- Euler(.Object)
+    .Object@counter <- 0
+    return(.Object)
+})
+
+setGeneric("doStep", function(object, ...) standardGeneric("doStep"))
+setMethod("doStep", "Kepler", function(object, ...) {
+    # cat("state@doStep=", object@state, "\n")
+    object@odeSolver <- step(object@odeSolver)
+
+    object@state <- object@odeSolver@ode@state
+
+    # object@rate <- object@odeSolver@ode@rate
+    # cat("\t", object@odeSolver@ode@state)
+    object
+})
+
+
+setGeneric("getTime", function(object, ...) standardGeneric("getTime"))
+setMethod("getTime", "Kepler", function(object, ...) {
+    return(object@state[5])
+})
+
+
+setGeneric("getEnergy", function(object, ...) standardGeneric("getEnergy"))
+setMethod("getEnergy", "Kepler", function(object, ...) {
+    ke <- 0.5 * (object@state[2] * object@state[2] +
+                     object@state[4] * object@state[4])
+    pe <- -object@GM / sqrt(object@state[1] * object@state[1] +
+                                object@state[3] * object@state[3])
+    return(pe+ke)
+})
+
+setMethod("init", "Kepler", function(object, initState, ...) {
+    object@state <- initState
+    object@odeSolver <- init(object@odeSolver, getStepSize(object@odeSolver))
+    object@counter <- 0
+    object
+})
+
+setReplaceMethod("init", "Kepler", function(object, ..., value) {
+    object@state <- value
+    object@odeSolver <- init(object@odeSolver, getStepSize(object@odeSolver))
+    object@counter <- 0
+    object
+})
+
+# new method
+setGeneric("setSolver<-", function(object, ..., value) standardGeneric("setSolver<-"))
+setReplaceMethod("setSolver", "Kepler", function(object, ..., value) {
+    object@odeSolver <- value
+    object
+})
+
+
+setMethod("getRate", "Kepler", function(object, state, ...) {
+    # Computes the rate using the given state.
+    r2 <- state[1] * state[1] + state[3] * state[3]  # distance squared
+    r3 <- r2 * sqrt(r2)   # distance cubed
+    object@rate[1] <- state[2]
+    object@rate[2] <- (- object@GM * state[1]) / r3
+    object@rate[3] <- state[4]
+    object@rate[4] <- (- object@GM * state[3]) / r3
+    object@rate[5] <- 1   # time derivative
+
+    # object@state <- object@odeSolver@ode@state <- state
+    # object@state <- state
+    object@counter <- object@counter + 1
+    object@rate
+
+})
+
+setMethod("getState", "Kepler", function(object, ...) {
+    # Gets the state variables.
+    return(object@state)
+})
+
+
+
+
+# constructor
+Kepler <- function() {
+    kepler <- new("Kepler")
+    return(kepler)
+}
+
+```
+
+```{r}
+kepler <- Kepler()
+kepler
+```
+
+## Application `KeplerEulerApp`
+
+```{r}
+# ++++++++++++++++++++++++++++++++++++++++++++++++++   example: KeplerEulerApp.R
+# Caclculation of the energy for a particle
+# Demostration of the use of the EUler ODE solver
+
+KeplerEulerApp <- function(verbose = FALSE) {
+    # initial values
+    x  <- 1
+    vx <- 0
+    y  <- 0
+    vy <- 2 * pi
+    dt <- 0.01
+    tol <- 1e-3
+
+    particle <- Kepler()                           # create a Kepler ODE object
+
+    # Two ways of initializing the ODE object
+      # particle <- init(particle, c(x, vx, y, vy, 0)) # set initial values
+    init(particle) <-  c(x, vx, y, vy, 0)       # set particle initial values
+
+    odeSolver <- Euler(particle)                   # select the solver
+
+    # Two ways of initializing the solver
+      # odeSolver <- init(odeSolver, dt)               # start the solver
+    init(odeSolver) <-  dt
+
+    particle@odeSolver <- odeSolver               # copy solver to ODE object
+    # How should this be replaced?
+        # setSolver(particle) <- odeSolver
+        # setOdeSolver(particle) <- odeSolver
+        # particle is of ODE class
+    
+    
+    
+    initialEnergy <- getEnergy(particle)          # calculate the initial energy
+    rowVector <- vector("list")
+    i <- 1
+    while (i < 100) {
+        rowVector[[i]] <- list(t  = getTime(particle),
+                               x  = particle@state[1],
+                               vx = particle@state[2],
+                               y  = particle@state[3],
+                               vy = particle@state[4],
+                               E  = getEnergy(particle))
+        particle <- doStep(particle)
+        energy   <- getEnergy(particle)
+        i <- i + 1
+    }
+    DT <- data.table::rbindlist(rowVector)
+    return(DT)
+
+}
+
+solution <- KeplerEulerApp()
+plot(solution)
+
+```
+
+### Modified version
+
+```{r}
+# ++++++++++++++++++++++++++++++++++++++++++++++++++   example: KeplerEulerApp.R
+# Caclculation of the energy for a particle
+# Demostration of the use of the EUler ODE solver
+
+KeplerEulerApp <- function(verbose = FALSE) {
+    # initial values
+    x  <- 1
+    vx <- 0
+    y  <- 0
+    vy <- 2 * pi
+    dt <- 0.01
+    tol <- 1e-3
+
+    particle <- Kepler()                           # create a Kepler ODE object
+
+    # Two ways of initializing the ODE object
+      # particle <- init(particle, c(x, vx, y, vy, 0)) # set initial values
+    init(particle) <-  c(x, vx, y, vy, 0)       # set particle initial values
+
+    odeSolver <- Euler(particle)                   # select the solver
+
+    # Two ways of initializing the solver
+      # odeSolver <- init(odeSolver, dt)               # start the solver
+    init(odeSolver) <-  dt
+    
+    # How should this be replaced?
+    # particle@odeSolver <- odeSolver               # copy solver to ODE object
+    
+    setSolver(particle) <- odeSolver
+    
+    # setOdeSolver(particle) <- odeSolver
+    
+    
+    initialEnergy <- getEnergy(particle)          # calculate the initial energy
+    rowVector <- vector("list")
+    i <- 1
+    while (i < 100) {
+        rowVector[[i]] <- list(t  = getTime(particle),
+                               x  = particle@state[1],
+                               vx = particle@state[2],
+                               y  = particle@state[3],
+                               vy = particle@state[4],
+                               E  = getEnergy(particle))
+        particle <- doStep(particle)
+        energy   <- getEnergy(particle)
+        i <- i + 1
+    }
+    DT <- data.table::rbindlist(rowVector)
+    return(DT)
+
+}
+
+solution <- KeplerEulerApp()
+plot(solution)
+
+```
+
+
+# Example `PlanetApp`
+
+## 
+```{r}
+# Planet.R
+
+setClass("Planet", slots = c(
+    odeSolver = "Euler",
+    GM = "numeric"
+    ),
+    contains = c("ODE")
+)
+
+setMethod("initialize", "Planet", function(.Object, ...) {
+    .Object@GM <- 4 * pi * pi
+    .Object@state <- vector("numeric", 5)
+    .Object@odeSolver <- Euler(.Object)
+    return(.Object)
+})
+
+setMethod("doStep", "Planet", function(object, ...) {
+    # Gets the state variables.
+    object@odeSolver <- step(object@odeSolver)
+    # object@odeSolver <- setStepSize(object@odeSolver, stepSize)
+    object@state <- object@odeSolver@ode@state
+    object@rate  <- object@odeSolver@ode@rate
+    invisible(object)
+})
+
+setMethod("init", "Planet", function(object, initState, ...) {
+    object@state <- object@odeSolver@ode@state <- initState
+    # initialize providing the step size
+    object@odeSolver <- init(object@odeSolver, getStepSize(object@odeSolver))
+    object@rate <- object@odeSolver@ode@rate
+    object@state <- object@odeSolver@ode@state
+    object
+})
+
+setMethod("getRate", "Planet", function(object, state, ...) {
+    # Gets the rate of change using the argument's state variables.
+    r2 <- state[1] * state[1] + state[3] * state[3]
+    r3 <- r2 * sqrt(r2)
+    object@rate[1] <- state[2]
+    object@rate[2] <- (- object@GM * state[1]) / r3
+    object@rate[3] <- state[4]
+    object@rate[4] <- (- object@GM * state[3]) / r3
+    object@rate[5] <- 1
+
+    object@rate
+})
+
+setMethod("getState", "Planet", function(object, ...) {
+    # Gets the state variables.
+    invisible(object@state)
+})
+
+# constructor
+Planet <- function() {
+    new("Planet")
+}
+
+```
+
+
+
+## Application `PlanetApp`
+
+```{r}
+# ++++++++++++++++++++++++++++++++++++++++++++++++++++++++  example: PlanetApp.R
+# Simulation of Earth orbiting around the SUn using the Euler ODE solver
+
+PlanetApp <- function(verbose = FALSE) {
+    # x =  1, AU or Astronomical Units. Length of semimajor axis or the orbit
+    # of the Earth around the Sun.
+    x <- 1; vx <- 0; y <- 0; vy <- 6.28; t <- 0
+    state <- c(x, vx, y, vy, t)
+    dt <-  0.01
+    planet <- Planet()
+    planet@odeSolver <- setStepSize(planet@odeSolver, dt)
+    planet <- init(planet, initState = state)
+    rowvec <- vector("list")
+    i <- 1
+    # run infinite loop. stop with ESCAPE.
+    while (getState(planet)[5] <= 90) {     # Earth orbit is 365 days around the sun
+        rowvec[[i]] <- list(t  = getState(planet)[5],     # just doing 3 months
+                            x  = getState(planet)[1],     # to speed up for CRAN
+                            vx = getState(planet)[2],
+                            y  = getState(planet)[3],
+                            vy = getState(planet)[4])
+        for (j in 1:5) {                 # advances time
+            planet <- doStep(planet)
+        }
+        i <- i + 1
+    }
+    DT <- data.table::rbindlist(rowvec)
+    return(DT)
+}
+# run the application
+solution <- PlanetApp()
+select_rows <- seq(1, nrow(solution), 10)      # do not overplot
+solution <- solution[select_rows,]
+plot(solution)
+```
+

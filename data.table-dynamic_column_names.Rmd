@@ -1,0 +1,145 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+Source: https://stackoverflow.com/a/11746023/5270873
+
+```{r}
+## Your code so far
+library(data.table)
+
+test_dtb <- data.table(a=sample(1:100, 100), 
+                       b=sample(1:100, 100), 
+                       id=rep(1:10,10))
+cn <- "mean_of_a"
+
+## One solution
+expr <- parse(text = paste0(cn, ":=mean(a)"))
+test_dtb[, eval(expr), by=id]
+
+## Checking the result
+head(test_dtb, 4)
+#     a  b id mean_of_a
+# 1: 30 26  1 38.4
+# 2: 83 82  2 47.4
+# 3: 47 66  3 39.5
+# 4: 87 23  4 65.2
+```
+
+
+Source: https://stackoverflow.com/a/11767770/5270873
+
+```{r}
+library(data.table)
+
+test_dtb <- data.table(a=sample(1:100, 100), 
+                       b=sample(1:100, 100), 
+                       id=rep(1:10,10))
+
+cn <- "blah"
+expr <- bquote(.(as.name(cn)):=mean(a))
+test_dtb[, eval(expr), by=id]
+
+
+## Checking the result
+head(test_dtb, 4)
+```
+
+
+https://stackoverflow.com/a/12607312/5270873
+
+Use the quote() and eval() functions to pass a variable to j. You don't need double-quotes on the column names when you do it this way, because the quote()-ed string will be evaluated inside the DT[]
+
+```{r}
+library('data.table')
+DT = data.table(x=c("b","b","b","a","a"), 
+                v=rnorm(5))
+
+temp <- quote(x)
+DT[, eval(temp)]
+```
+
+With a single column name, the result is a vector. If you want a data.table result, or several columns, use list form
+
+```{r}
+temp <- quote(list(x, v))
+DT[, eval(temp)]
+```
+
+## Select / assign to data.table when variable names are stored in a character vector
+
+
+https://stackoverflow.com/a/12392269/5270873
+
+
+### 
+
+```{r}
+DT = data.table(col1 = 1:3)
+colname = "col1"
+
+DT[, colname, with = FALSE] 
+```
+
+Using 'dot dot' (..) prefix:
+
+```{r}
+DT[, ..colname]    
+```
+
+To assign to variable(s), wrap the LHS of := in parentheses:
+
+```{r}
+DT[, (colname) := 4:6]    # The parens are enough to stop the LHS being a symbol
+
+DT
+```
+
+
+```{r}
+colVar = "col1"
+DT[, colVar := 1, with = FALSE]                 # deprecated, still works silently
+DT[, (colVar) := 1]                             # please change to this
+DT[, c("col1", "col2") := 1]                    # no change
+
+```
+
+```{r}
+DT = data.table(col1 = 1:3, col2 = 4:6, a = 1, b = 7:9)
+DT[, 2:4 := 1]                                  # no change
+DT
+```
+
+
+```{r}
+DT = data.table(col1 = 1:3, col2 = 4:6, a = 1, b = 7:9)
+DT[, c("col1", "col2") := list(sum(a), mean(b))]  # no change
+
+DT
+```
+
+```{r}
+DT[, `:=`(...), by = ...]                       # no change
+```
+
+
+or, you might find it easier to read, write and debug just to eval a paste, similar to constructing a dynamic SQL statement to send to a server :
+
+```{r}
+DT = data.table(col1 = 1:3)
+colname = "col1"
+
+expr = paste0("DT[,", colname, ":=cumsum(", colname,")]")
+expr
+# [1] "DT[,col1:=cumsum(col1)]"
+
+eval(parse(text=expr))
+#    col1
+# 1:    4
+# 2:   13
+# 3:   28
+
+DT
+```
+

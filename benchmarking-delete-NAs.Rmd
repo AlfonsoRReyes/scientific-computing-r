@@ -1,0 +1,54 @@
+
+
+```{r}
+#-------  Adjust these assumptions for your own use case  ------------
+row_size   <- 1e6L 
+col_size   <- 20    # not including ID column
+p_missing  <- 0.05   # likelihood of missing observation (except ID col)
+col_subset <- 18:21  # second part of question: filter on select columns
+
+#-------  System info for benchmark  ----------------------------------
+R.version # R version 3.4.3 (2017-11-30), platform = x86_64-w64-mingw32
+library(data.table); packageVersion('data.table') # 1.10.4.3
+library(dplyr);      packageVersion('dplyr')      # 0.7.4
+library(tidyr);      packageVersion('tidyr')      # 0.8.0
+library(microbenchmark)
+
+#-------  Example dataset using above assumptions  --------------------
+fakeData <- function(m, n, p){
+  set.seed(123)
+  m <-  matrix(runif(m*n), nrow=m, ncol=n)
+  m[m<p] <- NA
+  return(m)
+}
+df <- cbind( data.frame(id = paste0('ID',seq(row_size)), 
+                        stringsAsFactors = FALSE),
+             data.frame(fakeData(row_size, col_size, p_missing) )
+             )
+dt <- data.table(df)
+
+par(las=3, mfcol=c(1,2), mar=c(2,4,1,1)+0.1)
+boxplot(
+  microbenchmark(
+    df[complete.cases(df), ],
+    na.omit(df),
+    df %>% drop_na,
+    dt[complete.cases(dt), ],
+    na.omit(dt)
+  ), xlab='', 
+  main = 'Performance: Drop any NA observation',
+  col=c(rep('lightblue',2),'salmon',rep('beige',2))
+)
+boxplot(
+  microbenchmark(
+    df[complete.cases(df[,col_subset]), ],
+    #na.omit(df), # col subset not supported in na.omit.data.frame
+    df %>% drop_na(col_subset),
+    dt[complete.cases(dt[,col_subset,with=FALSE]), ],
+    na.omit(dt, cols=col_subset) # see ?na.omit.data.table
+  ), xlab='', 
+  main = 'Performance: Drop NA obs. in select cols',
+  col=c('lightblue','salmon',rep('beige',2))
+)
+```
+
