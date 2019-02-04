@@ -1,0 +1,57 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+```{r}
+library(gistr)
+```
+
+
+```{r}
+gist_auth()
+```
+
+```{r}
+pat <- "e5145b44d5bddee58c09c50591681b9a9aa844fe"
+Sys.setenv(GITHUB_PAT = pat)
+```
+
+
+```{r}
+# table-make-from_text_using_readr.Rmd
+file <- "table-make-from_text_using_readr.Rmd"
+gist_create(file, description = 'Make a table from text', knit = TRUE)
+```
+
+```{r}
+file <- "table-make-from_text_using_data_table.Rmd"
+gist_create(file, description = 'Make a table from text using data.table', 
+            knit = TRUE)
+```
+
+```{r}
+file <- "table-make-from_text-data_table-tsv.Rmd"
+gist_create(file, description = 'Make a table from text (tsv) using data.table', 
+            knit = TRUE)
+```
+
+
+```{r}
+# get the gists that are public
+gists("minepublic")
+```
+
+```{r}
+# run code
+run({'
+ ```{r}
+x <- letters
+(numbers <- runif(8))
+ ```'}) %>% 
+    gist_create
+```
+
+
+
